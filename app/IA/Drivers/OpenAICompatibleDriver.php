@@ -40,6 +40,8 @@ final class OpenAICompatibleDriver implements MotorIA
                 'type' => 'json_schema',
                 'json_schema' => ['name' => 'salida', 'strict' => true, 'schema' => $s->esquemaJson],
             ];
+        } elseif ($s->soloJson) {
+            $cuerpo['response_format'] = ['type' => 'json_object'];
         }
 
         try {

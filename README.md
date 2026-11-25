@@ -17,7 +17,8 @@ Lo que ya se puede usar en un semestre real:
 5. **Cargar notas desde un archivo.** Cruce por documento o por nombre completo, conversión de escala y reporte de lo que no cruzó.
 6. **Cerrar el periodo.** Qué nota necesita cada estudiante, quiénes están al margen, quiénes aprueban solo por una vacía o por redondeo, y revisión de ceros ordenada por cercanía al límite.
 7. **Aplicar y calificar exámenes digitales.** Se importa el banco en JSON y se descarga el examen: un HTML que funciona sin internet, no lleva respuestas, guarda solo y cifra la entrega. Luego se suben las entregas y el calificador descifra, identifica al estudiante y al examen, genera alertas, ejecuta los retos de código en el navegador, califica las abiertas por pregunta y pasa las notas al registro, también en grupo.
-8. **Entregar las notas.** Excel con todas las notas, planilla CSV para Excel en español y respaldo completo en JSON.
+8. **Generar el banco con IA.** Se carga el material de la materia (PDF, Word, PowerPoint, texto) y se arma el prompt con tres capas: su perfil, el estilo de la materia y la tarea. El prompt se revisa y se edita antes de enviarlo. La IA devuelve un borrador que se valida igual que un banco importado; usted lo corrige, a mano o pidiéndole a la IA, y lo guarda solo cuando lo aprueba. Funciona con Ollama o LM Studio en local, o con Claude en la nube.
+9. **Entregar las notas.** Excel con todas las notas, planilla CSV para Excel en español y respaldo completo en JSON.
 
 Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 
@@ -41,6 +42,7 @@ Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 | Examen autocontenido: sin respuestas dentro, autoguardado anunciado, salidas reales de ventana con duración, reloj, modo desconectado, entorno de prueba con consola y casos visibles en un Worker aislado, entrega cifrada (AES-256-GCM y RSA-OAEP-256) | `app/Evaluacion/GeneradorExamen.php`, `resources/examen/` | 4, 5.4, 5.5, 5.7 |
 | Recepción de entregas: descifrado con la clave del periodo, examen reconocido por identificador, entrega en la actividad equivocada, identidad manipulada, otro grupo, duplicadas, alertas de sesión, código idéntico aunque se quiten comentarios | `app/Evaluacion/ProcesadorEntregas.php`, `docs/formato-entrega.md` | 6.1, 6.3, 6.11 |
 | Calificador: planilla con indicadores, retos ejecutados en el navegador del docente, abiertas por pregunta con texto legible y resaltado de términos, detalle autoexplicativo, paso al registro (incluida la entrega grupal) | `app/Http/Controllers/CalificadorController.php`, `app/Livewire/CalificarAbiertas.php` | 6.2, 6.4, 6.6, 6.7, 6.8 |
+| Generación del banco con IA: motores configurables (local u online, nunca cae en silencio a otro), repositorio de contenido con extracción de texto, prompts de tres capas versionados, prompt editable, borrador validado, corrección por IA, ajuste de pesos, aprobación explícita y trazabilidad | `app/Evaluacion/GeneradorBanco.php`, `app/IA/`, `/materias/{materia}/generar` | 1.5, 7, 7.3, 7.4, 8 |
 | Exportación: Excel con una hoja por corte y planilla; CSV con `;` y BOM; un periodo incompleto no sale como nota final | `app/Notas/ExportadorNotas.php` | 3.1.11, 3.1.14 |
 | Cierre: simulador de lo que necesita cada estudiante (meta redondeada hacia arriba), al margen, aprobados por vacía o por redondeo, revisión de ceros y vacías | `app/Notas/CierrePeriodo.php`, `/grupos/{grupo}/cierre` | 3.7 |
 | Edición de estudiante y retiro del grupo sin perder notas | `app/Http/Controllers/EstudianteController.php` | 3.4.5, 3.4.6 |
@@ -51,7 +53,7 @@ Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 - **Adaptador del calificador HTML anterior**, para migrar las entregas del corte en curso. Hace falta un archivo de entrega real y el calificador actual.
 - Retos con DOM (HTML y CSS) y vista previa: hoy los retos son de JavaScript puro, en un Worker.
 - Versiones A/B y segundo banco, modo de ensayo con las pruebas de la sección 9.2 en pantalla, anulación de ítems y plantillas de comentarios desde la interfaz.
-- Generación del banco con IA (los motores ya están), contenido de la materia, supletorios y habilitaciones en pantalla, y restaurar un respaldo.
+- Más generadores del catálogo 7.4 (rúbrica, unidad didáctica, ejemplos prácticos), plan curricular y temario con lista de chequeo (7.1), supletorios y habilitaciones en pantalla, y restaurar un respaldo.
 
 ### Reglas que el código garantiza
 
@@ -72,11 +74,13 @@ php artisan serve                     # http://127.0.0.1:8000
 php artisan test
 ```
 
-### Motor de IA local (opcional)
+### Motor de IA local (recomendado)
 
-Con [Ollama](https://ollama.com) instalado en el equipo o en un servidor del programa, se registra un motor en la tabla `motores_ia` con `driver = ollama`, `base_url = http://<ip>:11434` y el modelo descargado. Mientras no exista la interfaz, el registro se hace con `php artisan tinker`.
+1. Instale [Ollama](https://ollama.com) en su equipo o en un servidor del programa y descargue un modelo, por ejemplo `ollama pull qwen3:14b`. Con menos memoria sirve un modelo de 7 u 8 B, aunque comete más errores de formato.
+2. En **Motores de IA** agregue el motor con la dirección `http://127.0.0.1:11434` y el nombre del modelo, y pulse **Probar**.
+3. Con un modelo local una generación puede tardar varios minutos. En WAMP, suba `max_execution_time` en `php.ini` (o use `IA_TIEMPO_MAXIMO` en `.env`).
 
 ## Próximos pasos
 
 1. Adaptador de entregas del calificador HTML anterior.
-2. Generación del banco con IA a partir del contenido de la materia (módulos 4 y 5).
+2. Plan curricular, temario y lista de chequeo (7.1), con el alcance por grupo alimentando la capa 2.

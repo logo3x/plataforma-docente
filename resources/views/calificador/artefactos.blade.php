@@ -3,6 +3,7 @@
     <h1>Actividades evaluables — {{ $materia->nombre }}</h1>
     <p class="suave">Quices, parciales y talleres de la materia. Se guardan en la materia y se pueden aplicar en cualquier periodo.</p>
 
+    <p><a class="boton" href="{{ route('generacion.create', $materia) }}">Generar una actividad con IA</a></p>
     <section class="tarjeta">
         <h2 style="margin-top:0">Importar una actividad</h2>
         <p>Archivo JSON en formato «plataforma-banco» (vea <code>docs/formato-banco.md</code> en el repositorio). Se valida antes de guardar:

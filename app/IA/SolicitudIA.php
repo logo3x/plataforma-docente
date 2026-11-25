@@ -15,6 +15,7 @@ final readonly class SolicitudIA
         public string $usuario,
         public bool $contieneDatosEstudiantes = false,
         public ?array $esquemaJson = null,
+        public bool $soloJson = false,       // pedir JSON en el modo nativo del motor, sin esquema estricto
         public int $maxTokens = 16000,
     ) {}
 }

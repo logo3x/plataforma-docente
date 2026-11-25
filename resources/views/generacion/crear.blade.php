@@ -31,7 +31,7 @@
                 @foreach ($unidades as $u)
                     @continue($u->hijos->isEmpty())
                     <p style="margin:.3rem 0 .1rem" class="suave">{{ $u->titulo }}</p>
-                    @foreach ($u->hijos as $t)<label style="font-weight:400;display:inline-block;margin-right:1rem"><input type="checkbox" name="temas[]" value="{{ $t->id }}" @checked(in_array($t->id, old('temas', [])))> {{ $t->titulo }}</label>@endforeach
+                    @foreach ($u->hijos as $t)<label style="font-weight:400;display:inline-block;margin-right:1rem"><input type="checkbox" name="temas[]" value="{{ $t->id }}" @checked(in_array($t->id, array_map('intval', (array) old('temas', request('temas', []))), true))> {{ $t->titulo }}</label>@endforeach
                 @endforeach
                 <p class="suave" style="margin:.3rem 0 0">Si elige un grupo, la IA recibe además qué temas ya vio según la lista de chequeo y cuáles no debe evaluar.</p>
             </fieldset>

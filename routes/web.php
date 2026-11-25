@@ -22,6 +22,7 @@ use App\Http\Controllers\RubricaController;
 use App\Http\Controllers\SegundaOportunidadController;
 use App\Http\Controllers\SeguridadController;
 use App\Http\Controllers\TemarioController;
+use App\Http\Controllers\UnidadDidacticaController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/inicio');
@@ -96,6 +97,20 @@ Route::middleware('auth')->group(function () {
     Route::post('/generaciones/{generacion}/rubrica/corregir', [RubricaController::class, 'corregir'])->name('rubricas.corregir');
     Route::post('/generaciones/{generacion}/rubrica/aprobar', [RubricaController::class, 'aprobar'])->name('rubricas.aprobar');
     Route::post('/generaciones/{generacion}/rubrica/descartar', [RubricaController::class, 'descartar'])->name('rubricas.descartar');
+    Route::get('/materias/{materia}/unidades', [UnidadDidacticaController::class, 'index'])->name('unidades.index');
+    Route::get('/materias/{materia}/unidades/nueva', [UnidadDidacticaController::class, 'create'])->name('unidades.create');
+    Route::post('/materias/{materia}/unidades', [UnidadDidacticaController::class, 'store'])->name('unidades.store');
+    Route::post('/materias/{materia}/unidades/prompt', [UnidadDidacticaController::class, 'preparar'])->name('unidades.preparar');
+    Route::post('/materias/{materia}/unidades/generar', [UnidadDidacticaController::class, 'generar'])->name('unidades.generar');
+    Route::get('/unidades/{unidad}', [UnidadDidacticaController::class, 'show'])->name('unidades.show');
+    Route::get('/unidades/{unidad}/editar', [UnidadDidacticaController::class, 'edit'])->name('unidades.edit');
+    Route::put('/unidades/{unidad}', [UnidadDidacticaController::class, 'update'])->name('unidades.update');
+    Route::delete('/unidades/{unidad}', [UnidadDidacticaController::class, 'destroy'])->name('unidades.destroy');
+    Route::get('/generaciones/{generacion}/unidad', [UnidadDidacticaController::class, 'borrador'])->name('unidades.borrador');
+    Route::put('/generaciones/{generacion}/unidad', [UnidadDidacticaController::class, 'editarBorrador'])->name('unidades.borrador.editar');
+    Route::post('/generaciones/{generacion}/unidad/corregir', [UnidadDidacticaController::class, 'corregir'])->name('unidades.corregir');
+    Route::post('/generaciones/{generacion}/unidad/aprobar', [UnidadDidacticaController::class, 'aprobar'])->name('unidades.aprobar');
+    Route::post('/generaciones/{generacion}/unidad/descartar', [UnidadDidacticaController::class, 'descartar'])->name('unidades.descartar');
     Route::get('/materias/{materia}/reclamos', [ReclamoController::class, 'materia'])->name('reclamos.materia');
     Route::get('/materias/{materia}/temario', [TemarioController::class, 'show'])->name('temario.show');
     Route::post('/materias/{materia}/temario/extraer', [TemarioController::class, 'extraer'])->name('temario.extraer');

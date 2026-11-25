@@ -8,6 +8,7 @@
                     @if ($u->origen === 'ia')<span class="alerta-chip" title="Extraído por la IA; revíselo">IA</span>@endif
                     <button class="boton boton-sec boton-chico" wire:click="mover({{ $u->id }}, -1)" aria-label="Subir unidad">↑</button>
                     <button class="boton boton-sec boton-chico" wire:click="mover({{ $u->id }}, 1)" aria-label="Bajar unidad">↓</button>
+                    <a class="boton boton-sec boton-chico" href="{{ route('unidades.index', ['materia' => $u->materia_id, 'unidad' => $u->id]) }}#generar">Planear la unidad</a>
                     <button class="enlace" wire:click="eliminar({{ $u->id }})" wire:confirm="¿Eliminar la unidad «{{ $u->titulo }}» con todos sus temas?">Eliminar</button>
                 </span>
             </div>

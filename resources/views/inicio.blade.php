@@ -14,6 +14,7 @@
                 <a href="{{ route('generacion.create', $materia) }}">Generar con IA</a> ·
                 <a href="{{ route('rubricas.index', $materia) }}">Rúbricas</a> ·
                 <a href="{{ route('temario.show', $materia) }}">Temario</a> ·
+                <a href="{{ route('unidades.index', $materia) }}">Unidades didácticas</a> ·
                 <a href="{{ route('reclamos.materia', $materia) }}">Reclamos</a> ·
                 <a href="{{ route('contenido.index', $materia) }}">Contenido</a> ·
                 <a href="{{ route('materias.estilo', $materia) }}">Estilo para la IA</a>

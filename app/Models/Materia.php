@@ -59,4 +59,9 @@ class Materia extends Model
     {
         return $this->hasMany(Rubrica::class);
     }
+
+    public function unidadesDidacticas(): HasMany
+    {
+        return $this->hasMany(UnidadDidactica::class);
+    }
 }

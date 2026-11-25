@@ -105,6 +105,40 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
  ]}
 TXT,
 
+        'unidad' => <<<'TXT'
+Tarea: planee la unidad didáctica como una secuencia de sesiones de clase.
+
+Unidad:               {{unidad}}
+Temas de la unidad:
+{{temas}}
+Resultados de aprendizaje:
+{{resultados}}
+Grupo:                {{grupo}}
+Número de sesiones:   {{sesiones}}, de {{duracion}} minutos cada una
+Énfasis del docente:  {{enfasis}}
+
+Reglas:
+- Cubra todos los temas de la unidad en orden lógico; en «temas» de cada sesión escriba el nombre exacto del tema tal como aparece arriba.
+- El objetivo de cada sesión empieza con un verbo observable («Implementar…», «Comparar…»), nunca «Conocer» o «Entender».
+- Inicio, desarrollo y cierre dicen qué hace el docente y qué hacen los estudiantes, con tiempos aproximados que sumen la duración.
+- Prefiera situaciones problema y práctica en clase a la exposición larga.
+- En «recursos» mencione el material del repositorio por su título cuando sirva.
+- La evaluación de la sesión es «diagnostica», «formativa», «sumativa» o «ninguna»; la evaluación de la unidad lista las actividades
+  calificables («quiz», «taller», «parcial», «trabajo», «sustentacion» u «otra») y qué evalúa cada una.
+- Cíñase al material de referencia y al alcance del grupo.
+{{memoria}}
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"formato":"plataforma-unidad","version":1,"titulo":"...","proposito":"para qué sirve la unidad, en dos frases",
+ "resultados":["..."],"previos":["conocimiento previo necesario"],
+ "sesiones":[
+  {"titulo":"...","temas":["..."],"objetivo":"...","duracion":"{{duracion}}",
+   "inicio":"...","desarrollo":"...","cierre":"...","recursos":["..."],
+   "evaluacion":{"tipo":"formativa","descripcion":"..."}}
+ ],
+ "evaluacion":[{"actividad":"...","tipo":"quiz","descripcion":"qué evalúa y cuándo"}]}
+TXT,
+
         'temario' => <<<'TXT'
 Tarea: lea el plan curricular de la materia y extraiga su temario como estructura.
 

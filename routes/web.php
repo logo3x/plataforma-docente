@@ -6,6 +6,7 @@ use App\Http\Controllers\CargaNotasController;
 use App\Http\Controllers\CierreController;
 use App\Http\Controllers\ContenidoController;
 use App\Http\Controllers\DictadoController;
+use App\Http\Controllers\EstadisticasController;
 use App\Http\Controllers\EstudianteController;
 use App\Http\Controllers\ExportacionController;
 use App\Http\Controllers\GeneracionBancoController;
@@ -94,6 +95,11 @@ Route::middleware('auth')->group(function () {
         Route::post('actividades/{actividad}/registro', [CalificadorController::class, 'pasarAlRegistro'])->name('registro');
         Route::get('actividades/{actividad}/abiertas', [CalificadorController::class, 'abiertas'])->name('abiertas');
         Route::get('entregas/{entrega}', [CalificadorController::class, 'detalle'])->name('detalle');
+        Route::get('actividades/{actividad}/estadisticas', [EstadisticasController::class, 'show'])->name('estadisticas');
+        Route::get('actividades/{actividad}/estadisticas.csv', [EstadisticasController::class, 'csv'])->name('estadisticas.csv');
+        Route::post('items/{item}/anular', [EstadisticasController::class, 'anular'])->name('items.anular');
+        Route::post('items/{item}/restaurar', [EstadisticasController::class, 'restaurar'])->name('items.restaurar');
+        Route::post('items/{item}/tema', [EstadisticasController::class, 'tema'])->name('items.tema');
         Route::post('entregas/{entrega}/resultados-navegador', ResultadosNavegadorController::class)
             ->name('entregas.resultados-navegador');
     });

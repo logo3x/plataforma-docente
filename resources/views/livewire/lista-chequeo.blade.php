@@ -13,6 +13,14 @@
                     <label style="font-weight:400" wire:key="c-{{ $t->id }}">
                         <input type="checkbox" @checked(isset($vistos[$t->id])) wire:click="alternar({{ $t->id }})"> {{ $t->titulo }}
                         @isset($vistos[$t->id])<span class="suave">— {{ \Illuminate\Support\Carbon::parse($vistos[$t->id])->format('d/m') }}</span>@endisset
+                        @isset($desempeno[$t->id])
+                            @php($pct = round($desempeno[$t->id]['acierto'] * 100))
+                            @if ($desempeno[$t->id]['acierto'] < $umbral && $desempeno[$t->id]['respuestas'] >= \App\Calificacion\EstadisticasActividad::MINIMO_PARA_MARCAR)
+                                <span class="estado estado-reprobado" title="{{ $desempeno[$t->id]['respuestas'] }} respuestas en actividades calificadas">⚠ bajo desempeño ({{ $pct }} %): reforzar</span>
+                            @else
+                                <span class="suave" title="{{ $desempeno[$t->id]['respuestas'] }} respuestas en actividades calificadas">· acierto {{ $pct }} %</span>
+                            @endif
+                        @endisset
                     </label>
                 @endforeach
             </fieldset>

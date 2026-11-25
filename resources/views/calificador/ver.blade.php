@@ -39,6 +39,7 @@
             <div class="fila">
                 <button class="boton boton-sec" id="ejecutar-retos" type="button">Ejecutar retos de código</button>
                 @if ($tieneAbiertas)<a class="boton boton-sec" href="{{ route('calificador.abiertas', $actividad) }}">Calificar abiertas por pregunta</a>@endif
+                <a class="boton boton-sec" href="{{ route('calificador.estadisticas', $actividad) }}">Estadísticas y análisis de ítems</a>
                 <form method="POST" action="{{ route('calificador.registro', $actividad) }}">@csrf
                     <button class="boton" type="submit" @disabled($indicadores['calificadas'] === 0)>Pasar notas al registro</button></form>
             </div>

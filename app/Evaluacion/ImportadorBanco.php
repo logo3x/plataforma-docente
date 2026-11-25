@@ -9,6 +9,7 @@ use App\Models\Pregunta;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 /**
@@ -108,10 +109,15 @@ final class ImportadorBanco
                 ], $b['configuracion'] ?? []),
             ]);
 
+            // 6.10.4: el «tema» de cada ítem se enlaza con el temario si coincide con un tema de la materia
+            $temas = $materia->temario()->where('tipo', 'tema')->get()
+                ->keyBy(fn ($t) => self::normalizarTema($t->titulo));
+
             foreach (array_values($b['items']) as $orden => $it) {
                 [$enunciado, $clave] = $this->separar($it);
                 $pregunta = Pregunta::query()->create([
                     'materia_id' => $materia->id,
+                    'temario_item_id' => filled($it['tema'] ?? null) ? $temas->get(self::normalizarTema($it['tema']))?->id : null,
                     'tipo' => $it['tipo'],
                     'dificultad' => in_array($it['dificultad'] ?? null, ['baja', 'media', 'alta'], true) ? $it['dificultad'] : 'media',
                     'enunciado' => $enunciado,
@@ -128,6 +134,12 @@ final class ImportadorBanco
 
             return $artefacto;
         });
+    }
+
+    /** «Pilas y Colas » y «pilas y colas» son el mismo tema. */
+    public static function normalizarTema(string $t): string
+    {
+        return mb_strtolower(trim(preg_replace('/\s+/u', ' ', Str::ascii($t))));
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Calificacion\DesempenoTemas;
 use App\Models\Grupo;
 use App\Models\TemarioItem;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +49,8 @@ class ListaChequeo extends Component
 
         return view('livewire.lista-chequeo', [
             'grupo' => $grupo, 'unidades' => $unidades, 'vistos' => $vistos,
+            'desempeno' => app(DesempenoTemas::class)->deGrupo($grupo),
+            'umbral' => DesempenoTemas::UMBRAL,
             'total' => $total, 'hechos' => count(array_intersect_key($vistos, $unidades->flatMap->hijos->keyBy('id')->all())),
         ]);
     }

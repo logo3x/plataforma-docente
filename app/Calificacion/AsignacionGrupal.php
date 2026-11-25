@@ -19,7 +19,7 @@ final class AsignacionGrupal
     /**
      * @return string operación de la bitácora (deshacible)
      */
-    public function asignar(Entrega $entrega, string $nota, ?string $comentario = null): string
+    public function asignar(Entrega $entrega, string $nota, ?string $comentario = null, ?string $motivoExtra = null): string
     {
         $actividad = $entrega->actividad;
         $integrantes = $entrega->integrantes()->get();
@@ -37,6 +37,9 @@ final class AsignacionGrupal
             ? null
             : 'Tope de '.$actividad->componente->division->dictado->escala()->mostrar($topeAplicado)
                 .": grupo de {$tamano} integrantes en actividad para {$actividad->tamano_grupo}.";
+        if ($motivoExtra !== null) {
+            $motivo = trim($motivoExtra.' '.($motivo ?? ''));
+        }
 
         return $this->registro->operacion(function () use ($entrega, $actividad, $integrantes, $nota, $tamano, $motivo, $comentario) {
             foreach ($integrantes as $estudiante) {

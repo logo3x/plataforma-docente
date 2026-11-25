@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Calificacion\AsignacionGrupal;
 use App\Calificacion\CalificadorEntrega;
+use App\Calificacion\PasoAlRegistro;
 use App\Evaluacion\GeneradorExamen;
 use App\Evaluacion\ImportadorBanco;
 use App\Evaluacion\ProcesadorEntregas;
@@ -12,7 +12,6 @@ use App\Models\Artefacto;
 use App\Models\Componente;
 use App\Models\Entrega;
 use App\Models\Materia;
-use App\Notas\RegistroNotas;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -168,25 +167,10 @@ class CalificadorController extends Controller
     }
 
     /** Lleva las notas completas al registro, sin transcripción (6.6). */
-    public function pasarAlRegistro(Request $request, Actividad $actividad, AsignacionGrupal $asignacion): RedirectResponse
+    public function pasarAlRegistro(Request $request, Actividad $actividad, PasoAlRegistro $paso): RedirectResponse
     {
         $this->autorizar($actividad);
-        $registro = app(RegistroNotas::class);
-        $pasadas = 0;
-        $pendientes = 0;
-
-        $op = $registro->operacion(function () use ($actividad, $asignacion, &$pasadas, &$pendientes) {
-            foreach ($actividad->entregas()->get() as $e) {
-                $nota = $this->calificador->nota($e);
-                if ($nota === null) {
-                    $pendientes++;
-
-                    continue;
-                }
-                $asignacion->asignar($e, $nota);
-                $pasadas++;
-            }
-        });
+        ['operacion' => $op, 'pasadas' => $pasadas, 'pendientes' => $pendientes] = $paso->ejecutar($actividad);
 
         $grupo = $actividad->grupos()->first() ?? $actividad->componente->division->dictado->grupos()->first();
         $pila = $request->session()->get("deshacer.grupo.{$grupo->id}", []);

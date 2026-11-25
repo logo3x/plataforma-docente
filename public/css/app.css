@@ -104,3 +104,7 @@ textarea { width: 100%; padding: .5rem .6rem; border: 1px solid #6b7280; border-
 .correcta { font-weight: 700; color: var(--ok); }
 .barra-avance { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; margin-bottom: .5rem; }
 .barra-avance div { height: 100%; background: var(--cian); }
+table.barras { background: transparent; }
+table.barras th, table.barras td { border: 0; padding: .2rem .4rem; }
+.barra-dato { height: 1rem; background: var(--cian); border-radius: 3px; min-width: 2px; }
+.barra-correcta { background: var(--ok); }

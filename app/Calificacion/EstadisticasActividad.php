@@ -5,6 +5,7 @@ namespace App\Calificacion;
 use App\Models\Actividad;
 use App\Models\Entrega;
 use App\Models\Grupo;
+use App\Models\Reclamo;
 use App\Notas\Calculo;
 use App\Notas\Escala;
 use Brick\Math\BigDecimal;
@@ -137,6 +138,7 @@ final class EstadisticasActividad
                 'discriminacion' => $discriminacion,
                 'marcas' => $marcas,
                 'opciones' => in_array($p->tipo, ['unica', 'vf'], true) ? $this->distribucion($filas, $p) : null,
+                'reclamos' => Reclamo::query()->where('artefacto_pregunta_id', $item->id)->selectRaw('estado, count(*) as n')->groupBy('estado')->pluck('n', 'estado')->all(),
             ];
         })->all();
     }

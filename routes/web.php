@@ -16,6 +16,7 @@ use App\Http\Controllers\InicioController;
 use App\Http\Controllers\MateriaController;
 use App\Http\Controllers\MotorIaController;
 use App\Http\Controllers\PlantillasIaController;
+use App\Http\Controllers\ReclamoController;
 use App\Http\Controllers\RegistroController;
 use App\Http\Controllers\SegundaOportunidadController;
 use App\Http\Controllers\SeguridadController;
@@ -81,6 +82,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/materias/{materia}/contenido', [ContenidoController::class, 'store'])->name('contenido.store');
     Route::get('/contenido/{contenido}', [ContenidoController::class, 'show'])->name('contenido.show');
     Route::delete('/contenido/{contenido}', [ContenidoController::class, 'destroy'])->name('contenido.destroy');
+    Route::get('/materias/{materia}/reclamos', [ReclamoController::class, 'materia'])->name('reclamos.materia');
     Route::get('/materias/{materia}/temario', [TemarioController::class, 'show'])->name('temario.show');
     Route::post('/materias/{materia}/temario/extraer', [TemarioController::class, 'extraer'])->name('temario.extraer');
     Route::post('/materias/{materia}/temario/sugerir', [TemarioController::class, 'sugerir'])->name('temario.sugerir');
@@ -115,6 +117,9 @@ Route::middleware('auth')->group(function () {
         Route::get('actividades/{actividad}/informes.zip', [DevolucionController::class, 'zip'])->name('devolucion.zip');
         Route::get('actividades/{actividad}/enlaces.csv', [DevolucionController::class, 'enlaces'])->name('devolucion.enlaces');
         Route::post('devoluciones/{devolucion}/marcar', [DevolucionController::class, 'marcar'])->name('devolucion.marcar');
+        Route::get('actividades/{actividad}/reclamos', [ReclamoController::class, 'index'])->name('reclamos');
+        Route::post('actividades/{actividad}/reclamos', [ReclamoController::class, 'store'])->name('reclamos.store');
+        Route::post('reclamos/{reclamo}/resolver', [ReclamoController::class, 'resolver'])->name('reclamos.resolver');
         Route::get('actividades/{actividad}/estadisticas.csv', [EstadisticasController::class, 'csv'])->name('estadisticas.csv');
         Route::post('items/{item}/anular', [EstadisticasController::class, 'anular'])->name('items.anular');
         Route::post('items/{item}/restaurar', [EstadisticasController::class, 'restaurar'])->name('items.restaurar');

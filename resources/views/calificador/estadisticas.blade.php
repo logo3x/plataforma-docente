@@ -76,6 +76,10 @@
                     <div class="aviso aviso-info" style="margin:.5rem 0">Anulado ({{ $ap->regla_anulacion === 'dar_por_buena' ? 'se da por bueno a todos' : 'retirado y reescalado' }}): {{ $ap->motivo_anulacion }}</div>
                 @endif
                 @foreach ($i['marcas'] as $m)<span class="estado estado-incompleto" style="margin:.4rem .3rem 0 0">◎ {{ $m }}</span>@endforeach
+                @if ($i['reclamos'])
+                    <a class="estado estado-sin_actividades" style="margin:.4rem .3rem 0 0;text-decoration:none" href="{{ route('calificador.reclamos', $actividad) }}">
+                        ⚑ {{ array_sum($i['reclamos']) }} reclamo(s)@if ($i['reclamos']['aceptado'] ?? 0), {{ $i['reclamos']['aceptado'] }} aceptado(s)@endif @if ($i['reclamos']['abierto'] ?? 0), {{ $i['reclamos']['abierto'] }} abierto(s)@endif</a>
+                @endif
 
                 @if ($i['opciones'])
                     <table class="barras" style="margin-top:.6rem" aria-label="Respuestas elegidas en el ítem {{ $i['numero'] }}">

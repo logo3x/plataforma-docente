@@ -50,6 +50,12 @@ main { max-width: 900px; }
         <div class="aviso aviso-info"><strong>Comentario del docente:</strong> {{ $comentarioNota }}</div>
     @endif
 
+    @foreach ($reclamos as $rc)
+        <div class="aviso {{ $rc->estado === 'aceptado' ? 'aviso-ok' : 'aviso-info' }}">
+            <strong>Su reclamo del {{ $rc->created_at->format('d/m/Y') }} fue {{ $rc->estado }}.</strong> {{ $rc->resolucion }}
+        </div>
+    @endforeach
+
     @if ($entrega)
         <h2>Detalle de la calificación</h2>
         <p class="suave">Para cada ítem: el enunciado, su respuesta, la respuesta correcta y el puntaje obtenido sobre el máximo.</p>

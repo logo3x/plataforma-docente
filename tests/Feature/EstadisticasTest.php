@@ -163,7 +163,7 @@ class EstadisticasTest extends TestCase
         // El ítem 3 (ambiguo) se da por bueno a todos: +1
         $this->post(route('calificador.items.anular', $this->item(3)), [
             'actividad_id' => $this->actividad->id, 'regla' => 'dar_por_buena', 'motivo' => 'Enunciado ambiguo: admite dos respuestas',
-        ])->assertSessionHas('estado', fn ($m) => str_contains($m, '12 nota(s) del registro se recalcularon'));
+        ])->assertSessionHas('estado', fn ($m) => str_contains($m, '12 nota(s) del registro cambiaron'));
 
         $this->assertSame('2.0000', Nota::query()->where('estudiante_id', $this->estudiantes[0]->id)->value('valor'));
         $this->assertSame('5.0000', Nota::query()->where('estudiante_id', $this->estudiantes[6]->id)->value('valor'));

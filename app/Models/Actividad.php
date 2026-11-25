@@ -56,4 +56,9 @@ class Actividad extends Model
     {
         return $this->hasMany(Devolucion::class);
     }
+
+    public function reclamos(): HasMany
+    {
+        return $this->hasMany(Reclamo::class);
+    }
 }

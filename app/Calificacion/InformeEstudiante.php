@@ -51,6 +51,8 @@ final class InformeEstudiante
             'tipoSegunda' => $segunda ? SegundaOportunidad::TIPOS[$segunda->tipo] : null,
             'mostrarOriginal' => (bool) $actividad->informe_muestra_original,
             'comentarioNota' => $tablero ? $actividad->notas()->where('estudiante_id', $estudiante->id)->value('comentario') : null,
+            // Solo sus propios reclamos, y solo los ya atendidos (6.5.6)
+            'reclamos' => $actividad->reclamos()->where('estudiante_id', $estudiante->id)->where('estado', '!=', 'abierto')->oldest()->get(),
             'generado' => now(),
         ];
     }

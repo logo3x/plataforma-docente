@@ -3,6 +3,7 @@
 namespace App\Calificacion;
 
 use App\Models\Actividad;
+use App\Models\NotaCambio;
 use App\Notas\RegistroNotas;
 
 /**
@@ -42,6 +43,10 @@ final class PasoAlRegistro
             }
         });
 
-        return ['operacion' => $op, 'pasadas' => $pasadas, 'pendientes' => $pendientes];
+        return [
+            'operacion' => $op, 'pasadas' => $pasadas, 'pendientes' => $pendientes,
+            // Notas que de verdad cambiaron: las que dejaron entrada en la bitácora
+            'cambiadas' => NotaCambio::query()->where('operacion_id', $op)->count(),
+        ];
     }
 }

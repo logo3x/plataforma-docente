@@ -22,7 +22,8 @@ Lo que ya se puede usar en un semestre real:
 10. **Mejorar el examen con los datos.** Cada actividad calificada tiene estadísticas del grupo y análisis por ítem: acierto, discriminación y qué opción eligió cada quien. Se marcan los ítems para revisar, y un ítem ambiguo se anula con su motivo, lo que recalcula y actualiza el registro. Los temas de bajo desempeño se resaltan en la lista de chequeo.
 11. **Dar segundas oportunidades.** Supletorio o recuperación de una actividad y habilitación de un corte o de la materia, con la regla que use la institución (reemplaza, promedia o tope). Se simula antes de registrar, la nota original nunca se borra y un registro equivocado se anula con motivo.
 12. **Devolver a cada estudiante su informe.** Contiene la nota, el detalle de cada ítem con la respuesta correcta y los comentarios, nunca las notas de los demás ni las alertas internas. Se libera cuando todo el grupo presentó y se entrega en un ZIP (un HTML imprimible por estudiante) o por un enlace personal firmado que vence y se puede retirar. La plataforma registra quién lo recibió.
-13. **Entregar las notas.** Excel con todas las notas, planilla CSV para Excel en español y respaldo completo en JSON.
+13. **Atender reclamos sin repetir errores.** Se registra cada reclamo y se resuelve rechazándolo con una respuesta, anulando el ítem, corrigiendo la clave (se recalifica a todo el grupo, no solo al reclamante) o ajustando una nota. El registro de la materia guarda la corrección aplicada, y la IA recibe esos casos como errores que no debe repetir.
+14. **Entregar las notas.** Excel con todas las notas, planilla CSV para Excel en español y respaldo completo en JSON.
 
 Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 
@@ -51,6 +52,7 @@ Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 | Estadísticas y análisis de ítems: resumen del grupo, distribución por rangos, acierto, discriminación (27 % superior e inferior), distribución de opciones, candidatos a revisión, vista para proyectar, CSV, anulación de ítem con reproceso de todos los grupos y desempeño por tema en la lista de chequeo | `app/Calificacion/EstadisticasActividad.php`, `app/Calificacion/DesempenoTemas.php` | 6.5.4, 6.5.5, 6.10 |
 | Supletorios, recuperaciones y habilitaciones: eventos que no se editan ni se borran (se anulan con motivo), reglas reemplaza, promedia o tope, simulación previa, marcas S, R y H en el registro con la nota original, lista del periodo, bitácora y respaldo | `app/Notas/SegundasOportunidades.php`, `app/Http/Controllers/SegundaOportunidadController.php` | 3.6, 3.7.4 |
 | Informe individual y devolución: detalle autoexplicativo compartido con la vista del docente, nota vigente y la original opcional, liberación explícita con aviso de pendientes, ZIP de informes autocontenidos, enlaces firmados con vencimiento y revocación, registro de apertura o entrega | `app/Calificacion/InformeEstudiante.php`, `app/Http/Controllers/DevolucionController.php` | 3.6.5, 6.5, 6.9 |
+| Reclamos: registro, rechazo con respuesta, anulación, corrección de clave con recalificación de todo el grupo, ajuste individual, registro por materia, marca en el análisis de ítems, respuesta en el informe del estudiante y memoria para la IA | `app/Calificacion/Reclamos.php`, `app/Calificacion/AjustesDeExamen.php` | 6.5.4, 6.5.6 |
 | Exportación: Excel con una hoja por corte y planilla; CSV con `;` y BOM; un periodo incompleto no sale como nota final | `app/Notas/ExportadorNotas.php` | 3.1.11, 3.1.14 |
 | Cierre: simulador de lo que necesita cada estudiante (meta redondeada hacia arriba), al margen, aprobados por vacía o por redondeo, revisión de ceros y vacías | `app/Notas/CierrePeriodo.php`, `/grupos/{grupo}/cierre` | 3.7 |
 | Edición de estudiante y retiro del grupo sin perder notas | `app/Http/Controllers/EstudianteController.php` | 3.4.5, 3.4.6 |
@@ -61,7 +63,7 @@ Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 - **Adaptador del calificador HTML anterior**, para migrar las entregas del corte en curso. Hace falta un archivo de entrega real y el calificador actual.
 - Retos con DOM (HTML y CSS) y vista previa: hoy los retos son de JavaScript puro, en un Worker.
 - Versiones A/B y segundo banco, modo de ensayo con las pruebas de la sección 9.2 en pantalla, anulación de ítems y plantillas de comentarios desde la interfaz.
-- Más generadores del catálogo 7.4 (rúbrica, unidad didáctica, ejemplos prácticos), registro de reclamos (6.5.6), envío de los enlaces por correo institucional y restaurar un respaldo.
+- Más generadores del catálogo 7.4 (rúbrica, unidad didáctica, ejemplos prácticos), envío de los enlaces por correo institucional, corrección de verificaciones de retos de código y restaurar un respaldo.
 
 ### Reglas que el código garantiza
 
@@ -91,4 +93,4 @@ php artisan test
 ## Próximos pasos
 
 1. Adaptador de entregas del calificador HTML anterior.
-2. Registro de reclamos y anulaciones atendidos (6.5.6), para no repetir el mismo error en el siguiente corte.
+2. Más generadores del catálogo 7.4: rúbrica (que alimente la calificación de abiertas), unidad didáctica y ejemplos prácticos.

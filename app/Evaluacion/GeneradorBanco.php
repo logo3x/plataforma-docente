@@ -13,6 +13,7 @@ use App\Models\Dictado;
 use App\Models\GeneracionIa;
 use App\Models\Materia;
 use App\Models\Pregunta;
+use App\Models\Reclamo;
 use App\Models\TemarioItem;
 use App\Models\User;
 use App\Temario\ServicioTemario;
@@ -56,6 +57,13 @@ final class GeneradorBanco
         $previas = Pregunta::query()->where('materia_id', $materia->id)->latest()->limit(40)->get()
             ->map(fn ($p) => '- '.Str::limit($p->enunciado['texto'] ?? '', 140))->join("\n");
 
+        // 6.5.6: los reclamos que prosperaron son errores que la IA no debe repetir
+        $errores = Reclamo::query()->where('estado', 'aceptado')->whereNotNull('artefacto_pregunta_id')
+            ->whereHas('actividad.componente.division.dictado', fn ($q) => $q->where('materia_id', $materia->id))
+            ->with('item.pregunta')->latest()->limit(20)->get()
+            ->map(fn ($r) => '- «'.Str::limit($r->item?->pregunta->enunciado['texto'] ?? '', 120).'»: '.Str::limit($r->resolucion, 160))
+            ->join("\n");
+
         // Temas elegidos del temario (7.1) y alcance real del grupo según la lista de chequeo (7.1.5)
         $temas = TemarioItem::query()->where('materia_id', $materia->id)->where('tipo', 'tema')->whereIn('id', $op['temas'] ?? [])->orderBy('orden')->pluck('titulo');
         $tema = trim($temas->join('; ').($temas->isNotEmpty() && filled($op['tema']) ? '. ' : '').($op['tema'] ?? ''));
@@ -74,7 +82,8 @@ final class GeneradorBanco
             'obligatorio' => $op['obligatorio'] ?: '—',
             'excluido' => $op['excluido'] ?: '—',
             'sigla' => $sigla,
-            'no_repetir' => $previas ? "- No repita estas preguntas que ya existen en la materia:\n{$previas}" : '',
+            'no_repetir' => trim(($previas ? "- No repita estas preguntas que ya existen en la materia:\n{$previas}" : '')
+                .($errores ? "\n- Estos ítems tuvieron reclamos que prosperaron; no repita el error:\n{$errores}" : '')),
         ], $contenidos, $alcance ? ['alcance_grupo' => $alcance] : []);
 
         return $prompt + ['sigla' => $sigla];

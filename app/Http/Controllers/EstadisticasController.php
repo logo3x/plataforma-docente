@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Calificacion\AjustesDeExamen;
 use App\Calificacion\EstadisticasActividad;
-use App\Calificacion\PasoAlRegistro;
 use App\Models\Actividad;
 use App\Models\ArtefactoPregunta;
 use App\Models\Grupo;
@@ -65,36 +65,26 @@ class EstadisticasController extends Controller
      * 6.5.5: anula un ítem para todo el grupo, deja traza con su motivo y reprocesa el grupo completo
      * (6.5.4). Las notas que ya estaban en el registro se actualizan y quedan en la bitácora.
      */
-    public function anular(Request $request, ArtefactoPregunta $item, PasoAlRegistro $paso): RedirectResponse
+    public function anular(Request $request, ArtefactoPregunta $item, AjustesDeExamen $ajustes): RedirectResponse
     {
-        $actividad = $this->actividadDelItem($request, $item);
+        $this->actividadDelItem($request, $item);
         $d = $request->validate([
             'regla' => ['required', Rule::in(['dar_por_buena', 'retirar_y_reescalar'])],
             'motivo' => ['required', 'string', 'min:5', 'max:300'],
         ]);
 
-        $item->update(['anulada_en' => now(), 'regla_anulacion' => $d['regla'], 'motivo_anulacion' => $d['motivo']]);
-        $pasadas = $this->reprocesar($item, $paso, "Anulación del ítem {$this->numero($item)}: {$d['motivo']}.");
+        $pasadas = $ajustes->anular($item, $d['regla'], $d['motivo']);
 
         return back()->with('estado', "Ítem {$this->numero($item)} anulado para todos los grupos que presentaron este examen. "
-            .($pasadas ? "{$pasadas} nota(s) del registro se recalcularon y quedaron en la bitácora." : 'Las notas se recalculan al pasarlas al registro.'));
+            .($pasadas ? "{$pasadas} nota(s) del registro cambiaron y quedaron en la bitácora." : 'Ninguna nota del registro cambió.'));
     }
 
-    /** El ítem es del examen: se reprocesan todas las actividades que lo aplicaron (6.5.4). */
-    private function reprocesar(ArtefactoPregunta $item, PasoAlRegistro $paso, string $motivo): int
+    public function restaurar(Request $request, ArtefactoPregunta $item, AjustesDeExamen $ajustes): RedirectResponse
     {
-        return Actividad::query()->where('artefacto_id', $item->artefacto_id)->get()
-            ->sum(fn (Actividad $a) => $paso->ejecutar($a, $motivo, soloYaRegistradas: true)['pasadas']);
-    }
+        $this->actividadDelItem($request, $item);
+        $pasadas = $ajustes->restaurar($item);
 
-    public function restaurar(Request $request, ArtefactoPregunta $item, PasoAlRegistro $paso): RedirectResponse
-    {
-        $actividad = $this->actividadDelItem($request, $item);
-        $motivo = $item->motivo_anulacion;
-        $item->update(['anulada_en' => null, 'regla_anulacion' => null, 'motivo_anulacion' => null]);
-        $pasadas = $this->reprocesar($item, $paso, "Se revierte la anulación del ítem {$this->numero($item)} ({$motivo}).");
-
-        return back()->with('estado', "La anulación del ítem {$this->numero($item)} se revirtió".($pasadas ? "; {$pasadas} nota(s) recalculadas." : '.'));
+        return back()->with('estado', "La anulación del ítem {$this->numero($item)} se revirtió".($pasadas ? "; {$pasadas} nota(s) del registro cambiaron." : '.'));
     }
 
     /** Vincula a mano una pregunta con un tema del temario (6.10.4). */

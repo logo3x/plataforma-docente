@@ -1,4 +1,4 @@
-# Plataforma docente UNIPAZ
+# Plataforma docente UNIPAZ (plataforma-docente)
 
 Aplicación Laravel que unifica el registro de notas, la generación de actividades, el calificador y el contenido de las materias. El ciclo es: preparar contenido → generar la actividad → aplicarla → calificarla → registrar la nota, sin escribir un dato dos veces.
 

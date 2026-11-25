@@ -8,7 +8,7 @@ Aplicación Laravel que unifica el registro de notas, la generación de activida
 
 ## Estado
 
-Fases 0 a 2 (esqueleto), sin interfaz todavía. Ya funciona:
+Fases 0 a 2. Interfaz web sin paso de compilación (CSS propio, Livewire y Alpine). Ya funciona:
 
 | Pieza | Dónde | Requerimientos |
 |---|---|---|
@@ -19,6 +19,10 @@ Fases 0 a 2 (esqueleto), sin interfaz todavía. Ya funciona:
 | Calificación híbrida: el servidor califica única, V/F, múltiple con crédito parcial, emparejar, ordenar y huecos; el navegador del docente reporta qué verificaciones de código pasaron y el servidor calcula el puntaje | `app/Calificacion` | 5.3, 6.1, 6.4, revisión A1 |
 | Anulación de ítem: dar por bueno o retirar y reescalar | `CalificadorEntrega::nota` | 6.5.5 |
 | Entrega grupal: la nota baja a todos, tope por tamaño de grupo, alerta de estudiante en dos entregas | `app/Calificacion/AsignacionGrupal.php` | 6.8 |
+| Autenticación con Fortify: login con límite de intentos, segundo factor (TOTP + códigos de recuperación), cambio de contraseña, sin registro público | `config/fortify.php`, `resources/views/auth`, `/seguridad` | revisión A3 |
+| Alta de materia en un paso con plantilla sugerida (universidad 30/30/40, colegio 4 periodos, libre) y dictado siguiente que hereda la estructura | `app/Dictados`, `/materias/crear` | 2.4, 2.6, 2.7, 2.8 |
+| Cargue masivo con la plantilla oficial (XLSX o CSV con `,` o `;`, UTF-8 o Windows-1252): vista previa obligatoria, errores y advertencias por fila, reimportación sin duplicar ni borrar, plantilla descargable | `app/Estudiantes`, `/grupos/{grupo}/importar` | 3.4 |
+| Registro de notas: pestaña por corte y consolidado, columnas dinámicas (crear, renombrar, mover, eliminar con confirmación), coma decimal, vacías a cero reversible, deshacer con el nombre de la acción, historial de cada nota (doble clic), marca de «aprueba solo por redondeo» | `app/Livewire/RegistroNotas.php`, `app/Notas/TableroNotas.php` | 3.1, 3.3, 3.5, 3.7.2 |
 | Motor de IA intercambiable: Ollama, servidores compatibles con OpenAI (LM Studio, llama.cpp, vLLM) y Claude en la nube con el SDK oficial | `app/IA` | 1.5 |
 
 ### Reglas que el código garantiza
@@ -39,7 +43,11 @@ php artisan key:generate
 touch database/database.sqlite
 php artisan migrate
 php artisan test
+php artisan docente:crear            # crea su cuenta (no hay registro público)
+php artisan serve                    # http://127.0.0.1:8000
 ```
+
+En WAMP basta con apuntar el virtual host a `public/`. No hace falta `npm`.
 
 ### Motor de IA local (opcional)
 
@@ -47,7 +55,8 @@ Con [Ollama](https://ollama.com) instalado en el equipo o en un servidor del pro
 
 ## Próximos pasos
 
-1. Autenticación del docente (Laravel Breeze o Fortify) e interfaz del registro de notas con Livewire o Inertia.
-2. Cargue masivo con la plantilla oficial de secretaría (3.4).
-3. Página del calificador en el navegador que ejecuta los retos con el entorno de la sección 4 y llama a `POST /calificador/entregas/{entrega}/resultados-navegador`.
-4. Descifrado de entregas compatible con el formato actual (AES-GCM 256 + RSA-OAEP 2048) para migrar el corte en curso.
+1. Carga de notas desde CSV que crea una columna (3.1.5): cruce por documento, conversión de escala, vista previa.
+2. Simulador de cierre y revisión de ceros en pantalla (3.7); el cálculo ya existe.
+3. Exportación a CSV y a la planilla institucional (3.1.11).
+4. Página del calificador en el navegador que ejecuta los retos con el entorno de la sección 4 y llama a `POST /calificador/entregas/{entrega}/resultados-navegador`.
+5. Descifrado de entregas compatible con el formato actual (AES-GCM 256 + RSA-OAEP 2048) para migrar el corte en curso.

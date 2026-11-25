@@ -5,6 +5,7 @@ use App\Http\Controllers\CalificadorController;
 use App\Http\Controllers\CargaNotasController;
 use App\Http\Controllers\CierreController;
 use App\Http\Controllers\ContenidoController;
+use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\DictadoController;
 use App\Http\Controllers\EstadisticasController;
 use App\Http\Controllers\EstudianteController;
@@ -22,6 +23,10 @@ use App\Http\Controllers\TemarioController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/inicio');
+
+// Informe del estudiante por enlace personal firmado: sin cuenta, solo lo suyo (6.9)
+Route::get('/informe/{devolucion}', [DevolucionController::class, 'publico'])
+    ->middleware(['signed', 'throttle:30,1'])->name('informe.publico');
 
 Route::middleware('auth')->group(function () {
     Route::get('/inicio', InicioController::class)->name('inicio');
@@ -102,6 +107,14 @@ Route::middleware('auth')->group(function () {
         Route::get('actividades/{actividad}/abiertas', [CalificadorController::class, 'abiertas'])->name('abiertas');
         Route::get('entregas/{entrega}', [CalificadorController::class, 'detalle'])->name('detalle');
         Route::get('actividades/{actividad}/estadisticas', [EstadisticasController::class, 'show'])->name('estadisticas');
+        Route::get('actividades/{actividad}/devolucion', [DevolucionController::class, 'index'])->name('devolucion');
+        Route::get('actividades/{actividad}/devolucion/{estudiante}', [DevolucionController::class, 'ver'])->name('devolucion.ver');
+        Route::post('actividades/{actividad}/devolucion/liberar', [DevolucionController::class, 'liberar'])->name('devolucion.liberar');
+        Route::post('actividades/{actividad}/devolucion/revocar', [DevolucionController::class, 'revocar'])->name('devolucion.revocar');
+        Route::post('actividades/{actividad}/devolucion/configurar', [DevolucionController::class, 'configurar'])->name('devolucion.configurar');
+        Route::get('actividades/{actividad}/informes.zip', [DevolucionController::class, 'zip'])->name('devolucion.zip');
+        Route::get('actividades/{actividad}/enlaces.csv', [DevolucionController::class, 'enlaces'])->name('devolucion.enlaces');
+        Route::post('devoluciones/{devolucion}/marcar', [DevolucionController::class, 'marcar'])->name('devolucion.marcar');
         Route::get('actividades/{actividad}/estadisticas.csv', [EstadisticasController::class, 'csv'])->name('estadisticas.csv');
         Route::post('items/{item}/anular', [EstadisticasController::class, 'anular'])->name('items.anular');
         Route::post('items/{item}/restaurar', [EstadisticasController::class, 'restaurar'])->name('items.restaurar');

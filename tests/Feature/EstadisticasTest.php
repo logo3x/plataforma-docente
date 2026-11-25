@@ -168,7 +168,7 @@ class EstadisticasTest extends TestCase
         $this->assertSame('2.0000', Nota::query()->where('estudiante_id', $this->estudiantes[0]->id)->value('valor'));
         $this->assertSame('5.0000', Nota::query()->where('estudiante_id', $this->estudiantes[6]->id)->value('valor'));
         $this->assertStringContainsString('Anulación del ítem 3: Enunciado ambiguo', NotaCambio::query()->latest('id')->value('motivo'));
-        $this->get(route('calificador.detalle', $this->actividad->entregas()->first()))->assertSee('Ítem anulado para todo el grupo: Enunciado ambiguo');
+        $this->get(route('calificador.detalle', $this->actividad->entregas()->first()))->assertSee('Ítem anulado para todo el grupo')->assertSee('se dio por bueno a todos')->assertSee('Enunciado ambiguo: admite dos respuestas');
 
         // El análisis ya no lo marca para revisión
         $this->assertSame([], (new EstadisticasActividad($this->actividad))->items()[2]['marcas']);

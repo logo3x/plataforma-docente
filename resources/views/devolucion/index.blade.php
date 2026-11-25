@@ -1,0 +1,71 @@
+<x-app :titulo="'Devolución — '.$actividad->nombre">
+    <div class="migas"><a href="{{ route('calificador.show', $actividad) }}">Calificador — {{ $actividad->nombre }}</a> › Devolución</div>
+    <h1>Devolución a los estudiantes — {{ $actividad->nombre }}</h1>
+    <p class="suave">Cada estudiante recibe solo su informe: su nota, el detalle de cada ítem con la respuesta correcta y los comentarios.
+        Nunca ve las notas de los demás ni las alertas internas.</p>
+    @if (session('error_devolucion'))<div class="aviso aviso-error" role="alert">{{ session('error_devolucion') }}</div>@endif
+
+    <div class="rejilla">
+        <section class="tarjeta">
+            <h2 style="margin-top:0">1. Liberar</h2>
+            @if ($actividad->devolucion_liberada_en)
+                <p><span class="estado estado-aprobado">✓ Liberada el {{ $actividad->devolucion_liberada_en->format('d/m/Y H:i') }}</span></p>
+                <form method="POST" action="{{ route('calificador.devolucion.revocar', $actividad) }}">@csrf
+                    <button class="boton boton-sec boton-chico" onclick="return confirm('¿Retirar la devolución? Los enlaces dejarán de funcionar.')">Retirar la devolución</button></form>
+            @else
+                @if ($pendientes)
+                    <div class="aviso aviso-error" role="alert"><strong>{{ $pendientes }} estudiante(s) aún no han presentado.</strong>
+                        El informe trae las respuestas correctas: si alguien presentará después (por ejemplo, un supletorio), espere antes de liberar.</div>
+                @endif
+                <form method="POST" action="{{ route('calificador.devolucion.liberar', $actividad) }}" class="fila">@csrf
+                    <label for="dias" style="margin:0">Enlaces válidos por</label>
+                    <input id="dias" name="dias" type="number" min="1" max="180" value="30" style="width:5rem"> días
+                    <button class="boton" @if ($pendientes) onclick="return confirm('Hay estudiantes sin presentar. ¿Liberar de todos modos?')" @endif>Liberar devolución</button>
+                </form>
+            @endif
+        </section>
+        <section class="tarjeta">
+            <h2 style="margin-top:0">2. Entregar</h2>
+            <p>Por archivo (uno por estudiante, para Classroom o correo) o por enlace personal que cada uno abre sin cuenta.</p>
+            <div class="fila">
+                <a class="boton boton-sec" href="{{ route('calificador.devolucion.zip', $actividad) }}" @unless ($actividad->devolucion_liberada_en) aria-disabled="true" style="opacity:.5;pointer-events:none" @endunless>Descargar informes (.zip)</a>
+                <a class="boton boton-sec" href="{{ route('calificador.devolucion.enlaces', $actividad) }}" @unless ($actividad->devolucion_liberada_en) aria-disabled="true" style="opacity:.5;pointer-events:none" @endunless>Enlaces personales (.csv)</a>
+            </div>
+        </section>
+        <section class="tarjeta">
+            <h2 style="margin-top:0">Opciones del informe</h2>
+            <form method="POST" action="{{ route('calificador.devolucion.configurar', $actividad) }}">@csrf
+                <label style="font-weight:400"><input type="checkbox" name="informe_muestra_original" value="1" @checked($actividad->informe_muestra_original) onchange="this.form.submit()">
+                    Con supletorio o recuperación, mostrar también la nota original (3.6.5)</label>
+            </form>
+        </section>
+    </div>
+
+    <h2>Estudiantes <span class="suave">· {{ $recibidas }} de {{ $filas->count() }} recibieron su informe</span></h2>
+    <table>
+        <thead><tr><th>Estudiante</th><th>Presentó</th><th>Informe</th><th>Recibido</th><th></th></tr></thead>
+        <tbody>
+            @foreach ($filas as $f)
+                @php($e = $f['estudiante'])
+                @php($d = $f['devolucion'])
+                <tr>
+                    <td>{{ $e->nombreCompleto() }}</td>
+                    <td>{{ $f['presento'] ? 'Sí' : 'No' }}</td>
+                    <td><a href="{{ route('calificador.devolucion.ver', [$actividad, $e]) }}" target="_blank">Ver</a></td>
+                    <td>
+                        @if ($d?->abierta_en)<span class="estado estado-aprobado">✓ Lo abrió el {{ $d->abierta_en->format('d/m H:i') }}</span>@if ($d->aperturas > 1) <span class="suave">({{ $d->aperturas }} veces)</span>@endif
+                        @elseif ($d?->entregada_en)<span class="estado estado-aprobado">✓ Entregado el {{ $d->entregada_en->format('d/m') }}</span>
+                        @elseif ($d && ! $d->revocada_en)<span class="estado estado-incompleto">Pendiente</span>
+                        @else — @endif
+                    </td>
+                    <td>
+                        @if ($d && $actividad->devolucion_liberada_en && ! $d->abierta_en)
+                            <form method="POST" action="{{ route('calificador.devolucion.marcar', $d) }}">@csrf
+                                <button class="enlace">{{ $d->entregada_en ? 'Desmarcar' : 'Marcar como entregado' }}</button></form>
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</x-app>

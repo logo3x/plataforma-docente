@@ -22,6 +22,8 @@ class Actividad extends Model
             'peso_escrita' => 'decimal:4',
             'tope_exceso' => 'decimal:4',
             'es_grupal' => 'boolean',
+            'devolucion_liberada_en' => 'datetime',
+            'informe_muestra_original' => 'boolean',
         ];
     }
 
@@ -48,5 +50,10 @@ class Actividad extends Model
     public function entregas(): HasMany
     {
         return $this->hasMany(Entrega::class);
+    }
+
+    public function devoluciones(): HasMany
+    {
+        return $this->hasMany(Devolucion::class);
     }
 }

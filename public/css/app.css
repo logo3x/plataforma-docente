@@ -92,3 +92,7 @@ details.menu .contenido > * + * { margin-top: .5rem; }
 .pie { color: var(--suave); font-size: .85rem; text-align: center; padding: 2rem 1rem; }
 [x-cloak] { display: none !important; }
 .redondeo { display: block; font-size: .8rem; color: var(--pend); margin-top: .2rem; }
+.nombre-estudiante { color: var(--texto); text-decoration: none; }
+.nombre-estudiante:hover { text-decoration: underline; color: var(--cian); }
+details.menu summary.boton { list-style: none; }
+details.menu .contenido a { display: block; }

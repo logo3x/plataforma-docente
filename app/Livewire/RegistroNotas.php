@@ -204,6 +204,7 @@ class RegistroNotas extends Component
             'division' => $division,
             'filas' => $division ? $tablero->filasDivision($division) : $tablero->filasConsolidado(),
             'ultimaAccion' => last(session($this->clavePila(), [])) ?: null,
+            'retirados' => $this->grupo()->estudiantes()->wherePivot('activo', false)->orderBy('apellidos')->get(),
         ]);
     }
 

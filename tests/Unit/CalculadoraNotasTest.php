@@ -175,4 +175,11 @@ class CalculadoraNotasTest extends TestCase
         $this->assertSame(ClasificacionCierre::ApruebaPorRedondeo, $r->clasificacion);
         $this->assertTrue($r->alMargen);
     }
+
+    #[Test]
+    public function la_meta_se_redondea_hacia_arriba(): void
+    {
+        $this->assertSame('3.1', Escala::unipaz()->meta('3.03'));
+        $this->assertSame('3.0', Escala::unipaz()->meta('3'));
+    }
 }

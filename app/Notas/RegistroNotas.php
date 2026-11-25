@@ -174,6 +174,21 @@ final class RegistroNotas
         });
     }
 
+    /**
+     * Deja en el historial de la nota un evento que no cambia su valor original, como un supletorio
+     * o una recuperación (3.6): la nota original se conserva y el evento queda visible en la auditoría.
+     */
+    public function registrarEvento(Actividad $actividad, Estudiante $estudiante, string $origen, ?string $valorEvento, string $motivo): void
+    {
+        $this->operacion(function () use ($actividad, $estudiante, $origen, $valorEvento, $motivo) {
+            $nota = Nota::query()->firstOrCreate(
+                ['actividad_id' => $actividad->id, 'estudiante_id' => $estudiante->id],
+                ['valor' => null, 'origen' => 'digitada'],
+            );
+            $this->registrarCambio($nota, $nota->valor, $valorEvento, $origen, $motivo);
+        });
+    }
+
     private function registrarCambio(Nota $nota, ?string $anterior, ?string $nuevo, string $origen, ?string $motivo): void
     {
         NotaCambio::query()->create([

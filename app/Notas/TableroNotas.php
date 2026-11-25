@@ -7,6 +7,7 @@ use App\Models\Division;
 use App\Models\Estudiante;
 use App\Models\Grupo;
 use App\Models\Nota;
+use App\Models\SegundaOportunidad;
 use Brick\Math\BigDecimal;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -30,7 +31,13 @@ final class TableroNotas
     /** @var Collection<int, Division> */
     private Collection $divisiones;
 
-    public function __construct(private readonly Grupo $grupo)
+    /** @var array<string, SegundaOportunidad> vigente por «tipo_ámbito:id:estudiante» (3.6) */
+    private array $segundas = [];
+
+    /**
+     * @param  ?SegundaOportunidad  $hipotetica  evento sin guardar, para simular su efecto (3.7.4)
+     */
+    public function __construct(private readonly Grupo $grupo, ?SegundaOportunidad $hipotetica = null)
     {
         $dictado = $grupo->dictado;
         $this->escala = $dictado->escala();
@@ -54,6 +61,35 @@ final class TableroNotas
             ->each(function (Nota $n) {
                 $this->notas[$n->actividad_id][$n->estudiante_id] = $n->valor;
             });
+
+        // La última segunda oportunidad vigente de cada ámbito es la que cuenta
+        SegundaOportunidad::query()->vigentes()
+            ->whereIn('estudiante_id', $this->estudiantes->pluck('id'))
+            ->orderBy('fecha')->orderBy('id')
+            ->get()
+            ->push(...array_filter([$hipotetica]))
+            ->each(function (SegundaOportunidad $s) {
+                $this->segundas[$this->claveSegunda($s->ambito_type, $s->ambito_id, $s->estudiante_id)] = $s;
+            });
+    }
+
+    /** Nota que cuenta para el cálculo: la original o la que deja la segunda oportunidad. */
+    public function notaEfectiva(int $actividadId, int $estudianteId): ?string
+    {
+        $s = $this->segunda((new Actividad)->getMorphClass(), $actividadId, $estudianteId);
+
+        return $s ? SegundasOportunidades::aplicar($this->nota($actividadId, $estudianteId), $s, $this->escala)
+            : $this->nota($actividadId, $estudianteId);
+    }
+
+    public function segunda(string $tipo, int $id, int $estudianteId): ?SegundaOportunidad
+    {
+        return $this->segundas[$this->claveSegunda($tipo, $id, $estudianteId)] ?? null;
+    }
+
+    private function claveSegunda(string $tipo, int $id, int $estudianteId): string
+    {
+        return "{$tipo}:{$id}:{$estudianteId}";
     }
 
     public function escala(): Escala
@@ -121,6 +157,13 @@ final class TableroNotas
             }
 
             $acum = Calculo::normalizar($acumulado);
+            $original = null;
+            // Habilitación de la materia: aplica sobre la nota final, cuando el periodo está completo
+            $hab = $todasFinales ? $this->segunda($this->grupo->dictado->getMorphClass(), $this->grupo->dictado_id, $e->id) : null;
+            if ($hab) {
+                $original = $acum;
+                $acum = SegundasOportunidades::aplicar($acum, $hab, $this->escala);
+            }
             $filas[] = [
                 'estudiante' => $e,
                 'divisiones' => $resultados,
@@ -129,6 +172,8 @@ final class TableroNotas
                 'estado' => ! $todasFinales
                     ? EstadoCorte::Incompleto
                     : ($this->escala->aprueba($acum) ? EstadoCorte::Aprobado : EstadoCorte::Reprobado),
+                'segunda' => $hab,
+                'original' => $original,
             ];
         }
 
@@ -137,6 +182,23 @@ final class TableroNotas
 
     /** Resultado de un estudiante en una división; si tiene subdivisiones, se pondera desde ellas (2.7.4). */
     public function resultado(Division $division, Estudiante $e): ResultadoDivision
+    {
+        $base = $this->resultadoBase($division, $e);
+
+        // Habilitación del corte: solo sobre una definitiva final (aprobada o reprobada)
+        $hab = $base->esFinal() ? $this->segunda($division->getMorphClass(), $division->id, $e->id) : null;
+        if ($hab === null) {
+            return $base;
+        }
+        $vigente = SegundasOportunidades::aplicar($base->definitiva, $hab, $this->escala);
+
+        return new ResultadoDivision(
+            $this->escala->aprueba($vigente) ? EstadoCorte::Aprobado : EstadoCorte::Reprobado,
+            $vigente, $base->promedios, $hab, $base->definitiva,
+        );
+    }
+
+    private function resultadoBase(Division $division, Estudiante $e): ResultadoDivision
     {
         $hijas = $this->divisiones->where('parent_id', $division->id);
 
@@ -149,7 +211,7 @@ final class TableroNotas
             $componentes[$c->id] = [
                 'peso' => $c->peso,
                 'actividades' => $c->actividades->count(),
-                'notas' => $c->actividades->map(fn (Actividad $a) => $this->nota($a->id, $e->id))->all(),
+                'notas' => $c->actividades->map(fn (Actividad $a) => $this->notaEfectiva($a->id, $e->id))->all(),
             ];
         }
 

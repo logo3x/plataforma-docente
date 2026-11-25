@@ -54,6 +54,12 @@ final readonly class Escala
         return (string) BigDecimal::of($valor)->toScale($this->decimales, $modo);
     }
 
+    /** Valor para un campo editable: sin ceros a la derecha ("3.5000" → "3.5"). */
+    public function editable(?string $valor): string
+    {
+        return $valor === null ? '' : (string) BigDecimal::of($valor)->strippedOfTrailingZeros();
+    }
+
     /** Aprueba con el valor interno, sin redondeo. */
     public function aprueba(string $valor): bool
     {

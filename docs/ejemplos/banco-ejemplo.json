@@ -1,0 +1,54 @@
+{
+  "formato": "unipaz-banco",
+  "version": 1,
+  "sigla": "ED-DEMO-Q1",
+  "titulo": "Quiz 1 — Arreglos y funciones",
+  "tipo": "quiz",
+  "valor": "5.0",
+  "configuracion": {
+    "instrucciones": "Responda en orden. Puede probar su código cuantas veces quiera.",
+    "reloj_minutos": 45,
+    "umbral_salidas": 3,
+    "umbral_salidas_segundos": 60,
+    "duracion_minima_minutos": 5,
+    "modo_desconectado": false
+  },
+  "items": [
+    {
+      "tipo": "unica", "tema": "Arreglos", "peso": "1.0",
+      "enunciado": "Una tienda guarda sus precios en el arreglo precios. ¿Qué devuelve precios.length si tiene 4 productos?",
+      "opciones": { "a": "3", "b": "4", "c": "5", "d": "undefined" },
+      "correcta": "b",
+      "justificacion": "length cuenta los elementos, no el último índice."
+    },
+    {
+      "tipo": "vf", "tema": "Funciones", "peso": "0.5",
+      "enunciado": "Una función sin return devuelve undefined.",
+      "correcta": true
+    },
+    {
+      "tipo": "multiple", "tema": "Arreglos", "peso": "1.0",
+      "enunciado": "¿Cuáles métodos agregan elementos a un arreglo?",
+      "opciones": { "a": "push", "b": "pop", "c": "unshift", "d": "shift" },
+      "correctas": ["a", "c"]
+    },
+    {
+      "tipo": "completar", "tema": "Funciones", "peso": "0.5",
+      "enunciado": "Complete la declaración de la función.",
+      "plantilla": "___ total(precios) {\n  ___ precios.reduce((s, p) => s + p, 0);\n}",
+      "huecos": ["function", "return"]
+    },
+    {
+      "tipo": "reto", "tema": "Funciones", "peso": "2.0",
+      "enunciado": "Escriba la función total(precios) que devuelva la suma de los precios del carrito.",
+      "plantilla_codigo": "function total(precios) {\n  // su código\n}\n",
+      "casos_visibles": [
+        { "entrada": "total([1000, 2500])", "esperada": "3500", "descripcion": "Dos productos" }
+      ],
+      "verificaciones": [
+        { "id": "dos", "nombre": "Suma dos precios", "fraccion": "0.5", "prueba": "total([1000, 2500]) === 3500" },
+        { "id": "vacio", "nombre": "Un carrito vacío suma cero", "fraccion": "0.5", "prueba": "total([]) === 0", "reservada": true }
+      ]
+    }
+  ]
+}

@@ -4,6 +4,14 @@
         <div class="fila">
             <a class="boton boton-sec boton-chico" href="{{ route('importacion.create', $grupo) }}">Actualizar lista</a>
             <a class="boton boton-sec boton-chico" href="{{ route('carga-notas.create', [$grupo, 'division' => $division?->id]) }}">Cargar notas desde archivo</a>
+            <a class="boton boton-sec boton-chico" href="{{ route('cierre', $grupo) }}">Cierre</a>
+            <details class="menu">
+                <summary class="boton boton-sec boton-chico">Exportar ▾</summary>
+                <div class="contenido" style="left:0;right:auto">
+                    <a href="{{ route('exportar.xlsx', $grupo) }}">Excel con todas las notas (.xlsx)</a>
+                    <a href="{{ route('exportar.csv', $grupo) }}" style="display:block">Planilla consolidada (.csv)</a>
+                </div>
+            </details>
             <span class="suave">Escala {{ $escala->mostrar($escala->minimo) }}–{{ $escala->mostrar($escala->maximo) }} · aprueba con {{ $escala->mostrar($escala->aprobatoria) }} · celda vacía no promedia</span>
         </div>
         <div class="fila">
@@ -103,8 +111,8 @@
                         @php($r = $fila['resultado'])
                         <tr wire:key="fila-{{ $e->id }}">
                             <td class="estudiante" title="Documento {{ $e->documento }}">
-                                {{ $e->nombreCompleto() }}
-                                @if ($e->revisar_nombre)<span class="suave" title="El nombre no traía coma en la plantilla">⚠</span>@endif
+                                <a href="{{ route('estudiantes.edit', [$grupo, $e]) }}" class="nombre-estudiante">{{ $e->nombreCompleto() }}</a>
+                                @if ($e->revisar_nombre)<a href="{{ route('estudiantes.edit', [$grupo, $e]) }}" class="suave" title="El nombre no traía coma en la plantilla: sepárelo">⚠ revisar nombre</a>@endif
                             </td>
                             @foreach ($componentes as $c)
                                 @foreach ($c->actividades as $a)
@@ -178,6 +186,13 @@
             </table>
         </div>
         <p class="suave">El acumulado suma los aportes de las divisiones con notas. «En curso» indica que falta alguna división o componente.</p>
+    @endif
+
+    @if ($retirados->isNotEmpty())
+        <details style="margin-top:1rem">
+            <summary>Retirados del grupo ({{ $retirados->count() }}): no aparecen en la planilla, sus notas se conservan</summary>
+            <ul>@foreach ($retirados as $r)<li><a href="{{ route('estudiantes.edit', [$grupo, $r]) }}">{{ $r->nombreCompleto() }}</a> — {{ $r->documento }}</li>@endforeach</ul>
+        </details>
     @endif
 
     @if ($historial)

@@ -34,7 +34,8 @@ class AutenticacionTest extends TestCase
         $u = User::factory()->create();
 
         for ($i = 0; $i < 5; $i++) {
-            $this->post('/login', ['email' => $u->email, 'password' => 'mala'])->assertSessionHasErrors('email');
+            $this->post('/login', ['email' => $u->email, 'password' => 'mala'])
+                ->assertSessionHasErrors(['email' => 'El correo o la contraseña no son correctos.']);
         }
         $this->post('/login', ['email' => $u->email, 'password' => 'mala'])->assertStatus(429);
         $this->assertGuest();

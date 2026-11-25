@@ -79,6 +79,32 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
 Use solo los tipos pedidos en «Cantidad de ítems».
 TXT,
 
+        'rubrica' => <<<'TXT'
+Tarea: diseñe una rúbrica analítica para calificar {{actividad}}
+
+Tema:                {{tema}}
+Grupo:               {{grupo}}
+Número de criterios: {{criterios}}
+Niveles (de mayor a menor): {{niveles}}
+
+Reglas:
+- Cada criterio evalúa una sola cosa que se puede observar en el trabajo del estudiante; dos criterios no miden lo mismo.
+- «peso» es el porcentaje de la nota que vale el criterio; los pesos de todos los criterios suman exactamente 100.
+- Cada criterio tiene exactamente {{cantidad_niveles}} niveles con los nombres indicados, en ese orden.
+- «porcentaje» es la parte del criterio que otorga el nivel: el primero otorga 100, los demás menos, sin repetir, y el último puede otorgar 0.
+- La descripción de cada nivel dice en una o dos frases qué se ve en una respuesta de ese nivel, en concreto
+  («explica la diferencia entre requisito y restricción con un ejemplo propio»), nunca «bien», «regular» o «mal».
+- Cíñase al material de referencia y al alcance del grupo: no exija lo que el grupo no ha visto.
+{{memoria}}
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"formato":"plataforma-rubrica","version":1,"titulo":"...","proposito":"qué se califica, en una frase",
+ "criterios":[
+  {"nombre":"...","descripcion":"qué evalúa este criterio","peso":"40",
+   "niveles":[{"nombre":"Excelente","descripcion":"...","porcentaje":"100"},{"nombre":"Bueno","descripcion":"...","porcentaje":"75"}]}
+ ]}
+TXT,
+
         'temario' => <<<'TXT'
 Tarea: lea el plan curricular de la materia y extraiga su temario como estructura.
 

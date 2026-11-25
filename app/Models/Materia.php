@@ -54,4 +54,9 @@ class Materia extends Model
     {
         return $this->hasMany(Pregunta::class);
     }
+
+    public function rubricas(): HasMany
+    {
+        return $this->hasMany(Rubrica::class);
+    }
 }

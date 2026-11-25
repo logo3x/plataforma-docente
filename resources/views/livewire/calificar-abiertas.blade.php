@@ -16,10 +16,27 @@
             @php($max = (string) \Brick\Math\BigDecimal::of($item->peso)->strippedOfTrailingZeros())
             <div class="tarjeta">
                 <h2 style="margin-top:0">{{ $item->pregunta->enunciado['texto'] }} <span class="suave">(máximo {{ $max }})</span></h2>
+                @php($rubrica = $item->pregunta->rubrica)
                 <details>
-                    <summary>Referencia y rúbrica</summary>
+                    <summary>Referencia y rúbrica @if ($rubrica)<span class="suave">· «{{ $rubrica->titulo }}»</span>@endif</summary>
                     <div class="suave" style="white-space:pre-wrap">{{ $item->pregunta->clave['referencia'] ?? 'Sin referencia.' }}</div>
                     @if (! empty($item->pregunta->clave['rubrica']))<div class="suave" style="white-space:pre-wrap;margin-top:.5rem">{{ $item->pregunta->clave['rubrica'] }}</div>@endif
+                    @if ($rubrica)
+                        <table class="suave" style="margin-top:.5rem"><thead><tr><th>Criterio</th><th class="num">Peso</th><th>Niveles</th></tr></thead><tbody>
+                            @foreach ($rubrica->criterios as $c)
+                                <tr><td>{{ $c['nombre'] }}</td><td class="num">{{ $c['peso'] }} %</td>
+                                    <td>@foreach ($c['niveles'] as $n)<div><strong>{{ $n['nombre'] }} ({{ $n['porcentaje'] }} %)</strong>@if ($n['descripcion']): {{ $n['descripcion'] }}@endif</div>@endforeach</td></tr>
+                            @endforeach
+                        </tbody></table>
+                    @endif
+                    <div class="fila" style="margin-top:.5rem">
+                        <label for="rubrica-asociada" style="margin:0">Rúbrica de la pregunta</label>
+                        <select id="rubrica-asociada" x-on:change="$wire.asociarRubrica($event.target.value ? parseInt($event.target.value) : null)" style="max-width:24rem">
+                            <option value="">Sin rúbrica: puntaje libre</option>
+                            @foreach ($rubricas as $ru)<option value="{{ $ru->id }}" @selected($rubrica?->id === $ru->id)>{{ $ru->titulo }}</option>@endforeach
+                        </select>
+                        <a href="{{ route('rubricas.index', ['materia' => $item->pregunta->materia_id, 'pregunta' => $item->pregunta_id]) }}#generar">Generar una con IA</a>
+                    </div>
                 </details>
                 <div class="fila" style="margin-top:.75rem">
                     <label for="buscar" style="margin:0">Resaltar términos</label>
@@ -38,11 +55,29 @@
                             @elseif ($palabras < 15) · <span class="estado estado-incompleto">Corta</span>@endif</span>
                     </div>
                     <div class="texto-estudiante">@if ($buscar !== '' && $texto !== ''){!! preg_replace('/('.collect(preg_split('/[\s,]+/', $buscar))->filter(fn ($t) => mb_strlen($t) > 1)->map(fn ($t) => preg_quote(e($t), '/'))->join('|').')/iu', '<mark>$1</mark>', e($texto)) !!}@else{{ $texto }}@endif</div>
+                    @if ($rubrica)
+                        @php($sel = ($r->desglose['rubrica_id'] ?? null) === $rubrica->id ? ($r->desglose['rubrica']['seleccion'] ?? []) : [])
+                        <div class="rubrica-calificar" role="group" aria-label="Rúbrica «{{ $rubrica->titulo }}»">
+                            @foreach ($rubrica->criterios as $ci => $c)
+                                <div class="fila">
+                                    <span><strong>{{ $c['nombre'] }}</strong> <span class="suave">{{ $c['peso'] }} %</span></span>
+                                    <span class="fila" style="gap:.4rem">
+                                    @foreach ($c['niveles'] as $ni => $n)
+                                        @php($elegido = ($sel[$ci] ?? null) === $ni)
+                                        <button type="button" @class(['boton', 'boton-chico', 'boton-sec' => ! $elegido]) aria-pressed="{{ $elegido ? 'true' : 'false' }}"
+                                                title="{{ $n['descripcion'] }}" wire:click="nivel({{ $r->id }}, {{ $ci }}, {{ $elegido ? 'null' : $ni }})">@if ($elegido)✓ @endif{{ $n['nombre'] }}</button>
+                                    @endforeach
+                                    </span>
+                                </div>
+                            @endforeach
+                            @if ($sel !== [] && in_array(null, $sel, true))<p class="suave" style="margin:.2rem 0">Faltan criterios por evaluar: el puntaje se calcula al completarlos.</p>@endif
+                        </div>
+                    @endif
                     <div class="fila puntaje-abierta">
                         <label for="p-{{ $r->id }}" style="margin:0">Puntaje</label>
                         <input id="p-{{ $r->id }}" type="text" inputmode="decimal" style="width:6rem" value="{{ $r->puntaje === null ? '' : (string) \Brick\Math\BigDecimal::of($r->puntaje)->strippedOfTrailingZeros() }}"
                                x-on:change="$wire.puntuar({{ $r->id }}, $event.target.value)">
-                        @foreach ([0, 0.25, 0.5, 0.75, 1] as $f)
+                        @foreach ($rubrica ? [] : [0, 0.25, 0.5, 0.75, 1] as $f)
                             @php($v = (string) \Brick\Math\BigDecimal::of($max)->multipliedBy((string) $f)->toScale(2, \Brick\Math\RoundingMode::HalfUp)->strippedOfTrailingZeros())
                             <button class="boton boton-sec boton-chico" wire:click="puntuar({{ $r->id }}, '{{ $v }}')">{{ $v }}</button>
                         @endforeach

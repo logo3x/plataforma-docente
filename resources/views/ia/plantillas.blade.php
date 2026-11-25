@@ -14,12 +14,12 @@
         <button class="boton" type="submit">Guardar perfil</button>
     </form>
 
-    @foreach (['contexto' => 'Capa 1 — Contexto general', 'materia' => 'Capa 2 — Estilo por materia', 'banco' => 'Capa 3 — Tarea: generar cuestionario o parcial', 'temario' => 'Capa 3 — Tarea: extraer el temario del plan', 'sugerencias' => 'Capa 3 — Tarea: sugerir organización de la clase'] as $clave => $titulo)
+    @foreach (\App\Http\Controllers\PlantillasIaController::CLAVES as $clave => $titulo)
         <section class="tarjeta">
             <h2 style="margin-top:0">{{ $titulo }} <span class="suave">· {{ $plantillas[$clave]['version'] ? 'versión '.$plantillas[$clave]['version'] : 'de fábrica' }}</span></h2>
             <form method="POST" action="{{ route('ia.plantillas.guardar') }}">
                 @csrf <input type="hidden" name="clave" value="{{ $clave }}">
-                <textarea name="cuerpo" rows="{{ $clave === 'banco' ? 24 : 11 }}" aria-label="{{ $titulo }}" style="font-family:ui-monospace,Consolas,monospace;font-size:.85rem">{{ $plantillas[$clave]['cuerpo'] }}</textarea>
+                <textarea name="cuerpo" rows="{{ in_array($clave, ['banco', 'rubrica']) ? 24 : 11 }}" aria-label="{{ $titulo }}" style="font-family:ui-monospace,Consolas,monospace;font-size:.85rem">{{ $plantillas[$clave]['cuerpo'] }}</textarea>
                 <div class="fila" style="margin-top:.5rem"><button class="boton boton-sec" type="submit">Guardar versión nueva</button></div>
             </form>
             <form method="POST" action="{{ route('ia.plantillas.restaurar') }}" style="margin-top:.5rem">@csrf <input type="hidden" name="clave" value="{{ $clave }}"><button class="enlace">Restaurar la de fábrica</button></form>

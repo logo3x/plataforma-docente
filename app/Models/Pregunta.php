@@ -27,6 +27,11 @@ class Pregunta extends Model
         return $this->belongsTo(Materia::class);
     }
 
+    public function rubrica(): BelongsTo
+    {
+        return $this->belongsTo(Rubrica::class);
+    }
+
     public function tema(): BelongsTo
     {
         return $this->belongsTo(TemarioItem::class, 'temario_item_id');

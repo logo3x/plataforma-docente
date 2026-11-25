@@ -23,6 +23,7 @@ Fases 0 a 2. Interfaz web sin paso de compilación (CSS propio, Livewire y Alpin
 | Alta de materia en un paso con plantilla sugerida (universidad 30/30/40, colegio 4 periodos, libre) y dictado siguiente que hereda la estructura | `app/Dictados`, `/materias/crear` | 2.4, 2.6, 2.7, 2.8 |
 | Cargue masivo con la plantilla oficial (XLSX o CSV con `,` o `;`, UTF-8 o Windows-1252): vista previa obligatoria, errores y advertencias por fila, reimportación sin duplicar ni borrar, plantilla descargable | `app/Estudiantes`, `/grupos/{grupo}/importar` | 3.4 |
 | Registro de notas: pestaña por corte y consolidado, columnas dinámicas (crear, renombrar, mover, eliminar con confirmación), coma decimal, vacías a cero reversible, deshacer con el nombre de la acción, historial de cada nota (doble clic), marca de «aprueba solo por redondeo» | `app/Livewire/RegistroNotas.php`, `app/Notas/TableroNotas.php` | 3.1, 3.3, 3.5, 3.7.2 |
+| Carga de notas desde archivo que crea una columna: cruce por documento y, como respaldo, por nombre completo (nunca por apellido solo), columna de grupo, conversión 0–10/50/100, columnas y escala corregibles en la vista previa, reporte de no cruzados, otro grupo, repetidas y fuera de rango; deshacible | `app/Notas/ImportadorNotas.php`, `/grupos/{grupo}/cargar-notas` | 3.1.5 |
 | Motor de IA intercambiable: Ollama, servidores compatibles con OpenAI (LM Studio, llama.cpp, vLLM) y Claude en la nube con el SDK oficial | `app/IA` | 1.5 |
 
 ### Reglas que el código garantiza
@@ -55,8 +56,7 @@ Con [Ollama](https://ollama.com) instalado en el equipo o en un servidor del pro
 
 ## Próximos pasos
 
-1. Carga de notas desde CSV que crea una columna (3.1.5): cruce por documento, conversión de escala, vista previa.
-2. Simulador de cierre y revisión de ceros en pantalla (3.7); el cálculo ya existe.
-3. Exportación a CSV y a la planilla institucional (3.1.11).
-4. Página del calificador en el navegador que ejecuta los retos con el entorno de la sección 4 y llama a `POST /calificador/entregas/{entrega}/resultados-navegador`.
-5. Descifrado de entregas compatible con el formato actual (AES-GCM 256 + RSA-OAEP 2048) para migrar el corte en curso.
+1. Simulador de cierre y revisión de ceros en pantalla (3.7); el cálculo ya existe.
+2. Exportación a CSV y a la planilla institucional (3.1.11).
+3. Página del calificador en el navegador que ejecuta los retos con el entorno de la sección 4 y llama a `POST /calificador/entregas/{entrega}/resultados-navegador`.
+4. Descifrado de entregas compatible con el formato actual (AES-GCM 256 + RSA-OAEP 2048) para migrar el corte en curso.

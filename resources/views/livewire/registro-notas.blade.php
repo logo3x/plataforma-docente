@@ -3,6 +3,7 @@
     <div class="fila" style="justify-content: space-between; margin-bottom: .75rem">
         <div class="fila">
             <a class="boton boton-sec boton-chico" href="{{ route('importacion.create', $grupo) }}">Actualizar lista</a>
+            <a class="boton boton-sec boton-chico" href="{{ route('carga-notas.create', [$grupo, 'division' => $division?->id]) }}">Cargar notas desde archivo</a>
             <span class="suave">Escala {{ $escala->mostrar($escala->minimo) }}–{{ $escala->mostrar($escala->maximo) }} · aprueba con {{ $escala->mostrar($escala->aprobatoria) }} · celda vacía no promedia</span>
         </div>
         <div class="fila">

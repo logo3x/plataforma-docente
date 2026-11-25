@@ -2,14 +2,12 @@
 
 namespace App\Estudiantes;
 
+use App\Archivos\LectorTabla;
 use App\Models\Estudiante;
 use App\Models\Grupo;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use OpenSpout\Common\Entity\Row;
-use OpenSpout\Reader\CSV\Options as OpcionesCsv;
-use OpenSpout\Reader\CSV\Reader as LectorCsv;
-use OpenSpout\Reader\XLSX\Reader as LectorXlsx;
 use OpenSpout\Writer\XLSX\Writer as EscritorXlsx;
 
 /**
@@ -38,56 +36,26 @@ final class ImportadorListaClase
      */
     public function leer(string $ruta, string $extension): array
     {
-        $lector = match (strtolower($extension)) {
-            'xlsx' => new LectorXlsx,
-            'csv', 'txt' => new LectorCsv($this->opcionesCsv($ruta)),
-            default => throw new InvalidArgumentException('Formato no admitido. Use la plantilla en .xlsx o .csv.'),
-        };
+        $tabla = (new LectorTabla)->leer($ruta, $extension);
+        $encabezados = array_map(fn ($h) => mb_strtolower($h), $tabla['encabezados']);
 
-        $lector->open($ruta);
-        $encabezados = null;
-        $filas = [];
+        $faltan = array_diff(self::OBLIGATORIAS, $encabezados);
+        if ($faltan !== []) {
+            throw new InvalidArgumentException(
+                'El archivo no tiene el formato de la plantilla oficial. Faltan las columnas: '.implode(', ', $faltan).'.'
+            );
+        }
 
-        try {
-            foreach ($lector->getSheetIterator() as $hoja) {
-                foreach ($hoja->getRowIterator() as $fila) {
-                    $celdas = array_map(fn ($v) => trim((string) ($v instanceof \DateTimeInterface ? $v->format('Y-m-d') : $v)), $this->valores($fila));
-
-                    if ($encabezados === null) {
-                        $encabezados = array_map(fn ($h) => mb_strtolower(trim($h, " \t\n\r\0\x0B\u{FEFF}")), $celdas);
-                        $faltan = array_diff(self::OBLIGATORIAS, $encabezados);
-                        if ($faltan !== []) {
-                            throw new InvalidArgumentException(
-                                'El archivo no tiene el formato de la plantilla oficial. Faltan las columnas: '.implode(', ', $faltan).'.'
-                            );
-                        }
-
-                        continue;
-                    }
-
-                    if (implode('', $celdas) === '') {
-                        continue; // fila vacía
-                    }
-
-                    $registro = [];
-                    foreach ($encabezados as $i => $h) {
-                        if (in_array($h, self::COLUMNAS, true)) {
-                            $registro[$h] = $celdas[$i] ?? '';
-                        }
-                    }
-                    $filas[] = $registro;
+        return array_map(function (array $celdas) use ($encabezados) {
+            $registro = [];
+            foreach ($encabezados as $i => $h) {
+                if (in_array($h, self::COLUMNAS, true)) {
+                    $registro[$h] = $celdas[$i] ?? '';
                 }
-                break; // solo la primera hoja
             }
-        } finally {
-            $lector->close();
-        }
 
-        if ($encabezados === null) {
-            throw new InvalidArgumentException('El archivo está vacío.');
-        }
-
-        return $filas;
+            return $registro;
+        }, $tabla['filas']);
     }
 
     /**
@@ -252,26 +220,5 @@ final class ImportadorListaClase
     private function entero(string $v): ?int
     {
         return is_numeric($v) ? (int) $v : null;
-    }
-
-    /** @return array<int, mixed> */
-    private function valores(Row $fila): array
-    {
-        return $fila->toArray();
-    }
-
-    /**
-     * Secretaría a veces exporta con punto y coma (configuración regional de Excel en español)
-     * y en Windows-1252 en lugar de UTF-8: se detectan ambos.
-     */
-    private function opcionesCsv(string $ruta): OpcionesCsv
-    {
-        $muestra = (string) file_get_contents($ruta, length: 65536);
-        $primera = strtok($muestra, "\n") ?: '';
-
-        return new OpcionesCsv(
-            FIELD_DELIMITER: substr_count($primera, ';') > substr_count($primera, ',') ? ';' : ',',
-            ENCODING: mb_check_encoding($muestra, 'UTF-8') ? 'UTF-8' : 'Windows-1252',
-        );
     }
 }

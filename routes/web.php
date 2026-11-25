@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Calificador\ResultadosNavegadorController;
+use App\Http\Controllers\CargaNotasController;
 use App\Http\Controllers\DictadoController;
 use App\Http\Controllers\ImportacionController;
 use App\Http\Controllers\InicioController;
@@ -27,6 +28,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/grupos/{grupo}/importar/confirmar', [ImportacionController::class, 'confirmar'])->name('importacion.confirmar');
 
     Route::get('/grupos/{grupo}/notas', RegistroController::class)->name('registro');
+    Route::get('/grupos/{grupo}/cargar-notas', [CargaNotasController::class, 'create'])->name('carga-notas.create');
+    Route::post('/grupos/{grupo}/cargar-notas', [CargaNotasController::class, 'subir'])->name('carga-notas.subir');
+    Route::get('/grupos/{grupo}/cargar-notas/previa', [CargaNotasController::class, 'previa'])->name('carga-notas.previa');
+    Route::post('/grupos/{grupo}/cargar-notas/confirmar', [CargaNotasController::class, 'confirmar'])->name('carga-notas.confirmar');
 
     Route::prefix('calificador')->name('calificador.')->group(function () {
         Route::post('entregas/{entrega}/resultados-navegador', ResultadosNavegadorController::class)

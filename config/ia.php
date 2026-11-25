@@ -139,6 +139,36 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
  "evaluacion":[{"actividad":"...","tipo":"quiz","descripcion":"qué evalúa y cuándo"}]}
 TXT,
 
+        'ejemplos' => <<<'TXT'
+Tarea: escriba ejemplos prácticos resueltos paso a paso, para que el estudiante aprenda viendo cómo se razona.
+
+Tema:        {{tema}}
+Cantidad:    {{cantidad}} ejemplos
+Dificultad:  {{dificultad}}
+Contexto:    {{contexto}}
+Grupo:       {{grupo}}
+
+Reglas:
+- Cada ejemplo parte de una situación concreta y creíble, no de una definición.
+- Los pasos muestran el razonamiento: qué se decide en cada paso y por qué, no solo el resultado.
+  Si un paso lleva código, póngalo en «codigo» del paso y explíquelo en «explicacion».
+- «respuesta» es el resultado final, verificable.
+- En «errores» liste las equivocaciones típicas de los estudiantes en ese ejercicio y cómo evitarlas.
+- «practica» es un ejercicio parecido, sin resolver, para que el estudiante lo intente solo.
+- En «tema» escriba el nombre del tema tal como aparece arriba.
+{{reglas_codigo}}
+- Cíñase al material de referencia y al alcance del grupo.
+{{memoria}}
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"formato":"plataforma-ejemplos","version":1,"titulo":"...","proposito":"qué aprende el estudiante con estos ejemplos",
+ "ejemplos":[
+  {"titulo":"...","tema":"...","dificultad":"baja|media|alta","enunciado":"...",
+   "pasos":[{"explicacion":"...","codigo":""},{"explicacion":"...","codigo":""}],
+   "respuesta":"...","errores":["..."],"practica":"...","codigo":"","comprobacion":""}
+ ]}
+TXT,
+
         'temario' => <<<'TXT'
 Tarea: lea el plan curricular de la materia y extraiga su temario como estructura.
 

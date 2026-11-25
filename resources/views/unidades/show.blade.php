@@ -29,7 +29,10 @@
             <div class="fila" style="justify-content:space-between;align-items:flex-start">
                 <h2>Sesión {{ $i + 1 }}. {{ $s['titulo'] }} <span class="suave">· {{ $s['duracion'] }} min</span></h2>
                 @if ($ids->isNotEmpty())
-                    <a class="boton boton-sec boton-chico no-imprimir" href="{{ route('generacion.create', ['materia' => $u->materia, 'temas' => $ids->all()]) }}">Generar un quiz de estos temas</a>
+                    <span class="fila no-imprimir" style="gap:.4rem">
+                        <a class="boton boton-sec boton-chico" href="{{ route('ejemplos.index', ['materia' => $u->materia, 'temas' => $ids->all()]) }}#generar">Ejemplos prácticos de estos temas</a>
+                        <a class="boton boton-sec boton-chico" href="{{ route('generacion.create', ['materia' => $u->materia, 'temas' => $ids->all()]) }}">Generar un quiz de estos temas</a>
+                    </span>
                 @endif
             </div>
             <dl>

@@ -73,6 +73,7 @@
         </table></div>
     @endif
 
+    <script src="{{ asset('js/ejecutor.js') }}"></script>
     <script>
     /* Calificación híbrida: los retos se ejecutan aquí, en el navegador del docente, aislados en un Worker
        sin red y con límite de tiempo. Solo se envía qué verificaciones pasaron; el puntaje lo calcula el servidor. */
@@ -80,19 +81,7 @@
         const boton = document.getElementById('ejecutar-retos');
         const estado = document.getElementById('estado-retos');
         const token = '{{ csrf_token() }}';
-        const W = `self.fetch=undefined;self.XMLHttpRequest=undefined;self.WebSocket=undefined;self.importScripts=undefined;
-          const L=[];console.log=console.info=console.warn=console.error=(...a)=>{if(L.length<200)L.push(a.map(x=>typeof x==='object'&&x!==null?JSON.stringify(x):String(x)).join(' '))};
-          self.onmessage=(ev)=>{const {codigo,prueba}=ev.data;
-            try{const r=new Function(codigo+'\\n;return ('+prueba+');')();self.postMessage({ok:r===true,consola:L});}
-            catch(e){self.postMessage({ok:false,error:String(e&&e.message||e),consola:L});}};`;
-        const url = URL.createObjectURL(new Blob([W], {type: 'text/javascript'}));
-        const correr = (codigo, prueba, ms) => new Promise(res => {
-            const w = new Worker(url);
-            const t = setTimeout(() => { w.terminate(); res({ok: false, error: 'tiempo agotado', consola: []}); }, ms);
-            w.onmessage = ev => { clearTimeout(t); w.terminate(); res(ev.data); };
-            w.onerror = ev => { clearTimeout(t); w.terminate(); ev.preventDefault(); res({ok: false, error: ev.message, consola: []}); };
-            w.postMessage({codigo, prueba});
-        });
+        const correr = (codigo, prueba, ms) => window.ejecutarJS(codigo, prueba, ms);
         boton?.addEventListener('click', async () => {
             boton.disabled = true; estado.textContent = 'Buscando retos pendientes…';
             const datos = await (await fetch('{{ route('calificador.retos', $actividad) }}', {headers: {Accept: 'application/json'}})).json();

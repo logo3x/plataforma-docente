@@ -64,4 +64,15 @@ class Materia extends Model
     {
         return $this->hasMany(UnidadDidactica::class);
     }
+
+    public function materiales(): HasMany
+    {
+        return $this->hasMany(Material::class);
+    }
+
+    /** La práctica de código corre en el navegador (JavaScript): se puede verificar el código de los ejemplos. */
+    public function codigoVerificable(): bool
+    {
+        return $this->perfil_codigo && $this->modalidad_practica === 'integrada';
+    }
 }

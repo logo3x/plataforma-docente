@@ -68,7 +68,7 @@ final class RegistroNotas
         if ($valor !== null) {
             if (! $escala->contiene($valor)) {
                 throw new InvalidArgumentException(
-                    "La nota {$valor} está fuera de la escala {$escala->minimo}–{$escala->maximo}."
+                    "La nota {$valor} está fuera de la escala {$escala->mostrar($escala->minimo)} a {$escala->mostrar($escala->maximo)}."
                 );
             }
             $valor = Calculo::paraGuardar($valor);

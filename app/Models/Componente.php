@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Brick\Math\BigDecimal;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -26,5 +27,11 @@ class Componente extends Model
     public function actividades(): HasMany
     {
         return $this->hasMany(Actividad::class)->orderBy('orden');
+    }
+
+    /** Peso como porcentaje legible: 0.3 → "30". */
+    public function porcentaje(): string
+    {
+        return (string) BigDecimal::of($this->peso)->multipliedBy(100)->strippedOfTrailingZeros();
     }
 }

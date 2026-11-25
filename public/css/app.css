@@ -100,3 +100,5 @@ details.menu .contenido a { display: block; }
 .puntaje-abierta { position: sticky; bottom: 0; background: var(--blanco); padding: .4rem 0; }
 mark { background: #fde68a; color: inherit; }
 .alerta-chip { display:inline-block; font-size:.8rem; padding:.05rem .45rem; border-radius:999px; background: var(--pend-fondo); color: var(--pend); margin: .1rem .15rem 0 0; }
+textarea { width: 100%; padding: .5rem .6rem; border: 1px solid #6b7280; border-radius: var(--radio); font-family: ui-monospace, Consolas, monospace; font-size: .9rem; color: var(--texto); }
+.correcta { font-weight: 700; color: var(--ok); }

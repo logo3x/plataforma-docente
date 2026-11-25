@@ -6,4 +6,88 @@ return [
      * cualquier tarea marcada con datos de estudiantes se niega a usar un motor en la nube.
      */
     'permitir_nube_con_datos_estudiantes' => env('IA_PERMITIR_NUBE_CON_DATOS_ESTUDIANTES', false),
+
+    /* Material del repositorio que cabe en un prompt. Con modelos locales la ventana es corta. */
+    'max_contexto_caracteres' => (int) env('IA_MAX_CONTEXTO', 24000),
+
+    /* Segundos que puede tardar una generación (los modelos locales pueden tardar minutos). */
+    'tiempo_maximo' => (int) env('IA_TIEMPO_MAXIMO', 600),
+
+    /*
+     * Plantillas por defecto de las tres capas (sección 8). El docente las edita en
+     * «Plantillas de IA»; cada cambio crea una versión nueva.
+     */
+    'plantillas' => [
+        'contexto' => <<<'TXT'
+Institución:        {{institucion}}
+Programa:           {{programa}}
+Docente:            {{docente}}
+Ciudad:             {{ciudad}}
+Idioma:             {{idioma}}
+Escala de notas:    de {{nota_minima}} a {{nota_maxima}}, aprueba con {{nota_aprobatoria}}
+Pesos del periodo:  {{pesos_cortes}}
+Perfil del grupo:   {{perfil_estudiantes}}
+Reglas de estilo:   {{reglas_escritura}}
+Prohibido:          {{restricciones}}
+TXT,
+        'materia' => <<<'TXT'
+Materia:               {{materia}}
+Código:                {{codigo_materia}}
+Unidades:              {{unidades}}
+Alcance por grupo:     {{alcance_grupo}}
+Lenguaje o técnica:    {{herramientas}}
+Modalidad práctica:    {{modalidad}}
+Tono:                  {{tono}}
+Verificación:          {{tipo_verificacion}}
+Vocabulario propio:    {{glosario}}
+TXT,
+        'banco' => <<<'TXT'
+Tarea: genere una actividad evaluable para la plataforma, en el formato JSON «unipaz-banco» v1.
+
+Tipo de artefacto:  {{tipo}}
+Tema:               {{tema}}
+Grupo:              {{grupo}}
+Valor:              {{valor}} sobre {{nota_maxima}}
+Cantidad de ítems:  {{cantidades}}
+Debe incluir:       {{obligatorio}}
+No debe incluir:    {{excluido}}
+
+Reglas de contenido:
+- Cíñase al material de referencia y al alcance del grupo. No evalúe temas que el grupo no ha visto.
+- Cada enunciado práctico es una situación problema breve, no una definición técnica.
+- Una sola respuesta defendible por pregunta cerrada; los distractores son plausibles pero claramente incorrectos.
+- En «justificacion» escriba una línea que explique la respuesta correcta, como la diría el docente en clase.
+- En los retos de código, «prueba» es una expresión de JavaScript que da exactamente true cuando el código es correcto,
+  «nombre» describe en español lo que se comprueba, y al menos una verificación es reservada ("reservada": true).
+  Las fracciones de las verificaciones de un reto suman 1.
+- Los pesos de todos los ítems deben sumar exactamente {{valor}}.
+{{no_repetir}}
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"formato":"unipaz-banco","version":1,"sigla":"{{sigla}}","titulo":"...","tipo":"{{tipo}}","valor":"{{valor}}",
+ "items":[
+  {"tipo":"unica","tema":"...","dificultad":"baja|media|alta","peso":"0.5","enunciado":"...","opciones":{"a":"...","b":"...","c":"...","d":"..."},"correcta":"b","justificacion":"..."},
+  {"tipo":"vf","peso":"0.5","enunciado":"...","correcta":true,"justificacion":"..."},
+  {"tipo":"multiple","peso":"0.5","enunciado":"...","opciones":{"a":"...","b":"...","c":"..."},"correctas":["a","c"],"justificacion":"..."},
+  {"tipo":"emparejar","peso":"0.5","enunciado":"...","izquierda":{"1":"...","2":"..."},"derecha":{"a":"...","b":"..."},"pares":{"1":"b","2":"a"}},
+  {"tipo":"ordenar","peso":"0.5","enunciado":"...","pasos":{"p1":"...","p2":"...","p3":"..."},"orden":["p2","p1","p3"]},
+  {"tipo":"completar","peso":"0.5","enunciado":"...","plantilla":"texto con ___ por cada hueco","huecos":["respuesta1","respuesta2"]},
+  {"tipo":"abierta","peso":"1.0","enunciado":"...","referencia":"respuesta esperada","rubrica":"criterios y puntajes"},
+  {"tipo":"reto","peso":"1.5","enunciado":"...","plantilla_codigo":"function f(x) {\n}\n","casos_visibles":[{"entrada":"f(2)","esperada":"4","descripcion":"..."}],
+   "verificaciones":[{"id":"v1","nombre":"...","fraccion":"0.5","prueba":"f(2) === 4"},{"id":"v2","nombre":"...","fraccion":"0.5","prueba":"f(0) === 0","reservada":true}]}
+ ]}
+Use solo los tipos pedidos en «Cantidad de ítems».
+TXT,
+    ],
+
+    /* Valores por defecto de la capa 1 (el docente los cambia en su perfil). */
+    'perfil_por_defecto' => [
+        'institucion' => 'Instituto Universitario de la Paz (UNIPAZ)',
+        'programa' => 'Ingeniería Informática',
+        'ciudad' => 'Barrancabermeja, Santander',
+        'idioma' => 'español de Colombia, trato de usted, sin tuteo',
+        'perfil_estudiantes' => 'estudiantes de pregrado; equipos de la sala de cómputo sin internet',
+        'reglas_escritura' => 'poco texto explicativo y mucho ejercicio práctico; enunciados como situaciones problema; contenido incremental',
+        'restricciones' => 'dramatismo, relleno, ejercicios que no se puedan verificar, temas que el grupo no haya visto',
+    ],
 ];

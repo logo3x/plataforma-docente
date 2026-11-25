@@ -15,10 +15,13 @@ use Illuminate\Database\Eloquent\Model;
  */
 class GestorIA
 {
+    /** La última generación registrada, para enlazarla con lo que produjo. */
+    public ?GeneracionIa $ultima = null;
+
     public function __construct(private readonly ResolutorMotor $resolutor) {}
 
     /**
-     * @param  array<string, mixed>  $trazabilidad  ['plantillas' => [...], 'contenidos' => [...], 'resultado' => Model]
+     * @param  array<string, mixed>  $trazabilidad  ['plantillas' => [...], 'contenidos' => [...], 'resultado' => Model, 'materia_id' => int, 'tarea' => string]
      */
     public function generar(User $docente, SolicitudIA $solicitud, ?ConfigMotorIa $config = null, array $trazabilidad = []): RespuestaIA
     {
@@ -49,8 +52,11 @@ class GestorIA
 
         $resultado = $trazabilidad['resultado'] ?? null;
 
-        GeneracionIa::query()->create([
+        $this->ultima = GeneracionIa::query()->create([
             'motor_ia_id' => $config->id,
+            'user_id' => $docente->id,
+            'materia_id' => $trazabilidad['materia_id'] ?? null,
+            'tarea' => $trazabilidad['tarea'] ?? 'libre',
             'resultado_type' => $resultado instanceof Model ? $resultado->getMorphClass() : null,
             'resultado_id' => $resultado instanceof Model ? $resultado->getKey() : null,
             'plantillas' => $trazabilidad['plantillas'] ?? null,

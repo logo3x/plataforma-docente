@@ -33,6 +33,8 @@ final class OllamaDriver implements MotorIA
         ];
         if ($s->esquemaJson !== null) {
             $cuerpo['format'] = $s->esquemaJson;   // salida estructurada con JSON Schema
+        } elseif ($s->soloJson) {
+            $cuerpo['format'] = 'json';
         }
 
         try {

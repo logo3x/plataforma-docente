@@ -22,6 +22,11 @@ class GeneracionIa extends Model
         ];
     }
 
+    public function materia(): BelongsTo
+    {
+        return $this->belongsTo(Materia::class);
+    }
+
     public function motor(): BelongsTo
     {
         return $this->belongsTo(ConfigMotorIa::class, 'motor_ia_id');

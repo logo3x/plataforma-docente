@@ -54,6 +54,12 @@ final readonly class Escala
         return (string) BigDecimal::of($valor)->toScale($this->decimales, $modo);
     }
 
+    /** Meta mínima a mostrar: siempre hacia arriba, para que sacar la nota mostrada sí alcance. */
+    public function meta(string $valor): string
+    {
+        return (string) BigDecimal::of($valor)->toScale($this->decimales, RoundingMode::Ceiling);
+    }
+
     /** Valor para un campo editable: sin ceros a la derecha ("3.5000" → "3.5"). */
     public function editable(?string $valor): string
     {

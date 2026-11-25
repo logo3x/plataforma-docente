@@ -34,6 +34,10 @@
         </tbody>
     </table>
 
+    <h2>Respaldo</h2>
+    <p>Descargue un archivo con toda la información del periodo: estructura, estudiantes, notas y bitácora de cambios.
+        Es un JSON legible por cualquier herramienta. <a href="{{ route('respaldo', $dictado) }}">Descargar respaldo</a></p>
+
     <h2>Siguiente periodo</h2>
     <form method="POST" action="{{ route('dictados.store', $dictado) }}" class="tarjeta">
         @csrf

@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Calificador\ResultadosNavegadorController;
 use App\Http\Controllers\CargaNotasController;
+use App\Http\Controllers\CierreController;
 use App\Http\Controllers\DictadoController;
+use App\Http\Controllers\EstudianteController;
+use App\Http\Controllers\ExportacionController;
 use App\Http\Controllers\ImportacionController;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\MateriaController;
@@ -28,6 +31,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/grupos/{grupo}/importar/confirmar', [ImportacionController::class, 'confirmar'])->name('importacion.confirmar');
 
     Route::get('/grupos/{grupo}/notas', RegistroController::class)->name('registro');
+    Route::get('/grupos/{grupo}/cierre', CierreController::class)->name('cierre');
+    Route::get('/grupos/{grupo}/exportar.xlsx', [ExportacionController::class, 'xlsx'])->name('exportar.xlsx');
+    Route::get('/grupos/{grupo}/planilla.csv', [ExportacionController::class, 'csv'])->name('exportar.csv');
+    Route::get('/dictados/{dictado}/respaldo.json', [ExportacionController::class, 'respaldo'])->name('respaldo');
+    Route::get('/grupos/{grupo}/estudiantes/{estudiante}', [EstudianteController::class, 'edit'])->name('estudiantes.edit');
+    Route::put('/grupos/{grupo}/estudiantes/{estudiante}', [EstudianteController::class, 'update'])->name('estudiantes.update');
     Route::get('/grupos/{grupo}/cargar-notas', [CargaNotasController::class, 'create'])->name('carga-notas.create');
     Route::post('/grupos/{grupo}/cargar-notas', [CargaNotasController::class, 'subir'])->name('carga-notas.subir');
     Route::get('/grupos/{grupo}/cargar-notas/previa', [CargaNotasController::class, 'previa'])->name('carga-notas.previa');

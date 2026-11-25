@@ -16,7 +16,8 @@ Lo que ya se puede usar en un semestre real:
 4. **Llevar las notas.** Pestaña por corte y consolidado, columnas dinámicas, celda vacía distinta de cero, deshacer, historial de cada nota y bitácora que no se puede alterar.
 5. **Cargar notas desde un archivo.** Cruce por documento o por nombre completo, conversión de escala y reporte de lo que no cruzó.
 6. **Cerrar el periodo.** Qué nota necesita cada estudiante, quiénes están al margen, quiénes aprueban solo por una vacía o por redondeo, y revisión de ceros ordenada por cercanía al límite.
-7. **Entregar las notas.** Excel con todas las notas, planilla CSV para Excel en español y respaldo completo en JSON.
+7. **Aplicar y calificar exámenes digitales.** Se importa el banco en JSON y se descarga el examen: un HTML que funciona sin internet, no lleva respuestas, guarda solo y cifra la entrega. Luego se suben las entregas y el calificador descifra, identifica al estudiante y al examen, genera alertas, ejecuta los retos de código en el navegador, califica las abiertas por pregunta y pasa las notas al registro, también en grupo.
+8. **Entregar las notas.** Excel con todas las notas, planilla CSV para Excel en español y respaldo completo en JSON.
 
 Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 
@@ -36,15 +37,21 @@ Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 | Carga de notas desde archivo que crea una columna: cruce por documento y, como respaldo, por nombre completo (nunca por apellido solo), columna de grupo, conversión 0–10/50/100, columnas y escala corregibles en la vista previa, reporte de no cruzados, otro grupo, repetidas y fuera de rango; deshacible | `app/Notas/ImportadorNotas.php`, `/grupos/{grupo}/cargar-notas` | 3.1.5 |
 | Motor de IA intercambiable: Ollama, servidores compatibles con OpenAI (LM Studio, llama.cpp, vLLM) y Claude en la nube con el SDK oficial | `app/IA` | 1.5 |
 
+| Banco «plataforma-banco» v1 con validación (pesos, respuestas dentro de las opciones, fracciones de verificaciones) | `app/Evaluacion/ImportadorBanco.php`, `docs/formato-banco.md` | 5.3, 9.2.4, 9.2.5 |
+| Examen autocontenido: sin respuestas dentro, autoguardado anunciado, salidas reales de ventana con duración, reloj, modo desconectado, entorno de prueba con consola y casos visibles en un Worker aislado, entrega cifrada (AES-256-GCM y RSA-OAEP-256) | `app/Evaluacion/GeneradorExamen.php`, `resources/examen/` | 4, 5.4, 5.5, 5.7 |
+| Recepción de entregas: descifrado con la clave del periodo, examen reconocido por identificador, entrega en la actividad equivocada, identidad manipulada, otro grupo, duplicadas, alertas de sesión, código idéntico aunque se quiten comentarios | `app/Evaluacion/ProcesadorEntregas.php`, `docs/formato-entrega.md` | 6.1, 6.3, 6.11 |
+| Calificador: planilla con indicadores, retos ejecutados en el navegador del docente, abiertas por pregunta con texto legible y resaltado de términos, detalle autoexplicativo, paso al registro (incluida la entrega grupal) | `app/Http/Controllers/CalificadorController.php`, `app/Livewire/CalificarAbiertas.php` | 6.2, 6.4, 6.6, 6.7, 6.8 |
 | Exportación: Excel con una hoja por corte y planilla; CSV con `;` y BOM; un periodo incompleto no sale como nota final | `app/Notas/ExportadorNotas.php` | 3.1.11, 3.1.14 |
 | Cierre: simulador de lo que necesita cada estudiante (meta redondeada hacia arriba), al margen, aprobados por vacía o por redondeo, revisión de ceros y vacías | `app/Notas/CierrePeriodo.php`, `/grupos/{grupo}/cierre` | 3.7 |
 | Edición de estudiante y retiro del grupo sin perder notas | `app/Http/Controllers/EstudianteController.php` | 3.4.5, 3.4.6 |
 | Respaldo JSON del dictado con estructura, estudiantes, notas y bitácora | `app/Dictados/RespaldoDictado.php` | 3.1.10 |
 
-### Fuera del MVP (siguientes fases)
+### Siguientes fases
 
-- **Calificador de entregas cifradas.** El servidor ya califica los ítems y recibe los resultados de los retos, pero falta la página del navegador y el descifrado. Para eso hacen falta un archivo de entrega y el calificador HTML actuales, así queda compatible con el formato vigente (AES-GCM 256 + RSA-OAEP 2048).
-- Generación con IA (los motores ya están), contenido de la materia, supletorios y habilitaciones en pantalla (el modelo ya existe), y restaurar un respaldo.
+- **Adaptador del calificador HTML anterior**, para migrar las entregas del corte en curso. Hace falta un archivo de entrega real y el calificador actual.
+- Retos con DOM (HTML y CSS) y vista previa: hoy los retos son de JavaScript puro, en un Worker.
+- Versiones A/B y segundo banco, modo de ensayo con las pruebas de la sección 9.2 en pantalla, anulación de ítems y plantillas de comentarios desde la interfaz.
+- Generación del banco con IA (los motores ya están), contenido de la materia, supletorios y habilitaciones en pantalla, y restaurar un respaldo.
 
 ### Reglas que el código garantiza
 
@@ -71,5 +78,5 @@ Con [Ollama](https://ollama.com) instalado en el equipo o en un servidor del pro
 
 ## Próximos pasos
 
-1. Página del calificador en el navegador que ejecuta los retos con el entorno de la sección 4 y llama a `POST /calificador/entregas/{entrega}/resultados-navegador`.
-2. Descifrado de entregas compatible con el formato actual (AES-GCM 256 + RSA-OAEP 2048) para migrar el corte en curso.
+1. Adaptador de entregas del calificador HTML anterior.
+2. Generación del banco con IA a partir del contenido de la materia (módulos 4 y 5).

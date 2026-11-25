@@ -96,3 +96,7 @@ details.menu .contenido > * + * { margin-top: .5rem; }
 .nombre-estudiante:hover { text-decoration: underline; color: var(--cian); }
 details.menu summary.boton { list-style: none; }
 details.menu .contenido a { display: block; }
+.texto-estudiante { white-space: pre-wrap; font-size: 15px; max-width: 90ch; background: #fffbeb; border-left: 4px solid var(--naranja); padding: .75rem 1rem; margin: .5rem 0 .75rem; border-radius: 0 var(--radio) var(--radio) 0; }
+.puntaje-abierta { position: sticky; bottom: 0; background: var(--blanco); padding: .4rem 0; }
+mark { background: #fde68a; color: inherit; }
+.alerta-chip { display:inline-block; font-size:.8rem; padding:.05rem .45rem; border-radius:999px; background: var(--pend-fondo); color: var(--pend); margin: .1rem .15rem 0 0; }

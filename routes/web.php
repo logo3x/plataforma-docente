@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Calificador\ResultadosNavegadorController;
+use App\Http\Controllers\CalificadorController;
 use App\Http\Controllers\CargaNotasController;
 use App\Http\Controllers\CierreController;
 use App\Http\Controllers\DictadoController;
@@ -42,7 +43,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/grupos/{grupo}/cargar-notas/previa', [CargaNotasController::class, 'previa'])->name('carga-notas.previa');
     Route::post('/grupos/{grupo}/cargar-notas/confirmar', [CargaNotasController::class, 'confirmar'])->name('carga-notas.confirmar');
 
+    Route::get('/materias/{materia}/actividades', [CalificadorController::class, 'artefactos'])->name('artefactos.index');
+    Route::post('/materias/{materia}/actividades', [CalificadorController::class, 'importar'])->name('artefactos.importar');
+    Route::post('/actividades-evaluables/{artefacto}/aplicar', [CalificadorController::class, 'aplicar'])->name('artefactos.aplicar');
+
     Route::prefix('calificador')->name('calificador.')->group(function () {
+        Route::get('actividades/{actividad}', [CalificadorController::class, 'show'])->name('show');
+        Route::get('actividades/{actividad}/examen.html', [CalificadorController::class, 'examen'])->name('examen');
+        Route::post('actividades/{actividad}/entregas', [CalificadorController::class, 'subir'])->name('subir');
+        Route::get('actividades/{actividad}/retos-pendientes', [CalificadorController::class, 'retosPendientes'])->name('retos');
+        Route::post('actividades/{actividad}/registro', [CalificadorController::class, 'pasarAlRegistro'])->name('registro');
+        Route::get('actividades/{actividad}/abiertas', [CalificadorController::class, 'abiertas'])->name('abiertas');
+        Route::get('entregas/{entrega}', [CalificadorController::class, 'detalle'])->name('detalle');
         Route::post('entregas/{entrega}/resultados-navegador', ResultadosNavegadorController::class)
             ->name('entregas.resultados-navegador');
     });

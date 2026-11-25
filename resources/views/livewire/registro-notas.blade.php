@@ -114,6 +114,7 @@
                             <td class="estudiante" title="Documento {{ $e->documento }}">
                                 <a href="{{ route('estudiantes.edit', [$grupo, $e]) }}" class="nombre-estudiante">{{ $e->nombreCompleto() }}</a>
                                 @if ($e->revisar_nombre)<a href="{{ route('estudiantes.edit', [$grupo, $e]) }}" class="suave" title="El nombre no traía coma en la plantilla: sepárelo">⚠ revisar nombre</a>@endif
+                                <a href="{{ route('segundas.create', [$grupo, $e]) }}" class="enlace-segunda" title="Supletorio, recuperación o habilitación">2ª oportunidad</a>
                             </td>
                             @foreach ($componentes as $c)
                                 @foreach ($c->actividades as $a)
@@ -126,12 +127,17 @@
                                                x-on:dblclick="$wire.verHistorial({{ $a->id }}, {{ $e->id }})"
                                                title="Doble clic: historial de la nota">
                                         @isset($errores[$clave])<span class="celda-error" role="alert">{{ $errores[$clave] }}</span>@endisset
+                                        @if ($so = $tablero->segunda($a->getMorphClass(), $a->id, $e->id))
+                                            <a class="marca-segunda" href="{{ route('segundas.create', [$grupo, $e]) }}"
+                                               title="{{ \App\Models\SegundaOportunidad::TIPOS[$so->tipo] }} del {{ $so->fecha->format('Y-m-d') }}. La nota original ({{ $tablero->nota($a->id, $e->id) === null ? 'vacía' : $escala->mostrar($tablero->nota($a->id, $e->id)) }}) se conserva.">{{ $so->letra() }} {{ $escala->mostrar($tablero->notaEfectiva($a->id, $e->id)) }}</a>
+                                        @endif
                                     </td>
                                 @endforeach
                                 @php($prom = $r->promedios[$c->id] ?? null)
                                 <td class="num">{{ $prom === null ? '—' : $escala->mostrar($prom) }}</td>
                             @endforeach
-                            <td class="num definitiva">{{ $r->definitiva === null ? '—' : $escala->mostrar($r->definitiva) }}</td>
+                            <td class="num definitiva">{{ $r->definitiva === null ? '—' : $escala->mostrar($r->definitiva) }}
+                                @if ($r->segunda)<span class="marca-segunda" title="Habilitación del {{ $r->segunda->fecha->format('Y-m-d') }}. Definitiva original: {{ $escala->mostrar($r->original) }}">H · antes {{ $escala->mostrar($r->original) }}</span>@endif</td>
                             <td>
                                 <span class="estado estado-{{ $r->estado->value }}">{{ $r->estado->etiqueta() }}</span>
                                 @if ($r->definitiva !== null && $escala->apruebaSoloPorRedondeo($r->definitiva))
@@ -171,10 +177,12 @@
                             @foreach ($tablero->pestanas() as $p)
                                 @php($rd = $fila['divisiones'][$p->id])
                                 <td class="num">{{ $rd->definitiva === null ? '—' : $escala->mostrar($rd->definitiva) }}
-                                    @if ($rd->estado->value === 'incompleto')<span class="suave" title="Incompleto">…</span>@endif</td>
+                                    @if ($rd->estado->value === 'incompleto')<span class="suave" title="Incompleto">…</span>@endif
+                                    @if ($rd->segunda)<span class="marca-segunda" title="Habilitación; definitiva original {{ $escala->mostrar($rd->original) }}">H</span>@endif</td>
                                 <td class="num">{{ $fila['aportes'][$p->id] === null ? '—' : $escala->mostrar($fila['aportes'][$p->id]) }}</td>
                             @endforeach
-                            <td class="num definitiva">{{ $escala->mostrar($fila['acumulado']) }}</td>
+                            <td class="num definitiva">{{ $escala->mostrar($fila['acumulado']) }}
+                                @if ($fila['segunda'])<span class="marca-segunda" title="Habilitación de la materia; nota original {{ $escala->mostrar($fila['original']) }}">H · antes {{ $escala->mostrar($fila['original']) }}</span>@endif</td>
                             <td>
                                 <span class="estado estado-{{ $fila['estado']->value }}">{{ $fila['estado'] === \App\Notas\EstadoCorte::Incompleto ? '… En curso' : $fila['estado']->etiqueta() }}</span>
                                 @if ($fila['estado'] !== \App\Notas\EstadoCorte::Incompleto && $escala->apruebaSoloPorRedondeo($fila['acumulado']))

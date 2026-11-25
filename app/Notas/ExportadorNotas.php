@@ -51,7 +51,7 @@ final class ExportadorNotas
                 $valores = [$e->documento, $e->apellidos, $e->nombres];
                 foreach ($division->componentes as $c) {
                     foreach ($c->actividades as $a) {
-                        $valores[] = $this->numero($tablero->nota($a->id, $e->id), $escala);
+                        $valores[] = $this->numero($tablero->notaEfectiva($a->id, $e->id), $escala);
                     }
                     $valores[] = $this->numero($r->promedios[$c->id] ?? null, $escala);
                 }

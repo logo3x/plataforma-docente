@@ -85,10 +85,10 @@ final class CierrePeriodo
         foreach ($this->tablero->pestanas() as $d) {
             foreach ($d->componentes as $c) {
                 foreach ($c->actividades as $a) {
-                    $aplicada = $estudiantes->contains(fn ($e) => $this->tablero->nota($a->id, $e->id) !== null);
+                    $aplicada = $estudiantes->contains(fn ($e) => $this->tablero->notaEfectiva($a->id, $e->id) !== null);
 
                     foreach ($estudiantes as $e) {
-                        $v = $this->tablero->nota($a->id, $e->id);
+                        $v = $this->tablero->notaEfectiva($a->id, $e->id);
                         $tipo = match (true) {
                             $v !== null && BigDecimal::of($v)->isEqualTo($escala->minimo) => 'cero',
                             $v === null && $aplicada => 'vacia',
@@ -142,8 +142,8 @@ final class CierrePeriodo
             foreach ($d->componentes as $c) {
                 $notas = [];
                 foreach ($c->actividades as $a) {
-                    $v = $this->tablero->nota($a->id, $e->id);
-                    $aplicada = $estudiantes->contains(fn ($o) => $this->tablero->nota($a->id, $o->id) !== null);
+                    $v = $this->tablero->notaEfectiva($a->id, $e->id);
+                    $aplicada = $estudiantes->contains(fn ($o) => $this->tablero->notaEfectiva($a->id, $o->id) !== null);
                     if ($v === null && $aplicada) {
                         $v = $escala->minimo;
                         $hayVacias = true;

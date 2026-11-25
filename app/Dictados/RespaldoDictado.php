@@ -2,8 +2,11 @@
 
 namespace App\Dictados;
 
+use App\Models\Actividad;
 use App\Models\Dictado;
+use App\Models\Division;
 use App\Models\NotaCambio;
+use App\Models\SegundaOportunidad;
 
 /**
  * Respaldo completo de un dictado en un archivo JSON (3.1.10, principio «el contenido es del
@@ -70,6 +73,17 @@ final class RespaldoDictado
                     'nuevo' => $c->valor_nuevo,
                     'origen' => $c->origen,
                     'motivo' => $c->motivo,
+                ])->values(),
+            'segundas_oportunidades' => SegundaOportunidad::query()->whereIn('estudiante_id', $dictado->estudiantes->pluck('id'))
+                ->with('ambito')->orderBy('id')->get()
+                ->map(fn (SegundaOportunidad $s) => [
+                    'documento' => $dictado->estudiantes->firstWhere('id', $s->estudiante_id)?->documento,
+                    'tipo' => $s->tipo,
+                    'sobre' => $s->ambito instanceof Actividad ? 'actividad: '.$s->ambito->nombre
+                        : ($s->ambito instanceof Division ? 'corte: '.$s->ambito->nombre : 'materia'),
+                    'valor' => $s->valor, 'regla' => $s->regla, 'tope' => $s->tope,
+                    'fecha' => $s->fecha?->toDateString(), 'motivo' => $s->motivo,
+                    'anulada_en' => $s->anulada_en?->toIso8601String(), 'motivo_anulacion' => $s->motivo_anulacion,
                 ])->values(),
         ];
     }

@@ -34,6 +34,10 @@
         </tbody>
     </table>
 
+    <h2>Segundas oportunidades</h2>
+    <p>Supletorios, recuperaciones y habilitaciones del periodo: <a href="{{ route('segundas.index', $dictado) }}">ver la lista</a>.
+        Se registran desde el registro de notas, con el enlace «2ª oportunidad» junto a cada estudiante.</p>
+
     <h2>Respaldo</h2>
     <p>Descargue un archivo con toda la información del periodo: estructura, estudiantes, notas y bitácora de cambios.
         Es un JSON legible por cualquier herramienta. <a href="{{ route('respaldo', $dictado) }}">Descargar respaldo</a></p>

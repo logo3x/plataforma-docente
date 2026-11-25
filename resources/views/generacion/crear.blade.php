@@ -26,7 +26,17 @@
             <div class="campo"><label for="motor_id">Motor</label>
                 <select id="motor_id" name="motor_id">@foreach ($motores as $m)<option value="{{ $m->id }}">{{ $m->nombre }} ({{ $m->es_local ? 'local' : 'nube' }})</option>@endforeach</select></div>
         </div>
-        <div class="campo"><label for="tema">Tema</label><input id="tema" name="tema" type="text" value="{{ old('tema') }}" required placeholder="Arreglos, recorridos y funciones de orden superior"></div>
+        @if ($unidades->flatMap->hijos->isNotEmpty())
+            <fieldset class="campo" style="border:0;padding:0"><legend style="font-weight:600">Temas del temario</legend>
+                @foreach ($unidades as $u)
+                    @continue($u->hijos->isEmpty())
+                    <p style="margin:.3rem 0 .1rem" class="suave">{{ $u->titulo }}</p>
+                    @foreach ($u->hijos as $t)<label style="font-weight:400;display:inline-block;margin-right:1rem"><input type="checkbox" name="temas[]" value="{{ $t->id }}" @checked(in_array($t->id, old('temas', [])))> {{ $t->titulo }}</label>@endforeach
+                @endforeach
+                <p class="suave" style="margin:.3rem 0 0">Si elige un grupo, la IA recibe además qué temas ya vio según la lista de chequeo y cuáles no debe evaluar.</p>
+            </fieldset>
+        @endif
+        <div class="campo"><label for="tema">{{ $unidades->flatMap->hijos->isNotEmpty() ? 'Precisiones del tema (opcional)' : 'Tema' }}</label><input id="tema" name="tema" type="text" value="{{ old('tema') }}" placeholder="Arreglos, recorridos y funciones de orden superior"></div>
 
         <fieldset class="campo" style="border:0;padding:0"><legend style="font-weight:600">Cantidad de ítems por tipo</legend>
             <div class="rejilla" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">

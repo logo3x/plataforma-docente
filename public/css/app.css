@@ -102,3 +102,5 @@ mark { background: #fde68a; color: inherit; }
 .alerta-chip { display:inline-block; font-size:.8rem; padding:.05rem .45rem; border-radius:999px; background: var(--pend-fondo); color: var(--pend); margin: .1rem .15rem 0 0; }
 textarea { width: 100%; padding: .5rem .6rem; border: 1px solid #6b7280; border-radius: var(--radio); font-family: ui-monospace, Consolas, monospace; font-size: .9rem; color: var(--texto); }
 .correcta { font-weight: 700; color: var(--ok); }
+.barra-avance { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; margin-bottom: .5rem; }
+.barra-avance div { height: 100%; background: var(--cian); }

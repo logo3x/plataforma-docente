@@ -14,7 +14,7 @@
         <button class="boton" type="submit">Guardar perfil</button>
     </form>
 
-    @foreach (['contexto' => 'Capa 1 — Contexto general', 'materia' => 'Capa 2 — Estilo por materia', 'banco' => 'Capa 3 — Tarea: generar cuestionario o parcial'] as $clave => $titulo)
+    @foreach (['contexto' => 'Capa 1 — Contexto general', 'materia' => 'Capa 2 — Estilo por materia', 'banco' => 'Capa 3 — Tarea: generar cuestionario o parcial', 'temario' => 'Capa 3 — Tarea: extraer el temario del plan', 'sugerencias' => 'Capa 3 — Tarea: sugerir organización de la clase'] as $clave => $titulo)
         <section class="tarjeta">
             <h2 style="margin-top:0">{{ $titulo }} <span class="suave">· {{ $plantillas[$clave]['version'] ? 'versión '.$plantillas[$clave]['version'] : 'de fábrica' }}</span></h2>
             <form method="POST" action="{{ route('ia.plantillas.guardar') }}">

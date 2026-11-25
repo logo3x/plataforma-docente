@@ -16,6 +16,7 @@ use App\Http\Controllers\MotorIaController;
 use App\Http\Controllers\PlantillasIaController;
 use App\Http\Controllers\RegistroController;
 use App\Http\Controllers\SeguridadController;
+use App\Http\Controllers\TemarioController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/inicio');
@@ -68,6 +69,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/materias/{materia}/contenido', [ContenidoController::class, 'store'])->name('contenido.store');
     Route::get('/contenido/{contenido}', [ContenidoController::class, 'show'])->name('contenido.show');
     Route::delete('/contenido/{contenido}', [ContenidoController::class, 'destroy'])->name('contenido.destroy');
+    Route::get('/materias/{materia}/temario', [TemarioController::class, 'show'])->name('temario.show');
+    Route::post('/materias/{materia}/temario/extraer', [TemarioController::class, 'extraer'])->name('temario.extraer');
+    Route::post('/materias/{materia}/temario/sugerir', [TemarioController::class, 'sugerir'])->name('temario.sugerir');
+    Route::get('/temario/borradores/{generacion}', [TemarioController::class, 'borrador'])->name('temario.borrador');
+    Route::put('/temario/borradores/{generacion}', [TemarioController::class, 'editar'])->name('temario.editar');
+    Route::post('/temario/borradores/{generacion}/aplicar', [TemarioController::class, 'aplicar'])->name('temario.aplicar');
+    Route::post('/temario/borradores/{generacion}/descartar', [TemarioController::class, 'descartar'])->name('temario.descartar');
     Route::get('/materias/{materia}/generar', [GeneracionBancoController::class, 'create'])->name('generacion.create');
     Route::post('/materias/{materia}/generar/prompt', [GeneracionBancoController::class, 'preparar'])->name('generacion.preparar');
     Route::post('/materias/{materia}/generar', [GeneracionBancoController::class, 'generar'])->name('generacion.generar');

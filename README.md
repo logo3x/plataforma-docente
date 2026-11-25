@@ -18,7 +18,8 @@ Lo que ya se puede usar en un semestre real:
 6. **Cerrar el periodo.** Qué nota necesita cada estudiante, quiénes están al margen, quiénes aprueban solo por una vacía o por redondeo, y revisión de ceros ordenada por cercanía al límite.
 7. **Aplicar y calificar exámenes digitales.** Se importa el banco en JSON y se descarga el examen: un HTML que funciona sin internet, no lleva respuestas, guarda solo y cifra la entrega. Luego se suben las entregas y el calificador descifra, identifica al estudiante y al examen, genera alertas, ejecuta los retos de código en el navegador, califica las abiertas por pregunta y pasa las notas al registro, también en grupo.
 8. **Generar el banco con IA.** Se carga el material de la materia (PDF, Word, PowerPoint, texto) y se arma el prompt con tres capas: su perfil, el estilo de la materia y la tarea. El prompt se revisa y se edita antes de enviarlo. La IA devuelve un borrador que se valida igual que un banco importado; usted lo corrige, a mano o pidiéndole a la IA, y lo guarda solo cuando lo aprueba. Funciona con Ollama o LM Studio en local, o con Claude en la nube.
-9. **Entregar las notas.** Excel con todas las notas, planilla CSV para Excel en español y respaldo completo en JSON.
+9. **Organizar la materia con su temario.** La IA extrae unidades, temas y resultados de aprendizaje del plan curricular como borrador; usted lo aprueba y lo ajusta, o lo arma a mano. La lista de chequeo de cada grupo está a un clic en el registro de notas, y lo que marca como visto es lo único que la IA puede evaluar para ese grupo. La IA también sugiere, tema por tema, cómo organizar la clase.
+10. **Entregar las notas.** Excel con todas las notas, planilla CSV para Excel en español y respaldo completo en JSON.
 
 Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 
@@ -43,6 +44,7 @@ Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 | Recepción de entregas: descifrado con la clave del periodo, examen reconocido por identificador, entrega en la actividad equivocada, identidad manipulada, otro grupo, duplicadas, alertas de sesión, código idéntico aunque se quiten comentarios | `app/Evaluacion/ProcesadorEntregas.php`, `docs/formato-entrega.md` | 6.1, 6.3, 6.11 |
 | Calificador: planilla con indicadores, retos ejecutados en el navegador del docente, abiertas por pregunta con texto legible y resaltado de términos, detalle autoexplicativo, paso al registro (incluida la entrega grupal) | `app/Http/Controllers/CalificadorController.php`, `app/Livewire/CalificarAbiertas.php` | 6.2, 6.4, 6.6, 6.7, 6.8 |
 | Generación del banco con IA: motores configurables (local u online, nunca cae en silencio a otro), repositorio de contenido con extracción de texto, prompts de tres capas versionados, prompt editable, borrador validado, corrección por IA, ajuste de pesos, aprobación explícita y trazabilidad | `app/Evaluacion/GeneradorBanco.php`, `app/IA/`, `/materias/{materia}/generar` | 1.5, 7, 7.3, 7.4, 8 |
+| Plan curricular y temario: extracción con IA como borrador, editor manual, resultados de aprendizaje, sugerencias por tema que el docente toma o descarta, lista de chequeo por grupo y alcance real en la capa 2 del prompt | `app/Temario/ServicioTemario.php`, `app/Livewire/EditorTemario.php`, `app/Livewire/ListaChequeo.php` | 7.1 |
 | Exportación: Excel con una hoja por corte y planilla; CSV con `;` y BOM; un periodo incompleto no sale como nota final | `app/Notas/ExportadorNotas.php` | 3.1.11, 3.1.14 |
 | Cierre: simulador de lo que necesita cada estudiante (meta redondeada hacia arriba), al margen, aprobados por vacía o por redondeo, revisión de ceros y vacías | `app/Notas/CierrePeriodo.php`, `/grupos/{grupo}/cierre` | 3.7 |
 | Edición de estudiante y retiro del grupo sin perder notas | `app/Http/Controllers/EstudianteController.php` | 3.4.5, 3.4.6 |
@@ -53,7 +55,7 @@ Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 - **Adaptador del calificador HTML anterior**, para migrar las entregas del corte en curso. Hace falta un archivo de entrega real y el calificador actual.
 - Retos con DOM (HTML y CSS) y vista previa: hoy los retos son de JavaScript puro, en un Worker.
 - Versiones A/B y segundo banco, modo de ensayo con las pruebas de la sección 9.2 en pantalla, anulación de ítems y plantillas de comentarios desde la interfaz.
-- Más generadores del catálogo 7.4 (rúbrica, unidad didáctica, ejemplos prácticos), plan curricular y temario con lista de chequeo (7.1), supletorios y habilitaciones en pantalla, y restaurar un respaldo.
+- Más generadores del catálogo 7.4 (rúbrica, unidad didáctica, ejemplos prácticos), supletorios y habilitaciones en pantalla, estadísticas por ítem ligadas al temario (6.10.4) y restaurar un respaldo.
 
 ### Reglas que el código garantiza
 
@@ -83,4 +85,4 @@ php artisan test
 ## Próximos pasos
 
 1. Adaptador de entregas del calificador HTML anterior.
-2. Plan curricular, temario y lista de chequeo (7.1), con el alcance por grupo alimentando la capa 2.
+2. Estadísticas de grupo y análisis de ítems (6.10), con los temas de bajo desempeño resaltados en la lista de chequeo.

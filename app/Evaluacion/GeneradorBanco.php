@@ -13,7 +13,9 @@ use App\Models\Dictado;
 use App\Models\GeneracionIa;
 use App\Models\Materia;
 use App\Models\Pregunta;
+use App\Models\TemarioItem;
 use App\Models\User;
+use App\Temario\ServicioTemario;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Support\Str;
@@ -41,6 +43,8 @@ final class GeneradorBanco
      */
     public function preparar(User $docente, Materia $materia, Dictado $dictado, array $op): array
     {
+        // Los campos opcionales del formulario pueden no venir
+        $op += ['tema' => '', 'grupo' => null, 'obligatorio' => null, 'excluido' => null, 'contenidos' => [], 'temas' => []];
         $cantidades = array_filter($op['cantidades'], fn ($n) => (int) $n > 0);
         if ($cantidades === []) {
             throw new InvalidArgumentException('Indique cuántos ítems de cada tipo quiere.');
@@ -52,9 +56,18 @@ final class GeneradorBanco
         $previas = Pregunta::query()->where('materia_id', $materia->id)->latest()->limit(40)->get()
             ->map(fn ($p) => '- '.Str::limit($p->enunciado['texto'] ?? '', 140))->join("\n");
 
+        // Temas elegidos del temario (7.1) y alcance real del grupo según la lista de chequeo (7.1.5)
+        $temas = TemarioItem::query()->where('materia_id', $materia->id)->where('tipo', 'tema')->whereIn('id', $op['temas'] ?? [])->orderBy('orden')->pluck('titulo');
+        $tema = trim($temas->join('; ').($temas->isNotEmpty() && filled($op['tema']) ? '. ' : '').($op['tema'] ?? ''));
+        if ($tema === '') {
+            throw new InvalidArgumentException('Escriba el tema o elija temas del temario.');
+        }
+        $grupo = filled($op['grupo'] ?? null) ? $dictado->grupos()->where('nombre', $op['grupo'])->first() : null;
+        $alcance = app(ServicioTemario::class)->alcance($materia, $grupo);
+
         $prompt = $this->prompts->construir($docente, $materia, $dictado, 'banco', [
             'tipo' => $op['tipo'],
-            'tema' => $op['tema'],
+            'tema' => $tema,
             'grupo' => $op['grupo'] ?: 'todos los grupos del periodo',
             'valor' => $op['valor'],
             'cantidades' => collect($cantidades)->map(fn ($n, $t) => "{$n} de tipo «{$t}» (".self::TIPOS[$t].')')->join('; '),
@@ -62,7 +75,7 @@ final class GeneradorBanco
             'excluido' => $op['excluido'] ?: '—',
             'sigla' => $sigla,
             'no_repetir' => $previas ? "- No repita estas preguntas que ya existen en la materia:\n{$previas}" : '',
-        ], $contenidos);
+        ], $contenidos, $alcance ? ['alcance_grupo' => $alcance] : []);
 
         return $prompt + ['sigla' => $sigla];
     }

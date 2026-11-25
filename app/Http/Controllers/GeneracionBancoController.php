@@ -28,7 +28,8 @@ class GeneracionBancoController extends Controller
             'dictados' => $materia->dictados()->with('grupos')->latest()->get(),
             'contenidos' => $materia->contenidos()->latest()->get(['id', 'titulo', 'tipo', 'texto_extraido']),
             'motores' => ConfigMotorIa::query()->where('user_id', $request->user()->id)->orderByDesc('predeterminado')->get(),
-            'borradores' => GeneracionIa::query()->where('materia_id', $materia->id)->where('estado', 'borrador')->latest()->limit(10)->get(),
+            'borradores' => GeneracionIa::query()->where('materia_id', $materia->id)->where('tarea', 'banco')->where('estado', 'borrador')->latest()->limit(10)->get(),
+            'unidades' => $materia->temario()->whereNull('parent_id')->with(['hijos' => fn ($q) => $q->where('tipo', 'tema')->orderBy('orden')])->get(),
         ]);
     }
 
@@ -39,7 +40,9 @@ class GeneracionBancoController extends Controller
         $d = $request->validate([
             'dictado_id' => ['required', 'integer'],
             'tipo' => ['required', Rule::in(['quiz', 'parcial', 'taller'])],
-            'tema' => ['required', 'string', 'max:500'],
+            'tema' => ['nullable', 'string', 'max:500'],
+            'temas' => ['nullable', 'array'],
+            'temas.*' => ['integer'],
             'grupo' => ['nullable', 'string', 'max:60'],
             'valor' => ['required', 'numeric', 'gt:0'],
             'cantidades' => ['required', 'array'],
@@ -53,7 +56,7 @@ class GeneracionBancoController extends Controller
         $dictado = $materia->dictados()->findOrFail($d['dictado_id']);
 
         try {
-            $prompt = $generador->preparar($request->user(), $materia, $dictado, $d + ['contenidos' => $d['contenidos'] ?? []]);
+            $prompt = $generador->preparar($request->user(), $materia, $dictado, $d + ['contenidos' => $d['contenidos'] ?? [], 'temas' => $d['temas'] ?? [], 'tema' => $d['tema'] ?? '']);
         } catch (InvalidArgumentException $e) {
             return back()->withInput()->withErrors(['cantidades' => $e->getMessage()]);
         }

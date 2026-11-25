@@ -78,6 +78,32 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
  ]}
 Use solo los tipos pedidos en «Cantidad de ítems».
 TXT,
+
+        'temario' => <<<'TXT'
+Tarea: lea el plan curricular de la materia y extraiga su temario como estructura.
+
+- Identifique las unidades en el orden del documento, los temas de cada unidad y los resultados de aprendizaje.
+- Use los títulos del documento; no invente temas que no estén en el plan.
+- «descripcion» es una frase corta con lo que cubre el tema (opcional).
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después:
+{"unidades":[{"titulo":"Unidad 1: ...","resultados":["El estudiante ..."],"temas":[{"titulo":"...","descripcion":"..."}]}]}
+TXT,
+        'sugerencias' => <<<'TXT'
+Tarea: sugiera cómo organizar la clase para cada tema del temario. Son sugerencias: el docente decide.
+
+Temario (id: título):
+{{temario}}
+
+Material disponible en el repositorio:
+{{materiales}}
+
+Para cada tema, en dos o tres frases: en qué orden conviene verlo, qué material del repositorio usar
+y qué actividad práctica encaja (quiz, taller, reto de código, debate). Sea concreto; nada de relleno.
+
+Formato de salida: responda SOLO con un objeto JSON:
+{"sugerencias":[{"id":123,"sugerencia":"..."}]}
+TXT,
     ],
 
     /* Valores por defecto de la capa 1 (el docente los cambia en su perfil). */

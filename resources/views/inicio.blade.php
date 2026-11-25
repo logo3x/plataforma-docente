@@ -12,6 +12,7 @@
             <p style="margin:.25rem 0">
                 <a href="{{ route('artefactos.index', $materia) }}">Actividades evaluables y calificador</a> ·
                 <a href="{{ route('generacion.create', $materia) }}">Generar con IA</a> ·
+                <a href="{{ route('temario.show', $materia) }}">Temario</a> ·
                 <a href="{{ route('contenido.index', $materia) }}">Contenido</a> ·
                 <a href="{{ route('materias.estilo', $materia) }}">Estilo para la IA</a>
             </p>

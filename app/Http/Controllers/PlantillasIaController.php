@@ -23,7 +23,7 @@ class PlantillasIaController extends Controller
     {
         return view('ia.plantillas', [
             'perfil' => $prompts->perfil($request->user()),
-            'plantillas' => collect(['contexto', 'materia', 'banco'])->mapWithKeys(fn ($c) => [$c => $prompts->plantilla($request->user(), $c)]),
+            'plantillas' => collect(['contexto', 'materia', 'banco', 'temario', 'sugerencias'])->mapWithKeys(fn ($c) => [$c => $prompts->plantilla($request->user(), $c)]),
         ]);
     }
 
@@ -37,7 +37,7 @@ class PlantillasIaController extends Controller
 
     public function plantilla(Request $request, ConstructorPrompt $prompts): RedirectResponse
     {
-        $d = $request->validate(['clave' => ['required', Rule::in(['contexto', 'materia', 'banco'])], 'cuerpo' => ['required', 'string', 'max:20000']]);
+        $d = $request->validate(['clave' => ['required', Rule::in(['contexto', 'materia', 'banco', 'temario', 'sugerencias'])], 'cuerpo' => ['required', 'string', 'max:20000']]);
         $p = $prompts->guardarPlantilla($request->user(), $d['clave'], $d['cuerpo']);
 
         return back()->with('estado', "Plantilla «{$d['clave']}» guardada como versión {$p->version}.");
@@ -45,7 +45,7 @@ class PlantillasIaController extends Controller
 
     public function restaurar(Request $request, ConstructorPrompt $prompts): RedirectResponse
     {
-        $d = $request->validate(['clave' => ['required', Rule::in(['contexto', 'materia', 'banco'])]]);
+        $d = $request->validate(['clave' => ['required', Rule::in(['contexto', 'materia', 'banco', 'temario', 'sugerencias'])]]);
         $p = $prompts->guardarPlantilla($request->user(), $d['clave'], config("ia.plantillas.{$d['clave']}"));
 
         return back()->with('estado', "Plantilla «{$d['clave']}» restaurada a la de fábrica (versión {$p->version}).");

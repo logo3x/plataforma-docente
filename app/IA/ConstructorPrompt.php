@@ -49,7 +49,7 @@ final class ConstructorPrompt
      * @param  Collection<int, Contenido>  $contenidos
      * @return array{sistema: string, usuario: string, plantillas: array, contenidos: array, recortado: bool}
      */
-    public function construir(User $docente, Materia $materia, Dictado $dictado, string $claveTarea, array $tarea, Collection $contenidos): array
+    public function construir(User $docente, Materia $materia, Dictado $dictado, string $claveTarea, array $tarea, Collection $contenidos, array $capa2 = []): array
     {
         $escala = $dictado->escala();
         $estilo = $materia->estilo ?? [];
@@ -67,7 +67,7 @@ final class ConstructorPrompt
         $p3 = $this->plantilla($docente, $claveTarea);
 
         $capa1 = $this->llenar($p1['cuerpo'], $this->perfil($docente) + $comunes);
-        $capa2 = $this->llenar($p2['cuerpo'], [
+        $capa2 = $this->llenar($p2['cuerpo'], array_merge([
             'materia' => $materia->nombre,
             'codigo_materia' => $materia->codigo ?? '—',
             'unidades' => $estilo['unidades'] ?? '—',
@@ -77,7 +77,7 @@ final class ConstructorPrompt
             'tono' => $estilo['tono'] ?? 'directo y profesional',
             'tipo_verificacion' => $estilo['tipo_verificacion'] ?? '—',
             'glosario' => $estilo['glosario'] ?? '—',
-        ]);
+        ], $capa2));
         $capa3 = $this->llenar($p3['cuerpo'], $tarea + $comunes);
 
         [$material, $recortado, $meta] = $this->material($contenidos);

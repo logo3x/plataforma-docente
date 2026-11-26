@@ -56,6 +56,7 @@ Todos llevan `tipo`, `enunciado` y `peso`. Opcionales: `tema`, `dificultad` (`ba
 - `prueba` es una expresión que debe dar exactamente `true`, por ejemplo `total([]) === 0`. Se evalúa después del código del estudiante, en un Worker aislado, sin red y con límite de tiempo.
 - `nombre` es lo que se lee en el detalle: escríbalo en lenguaje natural («Un carrito vacío suma cero»), no como expresión técnica (6.4).
 - Una verificación con `"reservada": true` no se muestra al estudiante. El examen solo anuncia cuántas hay (4.3.3).
+- En el informe del estudiante, ya calificada la actividad, las reservadas salen **completas** (nombre, resultado y valor) o **solo como cantidad** («2 verificaciones reservadas · superó 1 de 2 · 1.5 de 2.5»), según la opción `reservadas_informe` del panel de configuración (decisión pendiente 8). Por defecto, solo la cantidad en los parciales, cuyo banco se reutiliza en otra jornada u otro semestre, y completas en talleres y quices. El docente las ve siempre completas en el detalle de la entrega.
 
 ### Retos de HTML y CSS (`"lenguaje": "html"`)
 

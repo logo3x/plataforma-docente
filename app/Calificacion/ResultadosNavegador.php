@@ -87,6 +87,7 @@ final class ResultadosNavegador
             // 6.4.1: nombre legible en español, resultado y valor
             $detalle[] = [
                 'nombre' => $v['nombre'],
+                'reservada' => (bool) ($v['reservada'] ?? false),
                 'superada' => $superada,
                 'valor' => Calculo::normalizar($valor),
             ];

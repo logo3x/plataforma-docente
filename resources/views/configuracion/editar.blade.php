@@ -53,6 +53,13 @@
                 <div class="campo"><label for="tiempo_ejecucion_ms">Límite por ejecución (milisegundos)</label><input id="tiempo_ejecucion_ms" name="tiempo_ejecucion_ms" type="number" min="500" max="20000" step="100" value="{{ old('tiempo_ejecucion_ms', $c['tiempo_ejecucion_ms']) }}"></div>
             </div>
             <label style="font-weight:400"><input type="checkbox" name="anexo" value="1" @checked(old('anexo', $c['anexo']))> La parte práctica se entrega como anexo aparte (recordar al finalizar)</label>
+            <fieldset class="campo" style="border:0;padding:0;margin-top:.75rem"><legend style="font-weight:600">Verificaciones reservadas en el informe del estudiante</legend>
+                @foreach ($CA::RESERVADAS_INFORME as $k => $v)
+                    <label style="font-weight:400;display:block"><input type="radio" name="reservadas_informe" value="{{ $k }}" @checked(old('reservadas_informe', $c['reservadas_informe']) === $k)> {{ $v }}</label>
+                @endforeach
+                <p class="suave" style="margin:.2rem 0 0">Las reservadas no se ven durante el examen. Si va a usar este banco en otra jornada o en otro semestre,
+                    nombrarlas en el informe las da a conocer. Usted siempre las ve completas en el detalle de cada entrega.</p>
+            </fieldset>
         </section>
 
         <div class="fila">

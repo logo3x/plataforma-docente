@@ -57,9 +57,23 @@
                         {{ $d['alcance'] ?? \App\Calificacion\RevisionEstatica::ALCANCE }}</p>
                 @endif
                 @if (! empty($d['verificaciones']))
+                    {{-- Decisión 8: en el informe del estudiante, las reservadas completas o solo su cantidad.
+                         Las entregas calificadas antes de guardar la marca se reconocen por el nombre en la clave. --}}
+                    @php($nombresReservadas = collect($p->clave['verificaciones'] ?? [])->filter(fn ($x) => ! empty($x['reservada']))->pluck('nombre')->all())
+                    @php($esReservada = fn ($v) => (bool) ($v['reservada'] ?? in_array($v['nombre'], $nombresReservadas, true)))
+                    @php($soloCantidad = ($reservadas ?? 'completas') === 'cantidad')
+                    @php($filas = collect($d['verificaciones'])->reject(fn ($v) => $soloCantidad && $esReservada($v)))
+                    @php($ocultas = $soloCantidad ? collect($d['verificaciones'])->filter($esReservada) : collect())
+                    @php($si = empty($d['estatica']) ? ['✓ Superada', '✗ No superada'] : ['✓ Cumple', '✗ No cumple'])
                     <table><thead><tr><th>{{ empty($d['estatica']) ? 'Verificación' : 'Criterio revisado' }}</th><th>Resultado</th><th class="num">Valor</th></tr></thead><tbody>
-                        @foreach ($d['verificaciones'] as $v)<tr><td>{{ $v['nombre'] }}@if (! empty($v['nota']))<div class="suave">{{ $v['nota'] }}</div>@endif</td>
-                            <td>{{ $v['superada'] ? (empty($d['estatica']) ? '✓ Superada' : '✓ Cumple') : (empty($d['estatica']) ? '✗ No superada' : '✗ No cumple') }}</td><td class="num">{{ $num($v['valor']) }}</td></tr>@endforeach
+                        @foreach ($filas as $v)<tr><td>{{ $v['nombre'] }}@if ($esReservada($v)) <span class="etiqueta-tipo">reservada</span>@endif @if (! empty($v['nota']))<div class="suave">{{ $v['nota'] }}</div>@endif</td>
+                            <td>{{ $v['superada'] ? $si[0] : $si[1] }}</td><td class="num">{{ $num($v['valor']) }}</td></tr>@endforeach
+                        @if ($ocultas->isNotEmpty())
+                            <tr class="fila-reservadas"><td>{{ $ocultas->count() === 1 ? 'Una verificación reservada' : $ocultas->count().' verificaciones reservadas' }}
+                                <div class="suave">No se nombran: el examen se sigue usando.</div></td>
+                                <td>{{ empty($d['estatica']) ? 'Superó' : 'Cumplió' }} {{ $ocultas->where('superada', true)->count() }} de {{ $ocultas->count() }}</td>
+                                <td class="num">{{ $num((string) $ocultas->where('superada', true)->sum(fn ($v) => (float) $v['valor'])) }} de {{ $num((string) $ocultas->sum(fn ($v) => (float) $v['valor'])) }}</td></tr>
+                        @endif
                     </tbody></table>
                 @else <p class="suave">Pendiente de ejecutar en el calificador.</p>@endif
                 @foreach ($d['casos'] ?? [] as $c)

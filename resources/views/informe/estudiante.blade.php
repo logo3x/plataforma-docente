@@ -65,7 +65,8 @@ main { max-width: 900px; }
     @elseif ($entrega)
         <h2>Detalle de la calificación</h2>
         <p class="suave">Para cada ítem: el enunciado, su respuesta, la respuesta correcta y el puntaje obtenido sobre el máximo.</p>
-        @include('calificador._items', ['respuestas' => $entrega->respuestas])
+        @include('calificador._items', ['respuestas' => $entrega->respuestas,
+            'reservadas' => $actividad->artefacto ? \App\Evaluacion\ConfiguracionActividad::efectiva($actividad->artefacto)['reservadas_informe'] : 'completas'])
     @elseif ($vigente === null)
         <div class="tarjeta">No hay entrega registrada para esta actividad.</div>
     @endif

@@ -63,7 +63,7 @@ final class RevisionEstatica
             if ($ok) {
                 $total = $total->plus($valor);
             }
-            $detalle[] = ['nombre' => $v['nombre'], 'superada' => $ok, 'valor' => Calculo::normalizar($valor)] + ($nota ? ['nota' => $nota] : []);
+            $detalle[] = ['nombre' => $v['nombre'], 'reservada' => (bool) ($v['reservada'] ?? false), 'superada' => $ok, 'valor' => Calculo::normalizar($valor)] + ($nota ? ['nota' => $nota] : []);
         }
 
         return new ResultadoItem(Calculo::paraGuardar((string) $total), $max, [

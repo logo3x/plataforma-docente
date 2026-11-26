@@ -17,6 +17,12 @@ final class ConfiguracionActividad
         'minimo' => 'Mínimo: solo el estado de la ejecución y la consola',
     ];
 
+    /** Decisión 8: qué ve el estudiante de las verificaciones reservadas en su informe. */
+    public const RESERVADAS_INFORME = [
+        'completas' => 'Completas: cada una con su nombre, su resultado y su valor',
+        'cantidad' => 'Solo la cantidad: cuántas hubo, cuántas superó y lo que sumaron, sin nombrarlas',
+    ];
+
     /** Valores efectivos: lo guardado y, si falta, el valor por defecto según el tipo. */
     public static function efectiva(Artefacto $a): array
     {
@@ -36,6 +42,8 @@ final class ConfiguracionActividad
             'nivel_ayuda' => array_key_exists($c['nivel_ayuda'] ?? '', self::NIVELES_AYUDA) ? $c['nivel_ayuda'] : (in_array($tipo, ['taller', 'manual'], true) ? 'completo' : 'intermedio'),
             'tiempo_ejecucion_ms' => (int) ($c['tiempo_ejecucion_ms'] ?? 2000),
             'anexo' => (bool) ($c['anexo'] ?? false),
+            // En un parcial el banco se reutiliza (otra jornada, otro semestre): nombrar lo reservado lo gasta
+            'reservadas_informe' => array_key_exists($c['reservadas_informe'] ?? '', self::RESERVADAS_INFORME) ? $c['reservadas_informe'] : ($tipo === 'parcial' ? 'cantidad' : 'completas'),
         ];
     }
 
@@ -56,6 +64,7 @@ final class ConfiguracionActividad
             'nivel_ayuda' => ['required', 'in:'.implode(',', array_keys(self::NIVELES_AYUDA))],
             'tiempo_ejecucion_ms' => ['required', 'integer', 'between:500,20000'],
             'anexo' => ['nullable', 'boolean'],
+            'reservadas_informe' => ['nullable', 'in:'.implode(',', array_keys(self::RESERVADAS_INFORME))],
         ];
     }
 
@@ -75,6 +84,7 @@ final class ConfiguracionActividad
             'nivel_ayuda' => $d['nivel_ayuda'],
             'tiempo_ejecucion_ms' => (int) $d['tiempo_ejecucion_ms'],
             'anexo' => (bool) ($d['anexo'] ?? false),
+            'reservadas_informe' => $d['reservadas_informe'] ?? self::efectiva($a)['reservadas_informe'],     // si no llega, se conserva
         ] + ($a->configuracion ?? [])]);
     }
 }

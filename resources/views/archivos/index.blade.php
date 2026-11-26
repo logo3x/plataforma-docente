@@ -63,6 +63,7 @@
                 @if ($primera)<a class="boton boton-sec" href="{{ route('calificador.archivos.calificar', $primera) }}">{{ $entregas->firstWhere('puntaje', null) ? 'Calificar la próxima' : 'Revisar' }}</a>@endif
                 <a class="boton boton-sec" href="{{ route('calificador.devolucion', $actividad) }}">Devolución a los estudiantes</a>
                 <a class="boton boton-sec" href="{{ route('bitacora.index', ['actividad' => $actividad->id]) }}#nueva">Anotar en la bitácora</a>
+                <a class="boton boton-sec" href="{{ route('classroom.actividad', $actividad) }}">Classroom</a>
                 <form method="POST" action="{{ route('calificador.registro', $actividad) }}">@csrf
                     <button class="boton" type="submit" @disabled($calificadas === 0)>Pasar notas al registro</button></form>
             </div>

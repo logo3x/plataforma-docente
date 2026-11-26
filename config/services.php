@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    // Google Classroom (decisión pendiente 4): credenciales OAuth de un proyecto de Google Cloud de la institución
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
 ];

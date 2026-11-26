@@ -19,7 +19,7 @@
         @foreach ($dictado->grupos as $grupo)
             <div class="tarjeta">
                 <h3 style="margin-top:0">{{ $grupo->nombre }}</h3>
-                <p>{{ $grupo->estudiantes_count }} estudiantes</p>
+                <p>{{ $grupo->estudiantes_count }} estudiantes @if ($grupo->classroom_curso_nombre) · <a href="{{ route('classroom.grupo', $grupo) }}">Classroom: {{ $grupo->classroom_curso_nombre }}</a>@endif</p>
                 <div class="fila">
                     <a class="boton" href="{{ route('registro', $grupo) }}">Registro de notas</a>
                     <a class="boton boton-sec" href="{{ route('importacion.create', $grupo) }}">

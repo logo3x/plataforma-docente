@@ -8,6 +8,7 @@ use App\Http\Controllers\CalificadorController;
 use App\Http\Controllers\CargaNotasController;
 use App\Http\Controllers\CatalogoErroresController;
 use App\Http\Controllers\CierreController;
+use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ConfiguracionActividadController;
 use App\Http\Controllers\ContenidoController;
 use App\Http\Controllers\DebateController;
@@ -193,6 +194,17 @@ Route::middleware('auth')->group(function () {
     Route::post('/generaciones/{generacion}/aprobar', [GeneracionBancoController::class, 'aprobar'])->name('generacion.aprobar');
     Route::post('/generaciones/{generacion}/descartar', [GeneracionBancoController::class, 'descartar'])->name('generacion.descartar');
 
+    Route::get('/classroom', [ClassroomController::class, 'index'])->name('classroom.index');
+    Route::get('/classroom/conectar', [ClassroomController::class, 'conectar'])->name('classroom.conectar');
+    Route::get('/classroom/callback', [ClassroomController::class, 'callback'])->name('classroom.callback');
+    Route::post('/classroom/desconectar', [ClassroomController::class, 'desconectar'])->name('classroom.desconectar');
+    Route::get('/grupos/{grupo}/classroom', [ClassroomController::class, 'grupo'])->name('classroom.grupo');
+    Route::post('/grupos/{grupo}/classroom', [ClassroomController::class, 'vincularGrupo'])->name('classroom.grupo.vincular');
+    Route::post('/grupos/{grupo}/classroom/cruzar', [ClassroomController::class, 'cruzar'])->name('classroom.grupo.cruzar');
+    Route::get('/calificador/actividades/{actividad}/classroom', [ClassroomController::class, 'actividad'])->name('classroom.actividad');
+    Route::post('/calificador/actividades/{actividad}/classroom', [ClassroomController::class, 'vincularTarea'])->name('classroom.actividad.vincular');
+    Route::post('/calificador/actividades/{actividad}/classroom/importar', [ClassroomController::class, 'importar'])->name('classroom.actividad.importar');
+    Route::post('/calificador/actividades/{actividad}/classroom/notas', [ClassroomController::class, 'enviar'])->name('classroom.actividad.enviar');
     Route::get('/politica-alertas', [AlertasController::class, 'politica'])->name('alertas.politica');
     Route::put('/politica-alertas', [AlertasController::class, 'guardarPolitica'])->name('alertas.politica.guardar');
     Route::get('/calificador/actividades/{actividad}/alertas', [AlertasController::class, 'index'])->name('alertas.actividad');

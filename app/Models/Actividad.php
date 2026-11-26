@@ -17,6 +17,7 @@ class Actividad extends Model
     protected function casts(): array
     {
         return [
+            'classroom_tarea' => 'array',
             'fecha' => 'date',
             'valor_max' => 'decimal:4',
             'peso_escrita' => 'decimal:4',

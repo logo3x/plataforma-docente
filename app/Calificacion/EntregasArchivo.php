@@ -34,8 +34,18 @@ final class EntregasArchivo
      */
     public function recibir(Actividad $actividad, UploadedFile $archivo): array
     {
-        $nombre = $archivo->getClientOriginalName();
-        $contenido = (string) file_get_contents($archivo->getRealPath());
+        return $this->recibirContenido($actividad, $archivo->getClientOriginalName(), (string) file_get_contents($archivo->getRealPath()),
+            $archivo->getMimeType());
+    }
+
+    /**
+     * El mismo recibo, con el contenido ya en memoria. Si la identidad ya se conoce —por ejemplo, la entrega
+     * viene de Classroom con su autor—, se pasa en $integrantes y no se adivina por el nombre del archivo.
+     *
+     * @return array{estado: string, mensaje: string, entrega: ?Entrega}
+     */
+    public function recibirContenido(Actividad $actividad, string $nombre, string $contenido, ?string $mime = null, ?Collection $integrantes = null, array $extra = []): array
+    {
         $sha = hash('sha256', $contenido);
         $esPdf = str_starts_with($contenido, '%PDF-');
 
@@ -47,18 +57,18 @@ final class EntregasArchivo
             return ['estado' => 'duplicada', 'entrega' => null, 'mensaje' => "{$nombre}: ya se había cargado."];
         }
 
-        $integrantes = $this->reconocer($actividad, $nombre);
-        $ext = strtolower($archivo->getClientOriginalExtension()) ?: ($esPdf ? 'pdf' : 'bin');
-        $ruta = "entregas/{$actividad->id}/{$sha}.".preg_replace('/[^a-z0-9]/', '', $ext);
+        $integrantes ??= $this->reconocer($actividad, $nombre);
+        $ext = strtolower(pathinfo($nombre, PATHINFO_EXTENSION)) ?: ($esPdf ? 'pdf' : 'bin');
+        $ruta = "entregas/{$actividad->id}/{$sha}.".(preg_replace('/[^a-z0-9]/', '', $ext) ?: 'bin');
         Storage::disk('local')->put($ruta, $contenido);
 
-        $entrega = DB::transaction(function () use ($actividad, $nombre, $sha, $ruta, $contenido, $esPdf, $archivo, $integrantes) {
+        $entrega = DB::transaction(function () use ($actividad, $nombre, $sha, $ruta, $contenido, $esPdf, $mime, $integrantes, $extra) {
             $e = $actividad->entregas()->create([
                 'tipo' => 'archivo', 'subida_por_id' => $integrantes->first()?->id, 'ruta' => $ruta, 'sha256' => $sha, 'cifrada' => false,
-                'archivo_nombre' => mb_substr($nombre, 0, 250), 'archivo_mime' => $esPdf ? 'application/pdf' : ($archivo->getMimeType() ?: 'application/octet-stream'),
+                'archivo_nombre' => mb_substr($nombre, 0, 250), 'archivo_mime' => $esPdf ? 'application/pdf' : ($mime ?: 'application/octet-stream'),
                 'archivo_bytes' => strlen($contenido), 'paginas' => $esPdf ? $this->paginas($contenido) : null,
                 'estado_codigo' => 'pendiente', 'procesada_en' => now(),
-            ]);
+            ] + $extra);
             $e->integrantes()->attach($integrantes->pluck('id')->all());
 
             return $e;

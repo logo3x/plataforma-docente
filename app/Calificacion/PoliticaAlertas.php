@@ -28,6 +28,8 @@ final class PoliticaAlertas
         'estudiante_en_dos_entregas' => ['En dos entregas', 'Aparece como integrante de dos entregas de la actividad.', true],
         'grupo_no_cuadra' => ['Otro grupo', 'La entrega es de un grupo distinto al de la actividad.', true],
         'integrante_desconocido' => ['Integrante que no está en la lista', 'Declaró un integrante que no está en el periodo.', true],
+        'autor_distinto' => ['La subió otra persona', 'En Classroom, la entrega la subió alguien distinto a quien la respondió.', true],
+        'entrega_tardia' => ['Entregada tarde', 'Classroom la marcó como entregada después de la fecha límite.', false],
         'pegados' => ['Pegados de texto', 'Pegó texto en los editores.', false],
         'sin_cifrar' => ['Sin cifrar', 'El navegador del aula no permitió cifrar.', false],
         'cierre_automatico' => ['Cierre por tiempo', 'El examen se cerró al agotarse el tiempo.', false],
@@ -126,6 +128,8 @@ final class PoliticaAlertas
             'sin_cifrar' => 'El navegador del equipo no permitió cifrar la entrega.',
             'cierre_automatico' => 'El examen se cerró al agotarse el tiempo.',
             'cierre_docente' => 'El docente finalizó el examen para todo el grupo.',
+            'autor_distinto' => 'En Classroom, la entrega la subió '.($d['subio'] ?? 'otra persona').'.',
+            'entrega_tardia' => 'Classroom registró la entrega después de la fecha límite.',
             default => 'La entrega tuvo una observación.',
         };
     }

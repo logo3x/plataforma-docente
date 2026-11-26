@@ -43,6 +43,8 @@
       el('select', { id: 'grupo' }, D.grupos.map(g => el('option', { value: g, texto: g })))) : null;
     const integrantes = D.grupal ? el('div', {}, el('label', { for: 'integrantes', texto: 'Documentos de los demás integrantes (separados por coma)' }),
       el('input', { type: 'text', id: 'integrantes', inputmode: 'numeric' })) : null;
+    if (D.ensayo) p.append(el('div', { class: 'aviso mal', role: 'note' }, el('strong', { texto: 'EXAMEN DE ENSAYO. ' }),
+      'Para el docente: verifica este equipo antes de aplicar el examen. Su entrega solo sirve en la página de ensayo de la plataforma; no la reparta a los estudiantes.'));
     p.append(
       el('h2', { texto: D.titulo }),
       el('p', { texto: D.materia + ' · ' + D.periodo + ' · Valor ' + D.valor }),
@@ -64,7 +66,7 @@
     const doc = $('#documento').value.replace(/\D/g, '');
     const nombre = $('#nombre').value.trim();
     if (doc.length < 5 || nombre.length < 5) { const e = $('#error-portada'); e.textContent = 'Escriba su documento y su nombre completo.'; e.classList.remove('oculto'); return; }
-    clave = 'plataforma:' + D.sigla + ':' + doc;
+    clave = (D.ensayo ? 'plataforma-ensayo:' : 'plataforma:') + D.sigla + ':' + doc;   // el ensayo nunca pisa el guardado de un estudiante
     const previo = localStorage.getItem(clave);
     if (previo) { E = JSON.parse(previo); E.sesion.restauraciones = (E.sesion.restauraciones || 0) + 1; }
     else {
@@ -77,6 +79,7 @@
     $('#examen').classList.remove('oculto');
     $('#quien').textContent = E.nombre + ' · ' + E.documento;
     renderItems(); guardar(); iniciarReloj(); vigilarFoco(); vigilarConexion();
+    if (D.ensayo) autoverificar();
     if (E.cierre) mostrarCierre();
   }
 
@@ -268,6 +271,40 @@
     sondear(); setInterval(sondear, (D.intervalo_sonda || 20) * 1000);
   }
 
+  // ---------- Modo de ensayo (5.6): verificación del equipo de la sala ----------
+  async function autoverificar() {
+    const panel = $('#ensayo'); panel.classList.remove('oculto'); panel.innerHTML = '';
+    panel.append(el('h2', { texto: 'Verificación de este equipo' }), el('p', { texto: 'Comprobando…' }));
+    const r = [];
+    const chequear = async (nombre, prueba) => { try { const d = await prueba(); r.push({ nombre, ok: true, detalle: d || '' }); } catch (e) { r.push({ nombre, ok: false, detalle: String(e && e.message || e) }); } };
+    await chequear('Autoguardado en este navegador', async () => {
+      const k = 'plataforma-ensayo:prueba'; localStorage.setItem(k, 'ok'); const v = localStorage.getItem(k); localStorage.removeItem(k);
+      if (v !== 'ok') throw new Error('El navegador no conserva lo guardado (¿modo incógnito o almacenamiento bloqueado?).');
+      return 'Las respuestas se guardan y se recuperan si se cierra la ventana.';
+    });
+    await chequear('Cifrado de la entrega', async () => {
+      if (!window.crypto || !crypto.subtle) throw new Error('Este navegador no ofrece cifrado (crypto.subtle): las entregas saldrían sin cifrar.');
+      await cifrar('prueba de ensayo'); return 'Cifra con la clave pública del periodo.';
+    });
+    const casos = [['No compila', 'function (', 'no_compila'], ['Ejecuta con error', 'throw new Error("x")', 'error'],
+      ['Ejecuta sin salida', 'let a = 1;', 'sin_salida'], ['Ejecuta con salida', 'console.log("hola")', 'con_salida'], ['Excede el tiempo', 'while (true) {}', 'tiempo']];
+    for (const [nombre, codigo, esperado] of casos) {
+      await chequear('Entorno de código: «' + nombre + '»', async () => {
+        const res = await ejecutar(codigo, '', esperado === 'tiempo' ? 1000 : (D.tiempo_ms || 2000));
+        if (res.estado !== esperado) throw new Error('Reportó «' + (ETIQUETAS[res.estado] || res.estado) + '» en lugar de «' + nombre + '».');
+        return 'lo reporta bien';
+      });
+    }
+    E.sesion.ensayo = { verificaciones: r, navegador: navigator.userAgent, pantalla: screen.width + '×' + screen.height, fecha: new Date().toISOString() };
+    guardar();
+    const fallas = r.filter(x => !x.ok).length;
+    panel.innerHTML = '';
+    panel.append(el('h2', { texto: 'Verificación de este equipo' }),
+      el('p', { class: fallas ? 'aviso mal' : 'aviso bien', texto: fallas ? fallas + ' verificación(es) fallaron: no aplique el examen en este equipo hasta resolverlo.' : '✓ Este equipo está listo para el examen.' }),
+      el('ul', {}, r.map(x => el('li', {}, (x.ok ? '✓ ' : '✗ ') + x.nombre + (x.detalle ? ': ' + x.detalle : '')))),
+      el('p', { class: 'peso', texto: 'Falta comprobar a mano: pruebe código en un reto (no debe contar salidas), salga a otra pestaña una vez (debe contar una, con su duración) y finalice para subir la entrega de ensayo.' }));
+  }
+
   // ---------- Entrega cifrada (5.4.6, 5.4.7) ----------
   const b64 = (buf) => { let s = ''; new Uint8Array(buf).forEach(b => s += String.fromCharCode(b)); return btoa(s); };
   async function cifrar(texto) {
@@ -291,12 +328,13 @@
     const carga = { sigla: D.sigla, artefacto: D.uuid, documento: E.documento, nombre: E.nombre, grupo: E.grupo, integrantes: E.integrantes,
       inicio: E.inicio, fin: E.cierre.fin, cierre: E.cierre.tipo, respuestas: E.respuestas, sesion: E.sesion };
     const sobre = { formato: 'plataforma-entrega', version: 1, sigla: D.sigla, artefacto: D.uuid, documento: E.documento, generado: new Date().toISOString(), cifrado: null };
+    if (D.ensayo) sobre.ensayo = true;
     try {
       if (!window.crypto || !crypto.subtle) throw new Error('sin cifrado');
       sobre.cifrado = await cifrar(JSON.stringify(carga));
     } catch (e) { sobre.datos_planos = carga; }      // respaldo marcado en el calificador como «sin cifrar»
     const blob = new Blob([JSON.stringify(sobre)], { type: 'application/json' });
-    const a = el('a', { href: URL.createObjectURL(blob), download: D.sigla + '_' + E.documento + '.json' });
+    const a = el('a', { href: URL.createObjectURL(blob), download: (D.ensayo ? 'ENSAYO_' : '') + D.sigla + '_' + E.documento + '.json' });
     document.body.append(a); a.click(); a.remove();
     mostrarCierre(!!sobre.cifrado);
   }
@@ -306,7 +344,8 @@
     $('#examen').querySelectorAll('input, textarea, select').forEach(x => x.disabled = true);
     const c = $('#cierre'); c.classList.remove('oculto'); c.innerHTML = '';
     c.append(el('h2', { texto: 'Examen finalizado' + (E.cierre.tipo === 'automatico' ? ' por tiempo' : '') }),
-      el('p', {}, 'Se descargó el archivo ', el('strong', { texto: D.sigla + '_' + E.documento + '.json' }), '. Entréguelo como le indique el docente.'),
+      el('p', {}, 'Se descargó el archivo ', el('strong', { texto: (D.ensayo ? 'ENSAYO_' : '') + D.sigla + '_' + E.documento + '.json' }),
+        D.ensayo ? '. Súbalo en la página de ensayo de la plataforma para cerrar el ciclo.' : '. Entréguelo como le indique el docente.'),
       cifrada === false ? el('p', { class: 'aviso mal', texto: 'Este navegador no permitió cifrar: la entrega se generó sin cifrar y el docente lo verá marcado.' }) : null,
       D.anexo ? el('p', { class: 'aviso', texto: 'Recuerde subir también el anexo de la parte práctica.' }) : null,
       el('button', { class: 'boton boton-sec', texto: 'Descargar de nuevo', onclick: () => finalizar('descargar') }));

@@ -10,6 +10,7 @@ use App\Http\Controllers\DebateController;
 use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\DictadoController;
 use App\Http\Controllers\EjemploController;
+use App\Http\Controllers\EnsayoController;
 use App\Http\Controllers\EstadisticasController;
 use App\Http\Controllers\EstudianteController;
 use App\Http\Controllers\ExportacionController;
@@ -171,6 +172,9 @@ Route::middleware('auth')->group(function () {
         Route::get('actividades/{actividad}/abiertas', [CalificadorController::class, 'abiertas'])->name('abiertas');
         Route::get('entregas/{entrega}', [CalificadorController::class, 'detalle'])->name('detalle');
         Route::get('actividades/{actividad}/estadisticas', [EstadisticasController::class, 'show'])->name('estadisticas');
+        Route::get('actividades/{actividad}/ensayo', [EnsayoController::class, 'show'])->name('ensayo');
+        Route::get('actividades/{actividad}/ensayo/examen.html', [EnsayoController::class, 'examen'])->name('ensayo.examen');
+        Route::post('actividades/{actividad}/ensayo', [EnsayoController::class, 'subir'])->name('ensayo.subir');
         Route::get('actividades/{actividad}/similitud', [SimilitudController::class, 'index'])->name('similitud');
         Route::get('actividades/{actividad}/similitud/{a}/{b}', [SimilitudController::class, 'ver'])->name('similitud.ver');
         Route::post('actividades/{actividad}/similitud/{a}/{b}', [SimilitudController::class, 'revisar'])->name('similitud.revisar');

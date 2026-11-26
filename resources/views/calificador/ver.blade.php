@@ -19,8 +19,14 @@
     <div class="rejilla">
         <section class="tarjeta">
             <h2 style="margin-top:0">1. Examen</h2>
-            <p>Un archivo HTML que funciona sin internet y no lleva respuestas. Ábralo en un equipo de la sala antes de aplicarlo.</p>
-            <a class="boton" href="{{ route('calificador.examen', $actividad) }}">Descargar examen</a>
+            <p>Un archivo HTML que funciona sin internet y no lleva respuestas.</p>
+            <p>@if ($actividad->artefacto?->ensayado_en)<span class="estado estado-aprobado">✓ Ensayado el {{ $actividad->artefacto->ensayado_en->format('d/m/Y') }}</span>
+                <span class="suave">en {{ $actividad->artefacto->ensayado_equipo }}</span>
+                @else<span class="estado estado-incompleto">Sin ensayar</span> <span class="suave">Pruébelo en un equipo de la sala antes de aplicarlo.</span>@endif</p>
+            <div class="fila">
+                <a class="boton" href="{{ route('calificador.examen', $actividad) }}">Descargar examen</a>
+                <a class="boton boton-sec" href="{{ route('calificador.ensayo', $actividad) }}">Modo de ensayo</a>
+            </div>
         </section>
         <section class="tarjeta">
             <h2 style="margin-top:0">2. Entregas</h2>

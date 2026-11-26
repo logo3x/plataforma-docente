@@ -26,3 +26,5 @@ pre.plantilla input{width:9rem;font-family:inherit;padding:.1rem .3rem}
 .bloqueo{position:fixed;inset:0;background:rgba(11,37,69,.96);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;z-index:50;padding:2rem;font-size:1.2rem}
 table{border-collapse:collapse}td,th{border:1px solid var(--borde);padding:.3rem .5rem}
 .oculto{display:none!important}
+.aviso.bien{border-color:#15803d;background:#dcfce7;color:#14532d}
+.marca-ensayo{display:inline-block;background:#b45309;color:#fff;font-size:.75em;padding:.1rem .5rem;border-radius:4px;letter-spacing:.05em;vertical-align:middle}

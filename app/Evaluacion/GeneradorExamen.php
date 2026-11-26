@@ -15,7 +15,8 @@ final class GeneradorExamen
 {
     public function __construct(private readonly ClavesDictado $claves) {}
 
-    public function html(Actividad $actividad): string
+    /** Con $ensayo, el mismo examen marcado como ensayo (5.6): verifica el equipo y su entrega no cuenta. */
+    public function html(Actividad $actividad, bool $ensayo = false): string
     {
         $artefacto = $actividad->artefacto()->with('items.pregunta')->firstOrFail();
         $dictado = $actividad->componente->division->dictado()->with('materia')->first();
@@ -35,6 +36,7 @@ final class GeneradorExamen
             'intervalo_sonda' => $config['intervalo_sonda'] ?? 20,
             'tiempo_ms' => (int) ($config['tiempo_ejecucion_ms'] ?? 2000),
             'grupal' => (bool) $actividad->es_grupal,
+            'ensayo' => $ensayo,
             'anexo' => (bool) ($config['anexo'] ?? false),
             'grupos' => $actividad->grupos()->pluck('nombre')->all() ?: $dictado->grupos()->pluck('nombre')->all(),
             'clave_publica' => $this->claves->publicaSpkiBase64($dictado),

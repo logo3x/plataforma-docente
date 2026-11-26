@@ -47,6 +47,11 @@ final class ProcesadorEntregas
             return ['estado' => 'rechazada', 'mensaje' => "{$nombreArchivo}: {$e->getMessage()}", 'entrega' => null];
         }
 
+        // Una entrega del examen de ensayo nunca entra como nota (5.6)
+        if (! empty($sobre['ensayo'])) {
+            return ['estado' => 'rechazada', 'entrega' => null, 'mensaje' => "{$nombreArchivo}: es una entrega del examen de ensayo. Súbala en la página de ensayo, no aquí."];
+        }
+
         // Identidad del examen por sigla e identificador (6.1.3, 6.1.4)
         if ($sobre['artefacto'] !== $artefacto->uuid) {
             $otro = Artefacto::query()->where('uuid', $sobre['artefacto'])->orWhere('sigla', $sobre['sigla'])->first();

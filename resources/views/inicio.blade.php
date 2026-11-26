@@ -18,6 +18,7 @@
                 <a href="{{ route('ejemplos.index', $materia) }}">Ejemplos prácticos</a> ·
                 <a href="{{ route('debates.index', $materia) }}">Preguntas de debate</a> ·
                 <a href="{{ route('vocabularios.index', $materia) }}">Vocabulario</a> ·
+                <a href="{{ route('proyectos.index', $materia) }}">Ideas de proyectos</a> ·
                 <a href="{{ route('reclamos.materia', $materia) }}">Reclamos</a> ·
                 <a href="{{ route('contenido.index', $materia) }}">Contenido</a> ·
                 <a href="{{ route('materias.estilo', $materia) }}">Estilo para la IA</a>

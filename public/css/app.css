@@ -116,7 +116,7 @@ table.barras th, table.barras td { border: 0; padding: .2rem .4rem; }
 
 /* Unidad didáctica imprimible */
 .sesion-unidad h2 { margin: 0 0 .25rem; }
-.sesion-unidad dl { display: grid; grid-template-columns: 8rem 1fr; gap: .3rem 1rem; margin: .5rem 0 0; }
+.sesion-unidad dl { display: grid; grid-template-columns: 9.5rem 1fr; gap: .3rem 1rem; margin: .5rem 0 0; }
 .sesion-unidad dt { font-weight: 700; }
 .sesion-unidad dd { margin: 0; white-space: pre-wrap; }
 @media print {

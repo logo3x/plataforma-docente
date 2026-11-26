@@ -52,7 +52,7 @@
             </select>
             <p class="suave" style="margin:.2rem 0 0">La IA recibe el enunciado y la respuesta de referencia. Al aprobar, la rúbrica queda asociada a esa pregunta.</p></div>
         <div class="campo"><label for="proposito">O describa la actividad que se califica</label>
-            <textarea id="proposito" name="proposito" rows="3" placeholder="Sustentación del proyecto final: explicar el diseño de la base de datos y justificar las decisiones">{{ old('proposito') }}</textarea>
+            <textarea id="proposito" name="proposito" rows="3" placeholder="Sustentación del proyecto final: explicar el diseño de la base de datos y justificar las decisiones">{{ old('proposito', request('proposito')) }}</textarea>
             @error('proposito')<div class="error" role="alert">{{ $message }}</div>@enderror</div>
         <div class="rejilla">
             <div class="campo"><label for="dictado_id">Periodo</label>

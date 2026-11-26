@@ -18,6 +18,7 @@ use App\Http\Controllers\InicioController;
 use App\Http\Controllers\MateriaController;
 use App\Http\Controllers\MotorIaController;
 use App\Http\Controllers\PlantillasIaController;
+use App\Http\Controllers\ProyectoController;
 use App\Http\Controllers\ReclamoController;
 use App\Http\Controllers\RegistroController;
 use App\Http\Controllers\RubricaController;
@@ -115,7 +116,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/generaciones/{generacion}/unidad/aprobar', [UnidadDidacticaController::class, 'aprobar'])->name('unidades.aprobar');
     Route::post('/generaciones/{generacion}/unidad/descartar', [UnidadDidacticaController::class, 'descartar'])->name('unidades.descartar');
     // Generadores de material del catálogo (7.4): mismas pantallas y flujo de borrador para cada tipo
-    foreach (['ejemplos' => EjemploController::class, 'debates' => DebateController::class, 'vocabularios' => VocabularioController::class] as $r => $c) {
+    foreach (['ejemplos' => EjemploController::class, 'debates' => DebateController::class, 'vocabularios' => VocabularioController::class, 'proyectos' => ProyectoController::class] as $r => $c) {
         Route::get("/materias/{materia}/{$r}", [$c, 'index'])->name("{$r}.index");
         Route::get("/materias/{materia}/{$r}/nuevo", [$c, 'create'])->name("{$r}.create");
         Route::post("/materias/{materia}/{$r}", [$c, 'store'])->name("{$r}.store");

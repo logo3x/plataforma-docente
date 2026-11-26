@@ -8,6 +8,7 @@ use App\IA\RespuestaRechazada;
 use App\Material\GeneradorMaterial;
 use App\Material\TipoMaterial;
 use App\Models\ConfigMotorIa;
+use App\Models\Dictado;
 use App\Models\GeneracionIa;
 use App\Models\Materia;
 use App\Models\Material;
@@ -42,6 +43,12 @@ abstract class MaterialController extends Controller
     protected function problemasCorreccion(Request $request): array
     {
         return [];
+    }
+
+    /** Ajuste propio del tipo a lo pedido en el formulario de generación, antes de armar el prompt. */
+    protected function ajustarGeneracion(array $d, Materia $materia, Dictado $dictado): array
+    {
+        return $d;
     }
 
     protected function tipo(): TipoMaterial
@@ -142,7 +149,8 @@ abstract class MaterialController extends Controller
         $dictado = $materia->dictados()->findOrFail($d['dictado_id']);
 
         try {
-            $prompt = $this->generador()->preparar($request->user(), $materia, $dictado, $d + ['temas' => [], 'contenidos' => []]);
+            $d = $this->ajustarGeneracion($d + ['temas' => [], 'contenidos' => []], $materia, $dictado);
+            $prompt = $this->generador()->preparar($request->user(), $materia, $dictado, $d);
         } catch (InvalidArgumentException $e) {
             return back()->withInput()->withErrors(['tema' => $e->getMessage()]);
         }

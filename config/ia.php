@@ -227,6 +227,38 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
  ]}
 TXT,
 
+        'proyectos' => <<<'TXT'
+Tarea: proponga ideas de proyecto que integren los temas indicados en un producto concreto, útil para alguien real.
+
+Temas que integra: {{tema}}
+Cantidad:          {{cantidad}} proyectos
+Duración:          {{semanas}} semanas
+Integrantes:       {{integrantes}}
+Contexto:          {{contexto}}
+Grupo:             {{grupo}}
+
+Reglas:
+- Cada proyecto parte de un problema o una necesidad concreta, con un usuario o cliente identificable; no de un tema.
+- Use solo lo que el grupo ya vio: cada proyecto integra varios de los temas indicados y no exige temas que el grupo no ha visto.
+- «entregables» dice qué se entrega al final (producto, informe, presentación…).
+- «hitos» son entregas parciales con su semana; el último cae en la semana {{semanas}}.
+- «criterios» son los aspectos que se evalúan; servirán para armar la rúbrica.
+- «extension» es un reto adicional opcional para quien avance más rápido.
+- «notas_docente» advierte los riesgos típicos y cómo acompañar; no se muestra al estudiante.
+- Varíe la dificultad entre los proyectos y escriba «temas» con los nombres tal como aparecen arriba.
+{{reglas_codigo}}
+- Cíñase al material de referencia y al alcance del grupo.
+{{memoria}}
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"formato":"plataforma-proyectos","version":1,"titulo":"...","proposito":"qué se busca con estos proyectos",
+ "proyectos":[
+  {"titulo":"...","resumen":"una frase","problema":"...","temas":["..."],"dificultad":"baja|media|alta","integrantes":"{{integrantes}}","semanas":"{{semanas}}",
+   "entregables":["..."],"hitos":[{"semana":"2","entrega":"..."},{"semana":"{{semanas}}","entrega":"..."}],
+   "criterios":["..."],"extension":"...","notas_docente":"..."}
+ ]}
+TXT,
+
         'temario' => <<<'TXT'
 Tarea: lea el plan curricular de la materia y extraiga su temario como estructura.
 

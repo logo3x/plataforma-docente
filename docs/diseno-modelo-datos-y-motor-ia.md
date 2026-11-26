@@ -1,7 +1,7 @@
 # Diseño detallado — modelo de datos y motor de IA
 
 Plataforma educativa · basado en el documento de requerimientos v3 y en la revisión (`revision-requerimientos-v3.md`).
-Stack: Laravel 12 o superior, PHP 8.3 o superior, MySQL 8 (o MariaDB 10.6 o superior).
+Stack: Laravel 12 o superior, PHP 8.4 o superior, MySQL 8 (o MariaDB 10.6 o superior).
 
 Este diseño ya incorpora las correcciones propuestas en la revisión:
 

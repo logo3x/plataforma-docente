@@ -2,7 +2,9 @@
 
 ## En el equipo del docente con WAMP (o XAMPP, Laragon)
 
-Requisitos: PHP 8.3 o superior con las extensiones `pdo_mysql` (o `pdo_sqlite`), `mbstring`, `xml`, `zip`, `gd`, `intl`, `fileinfo`; Composer; MySQL 8 o MariaDB 10.6 o superior. **No se necesita Node ni `npm`.**
+Requisitos: PHP 8.4 o superior con las extensiones `pdo_mysql` (o `pdo_sqlite`), `mbstring`, `xml`, `zip`, `gd`, `intl`, `fileinfo`; Composer; MySQL 8 o MariaDB 10.6 o superior. **No se necesita Node ni `npm`.**
+
+Para saber qué PHP tiene, ejecute `php -v`. Si es 8.3 o anterior: en WAMP, descargue el complemento de PHP 8.4 desde la página de WampServer y elíjalo en el menú *PHP → Version*; en XAMPP, instale la versión que trae PHP 8.4; en Laragon, descargue PHP 8.4 y selecciónelo en *PHP → Version*. Use la misma versión en la consola, porque Composer y `php artisan` también la usan.
 
 1. Clone el repositorio dentro de `www` (o donde tenga sus proyectos):
    ```bash

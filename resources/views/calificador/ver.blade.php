@@ -1,7 +1,8 @@
 @php($dictado = $actividad->componente->division->dictado)
 @php($tiposAlerta = ['manipulado' => '⚠ Identidad no coincide', 'grupo_no_cuadra' => 'Otro grupo', 'sin_cifrar' => 'Sin cifrar', 'texto_identico' => 'Texto idéntico',
     'salidas' => 'Salidas', 'pegados' => 'Pegados', 'duracion_anomala' => 'Duración corta', 'cierre_automatico' => 'Cierre por tiempo', 'reconexion' => 'Reconexión',
-    'integrante_desconocido' => 'Integrante no está en la lista', 'estudiante_en_dos_entregas' => 'En dos entregas'])
+    'integrante_desconocido' => 'Integrante no está en la lista', 'estudiante_en_dos_entregas' => 'En dos entregas',
+    'version_no_coincide' => 'Versión distinta a la de su documento'])
 <x-app :titulo="'Calificador — '.$actividad->nombre">
     <div class="migas"><a href="{{ route('inicio') }}">Mis materias</a> ›
         <a href="{{ route('artefactos.index', $dictado->materia) }}">Actividades evaluables</a> › {{ $actividad->nombre }}</div>
@@ -23,8 +24,16 @@
             <p>@if ($actividad->artefacto?->ensayado_en)<span class="estado estado-aprobado">✓ Ensayado el {{ $actividad->artefacto->ensayado_en->format('d/m/Y') }}</span>
                 <span class="suave">en {{ $actividad->artefacto->ensayado_equipo }}</span>
                 @else<span class="estado estado-incompleto">Sin ensayar</span> <span class="suave">Pruébelo en un equipo de la sala antes de aplicarlo.</span>@endif</p>
+            @php($bancos = $actividad->artefacto?->bancos() ?? [1])
+            @php($versiones = $actividad->artefacto?->versiones() ?? [])
+            @if (count($versiones) > 1)
+                <p class="suave">Versiones {{ implode(', ', $versiones) }}: a cada estudiante le toca una según su documento, siempre la misma.
+                    @if (count($bancos) > 1) El banco 2 tiene otros datos: úselo en la otra jornada para que una foto del examen no sirva.@endif</p>
+            @endif
             <div class="fila">
-                <a class="boton" href="{{ route('calificador.examen', $actividad) }}">Descargar examen</a>
+                @foreach ($bancos as $b)
+                    <a @class(['boton', 'boton-sec' => $b === 2]) href="{{ route('calificador.examen', ['actividad' => $actividad, 'banco' => $b]) }}">{{ count($bancos) > 1 ? "Descargar banco {$b} (".implode(' y ', $actividad->artefacto->versionesDelBanco($b)).')' : 'Descargar examen' }}</a>
+                @endforeach
                 <a class="boton boton-sec" href="{{ route('calificador.ensayo', $actividad) }}">Modo de ensayo</a>
             </div>
         </section>
@@ -67,7 +76,7 @@
                 @foreach ($filas as $f)
                     @php($e = $f['entrega'])
                     <tr>
-                        <td>{{ $e->integrantes->map->nombreCompleto()->join(' · ') }}@if (! $e->cifrada) <span class="alerta-chip">sin cifrar</span>@endif</td>
+                        <td>{{ $e->integrantes->map->nombreCompleto()->join(' · ') }}@if (count($versiones) > 1 && $e->version) <span class="suave">· versión {{ $e->version }}</span>@endif @if (! $e->cifrada) <span class="alerta-chip">sin cifrar</span>@endif</td>
                         <td class="num">{{ $e->duracion_seg === null ? '—' : sprintf('%d:%02d', intdiv($e->duracion_seg, 60), $e->duracion_seg % 60) }}</td>
                         <td class="num">{{ rtrim(rtrim(number_format($f['servidor'], 2, '.', ''), '0'), '.') }}</td>
                         <td>@if ($f['retos'])<span class="alerta-chip">{{ $f['retos'] }} reto(s)</span>@endif @if ($f['abiertas'])<span class="alerta-chip">{{ $f['abiertas'] }} abierta(s)</span>@endif @if (! $f['retos'] && ! $f['abiertas'])—@endif</td>

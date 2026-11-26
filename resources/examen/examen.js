@@ -21,6 +21,8 @@
   let cerrado = false;
 
   // ---------- Barajado determinista derivado del documento (5.4.3) ----------
+  // Bits altos del hash: los bajos de FNV-1a casi no mezclan (el último solo depende de la paridad de los caracteres)
+  function versionPara(doc) { const v = D.versiones && D.versiones.length ? D.versiones : ['A']; return v[(semilla(doc + '|' + D.sigla) >>> 16) % v.length]; }
   function semilla(txt) { let h = 2166136261; for (const c of txt) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
   function barajar(lista, txt) {
     let s = semilla(txt); const a = lista.slice();
@@ -75,9 +77,12 @@
         inicio: new Date().toISOString(), respuestas: {}, cierre: null,
         sesion: { salidas: [], pegados: 0, ejecuciones: 0, errores_sintaxis: 0, reconexiones: [], restauraciones: 0, navegador: navigator.userAgent } };
     }
+    // 5.4.2: la versión sale del documento (siempre la misma al reabrir) y solo se muestran sus ítems
+    E.version = E.version || versionPara(E.documento);
+    D.items = D.items.filter(it => (it.version || 'A') === E.version);
     $('#portada').classList.add('oculto');
     $('#examen').classList.remove('oculto');
-    $('#quien').textContent = E.nombre + ' · ' + E.documento;
+    $('#quien').textContent = E.nombre + ' · ' + E.documento + ((D.versiones || []).length > 1 ? ' · versión ' + E.version : '');
     renderItems(); guardar(); iniciarReloj(); vigilarFoco(); vigilarConexion();
     if (D.ensayo) autoverificar();
     if (E.cierre) mostrarCierre();
@@ -326,7 +331,7 @@
     }
     if (!E.cierre) { E.cierre = { tipo, fin: new Date().toISOString() }; guardar(); }
     const carga = { sigla: D.sigla, artefacto: D.uuid, documento: E.documento, nombre: E.nombre, grupo: E.grupo, integrantes: E.integrantes,
-      inicio: E.inicio, fin: E.cierre.fin, cierre: E.cierre.tipo, respuestas: E.respuestas, sesion: E.sesion };
+      inicio: E.inicio, fin: E.cierre.fin, cierre: E.cierre.tipo, respuestas: E.respuestas, sesion: E.sesion, version: E.version };
     const sobre = { formato: 'plataforma-entrega', version: 1, sigla: D.sigla, artefacto: D.uuid, documento: E.documento, generado: new Date().toISOString(), cifrado: null };
     if (D.ensayo) sobre.ensayo = true;
     try {

@@ -83,14 +83,17 @@ class CalificadorController extends Controller
             ->with('estado', 'Actividad aplicada: ya aparece como columna en el registro. Descargue el examen y, después de aplicarlo, suba aquí las entregas.');
     }
 
-    public function examen(Actividad $actividad, GeneradorExamen $generador): Response
+    /** El examen de un banco (5.4.2): el banco 2 es para la otra jornada, con otros datos. */
+    public function examen(Request $request, Actividad $actividad, GeneradorExamen $generador): Response
     {
         $this->autorizar($actividad);
         abort_if($actividad->artefacto_id === null, 404);
+        $banco = $request->integer('banco', 1);
+        abort_unless(in_array($banco, $actividad->artefacto->bancos(), true), 404, 'El examen no tiene ese banco.');
 
-        return response($generador->html($actividad), 200, [
+        return response($generador->html($actividad, banco: $banco), 200, [
             'Content-Type' => 'text/html; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="'.$actividad->artefacto->sigla.'.html"',
+            'Content-Disposition' => 'attachment; filename="'.$actividad->artefacto->sigla.($banco === 2 ? '_banco2' : '').'.html"',
         ]);
     }
 

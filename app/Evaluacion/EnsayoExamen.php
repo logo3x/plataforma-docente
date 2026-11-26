@@ -45,7 +45,9 @@ final class EnsayoExamen
         $verificaciones = $sesion['ensayo']['verificaciones'] ?? [];
         $items = [];
         $puntaje = BigDecimal::zero();
-        foreach ($artefacto->items as $it) {
+        // Solo los ítems de la versión que respondió (5.4.2)
+        $version = in_array($carga['version'] ?? null, $artefacto->versiones(), true) ? $carga['version'] : null;
+        foreach ($artefacto->items->when($version, fn ($c) => $c->where('banco', $version)) as $it) {
             $tipo = $it->pregunta->tipo;
             $respuesta = $carga['respuestas'][(string) $it->id] ?? null;
             $fila = ['numero' => $it->orden + 1, 'tipo' => $tipo, 'enunciado' => $it->pregunta->enunciado['texto'] ?? '', 'peso' => (string) $it->peso, 'respuesta' => $respuesta];
@@ -75,7 +77,7 @@ final class EnsayoExamen
         ]);
         $artefacto->update(['ensayado_en' => $ensayo->created_at, 'ensayado_equipo' => $ensayo->equipo]);
 
-        return ['ensayo' => $ensayo, 'items' => $items, 'sesion' => $sesion + ['salidas' => $salidas]];
+        return ['ensayo' => $ensayo, 'items' => $items, 'sesion' => $sesion + ['salidas' => $salidas], 'version' => count($artefacto->versiones()) > 1 ? $version : null];
     }
 
     /** «Chrome 131 · Windows · 1366×768», a partir del agente del navegador. */

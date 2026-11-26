@@ -21,6 +21,9 @@ final class ImportadorBanco
 {
     public const FORMATO = 'plataforma-banco';
 
+    /** Versiones de un ítem (5.4.2): A y B en el primer banco; 2A y 2B en el segundo, para otra jornada. */
+    public const VERSIONES = ['A', 'B', '2A', '2B'];
+
     public const TIPOS = ['unica', 'vf', 'multiple', 'emparejar', 'ordenar', 'completar', 'abierta', 'reto'];
 
     /**
@@ -45,10 +48,17 @@ final class ImportadorBanco
             return [...$errores, 'El banco no tiene ítems.'];
         }
 
-        $suma = BigDecimal::zero();
+        $sumas = [];
+        $firmas = [];
         foreach (array_values($items) as $i => $it) {
             $n = $i + 1;
             $tipo = $it['tipo'] ?? null;
+            $version = self::versionDe($it);
+            if ($version === null) {
+                $errores[] = "Ítem {$n}: la versión «{$it['version']}» no existe; use A, B, 2A o 2B.";
+
+                continue;
+            }
             if (! in_array($tipo, self::TIPOS, true)) {
                 $errores[] = "Ítem {$n}: tipo «{$tipo}» desconocido.";
 
@@ -62,7 +72,8 @@ final class ImportadorBanco
                 if (! $peso->isPositive()) {
                     throw new InvalidArgumentException;
                 }
-                $suma = $suma->plus($peso);
+                $sumas[$version] = ($sumas[$version] ?? BigDecimal::zero())->plus($peso);
+                $firmas[$version][] = $tipo.':'.$peso->strippedOfTrailingZeros();
             } catch (MathException|InvalidArgumentException) {
                 $errores[] = "Ítem {$n}: el peso debe ser un número mayor que cero.";
             }
@@ -72,11 +83,31 @@ final class ImportadorBanco
         }
 
         try {
-            if (! $suma->isEqualTo((string) ($b['valor'] ?? '0'))) {
-                $errores[] = "Los pesos suman {$suma} y el valor de la actividad es {$b['valor']}: deben coincidir (9.2.4).";
+            foreach ($sumas as $version => $suma) {
+                if (! $suma->isEqualTo((string) ($b['valor'] ?? '0'))) {
+                    $errores[] = (count($sumas) > 1 ? "Los pesos de la versión {$version} suman {$suma}" : "Los pesos suman {$suma}")
+                        ." y el valor de la actividad es {$b['valor']}: deben coincidir (9.2.4).";
+                }
             }
         } catch (MathException) {
             $errores[] = 'El valor de la actividad no es un número.';
+        }
+
+        // 5.4.2: las versiones de un banco tienen los mismos tipos de ítem y los mismos valores
+        foreach ([['A', 'B'], ['2A', '2B']] as [$x, $y]) {
+            if (isset($firmas[$y]) && ! isset($firmas[$x])) {
+                $errores[] = "Hay ítems de la versión {$y} pero ninguno de la {$x}.";
+            } elseif (isset($firmas[$x], $firmas[$y])) {
+                [$fx, $fy] = [$firmas[$x], $firmas[$y]];
+                sort($fx);
+                sort($fy);
+                if ($fx !== $fy) {
+                    $errores[] = "Las versiones {$x} y {$y} deben tener los mismos tipos de ítem con los mismos pesos (".count($firmas[$x]).' frente a '.count($firmas[$y]).' ítems).';
+                }
+            }
+        }
+        if (isset($firmas['2A']) && ! isset($firmas['A'])) {
+            $errores[] = 'Hay un segundo banco (2A) pero no el primero (A).';
         }
 
         return $errores;
@@ -127,6 +158,7 @@ final class ImportadorBanco
                 ArtefactoPregunta::query()->create([
                     'artefacto_id' => $artefacto->id,
                     'pregunta_id' => $pregunta->id,
+                    'banco' => self::versionDe($it),
                     'peso' => (string) $it['peso'],
                     'orden' => $orden,
                 ]);
@@ -134,6 +166,14 @@ final class ImportadorBanco
 
             return $artefacto;
         });
+    }
+
+    /** Versión del ítem; sin indicar, A. Null si no es válida. */
+    public static function versionDe(array $it): ?string
+    {
+        $v = strtoupper(trim((string) ($it['version'] ?? 'A')));
+
+        return in_array($v, self::VERSIONES, true) ? $v : null;
     }
 
     /** «Pilas y Colas » y «pilas y colas» son el mismo tema. */

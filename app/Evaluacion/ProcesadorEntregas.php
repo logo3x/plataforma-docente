@@ -79,6 +79,16 @@ final class ProcesadorEntregas
             $alertas[] = ['manipulado', ['visible' => $sobre['documento'], 'cifrado' => $carga['documento'] ?? null]];
         }
 
+        // 5.4.2: qué versión respondió y si es la que le toca por su documento
+        $version = $this->version($artefacto, $carga);
+        if ($version === null) {
+            return ['estado' => 'rechazada', 'entrega' => null, 'mensaje' => "{$nombreArchivo}: no se pudo saber qué versión del examen respondió."];
+        }
+        $esperada = Artefacto::versionPara((string) ($carga['documento'] ?? ''), $artefacto->sigla, $artefacto->versionesDelBanco(str_starts_with($version, '2') ? 2 : 1));
+        if ($esperada !== $version) {
+            $alertas[] = ['version_no_coincide', ['respondida' => $version, 'esperada' => $esperada]];
+        }
+
         $estudiante = Estudiante::query()->where('dictado_id', $dictado->id)->where('documento', (string) ($carga['documento'] ?? ''))->first();
         if ($estudiante === null) {
             return ['estado' => 'rechazada', 'entrega' => null,
@@ -90,7 +100,7 @@ final class ProcesadorEntregas
             $alertas[] = ['grupo_no_cuadra', ['grupos' => $estudiante->grupos()->pluck('nombre')->all()]];
         }
 
-        $entrega = DB::transaction(function () use ($actividad, $estudiante, $carga, $contenido, $sha, $sobre, $alertas, $artefacto) {
+        $entrega = DB::transaction(function () use ($actividad, $estudiante, $carga, $contenido, $sha, $sobre, $alertas, $artefacto, $version) {
             $ruta = "entregas/{$actividad->id}/{$sha}.json";
             Storage::disk('local')->put($ruta, $contenido);
 
@@ -107,6 +117,7 @@ final class ProcesadorEntregas
                 'sesion' => $carga['sesion'] ?? [],
                 'duracion_seg' => $inicio && $fin ? max(0, $fin - $inicio) : null,
                 'cierre' => $carga['cierre'] ?? null,
+                'version' => $version,
             ]);
 
             // Integrantes: quien entrega más los declarados que existan en el dictado (6.8.9)
@@ -134,6 +145,24 @@ final class ProcesadorEntregas
     }
 
     /** @return array{formato:string, sigla:string, artefacto:string, documento:string, cifrado:?array, datos_planos?:array} */
+    /**
+     * Versión respondida: la que declara la entrega si existe en el examen; si no la declara (examen
+     * generado antes de las versiones), la de las preguntas que respondió, o la única que haya.
+     */
+    private function version(Artefacto $artefacto, array $carga): ?string
+    {
+        $versiones = $artefacto->versiones();
+        if (in_array($carga['version'] ?? null, $versiones, true)) {
+            return $carga['version'];
+        }
+        if (count($versiones) === 1) {
+            return $versiones[0];
+        }
+        $respondidas = $artefacto->items()->whereIn('id', array_keys((array) ($carga['respuestas'] ?? [])))->distinct()->pluck('banco')->all();
+
+        return count($respondidas) === 1 ? $respondidas[0] : null;
+    }
+
     private function leerSobre(string $contenido): array
     {
         $s = json_decode($contenido, true);

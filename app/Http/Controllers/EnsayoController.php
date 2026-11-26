@@ -31,14 +31,16 @@ class EnsayoController extends Controller
         ]);
     }
 
-    public function examen(Actividad $actividad, GeneradorExamen $generador): Response
+    public function examen(Request $request, Actividad $actividad, GeneradorExamen $generador): Response
     {
         $this->autorizar($actividad);
         abort_if($actividad->artefacto_id === null, 404);
+        $banco = $request->integer('banco', 1);
+        abort_unless(in_array($banco, $actividad->artefacto->bancos(), true), 404);
 
-        return response($generador->html($actividad, ensayo: true), 200, [
+        return response($generador->html($actividad, ensayo: true, banco: $banco), 200, [
             'Content-Type' => 'text/html; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="ENSAYO_'.$actividad->artefacto->sigla.'.html"',
+            'Content-Disposition' => 'attachment; filename="ENSAYO_'.$actividad->artefacto->sigla.($banco === 2 ? '_banco2' : '').'.html"',
         ]);
     }
 

@@ -35,7 +35,12 @@
                 <li>Vaya a otra pestaña unos segundos y vuelva: debe contar exactamente una salida, con su duración.</li>
                 <li>Responda algunas preguntas y finalice: se descarga <code>ENSAYO_{{ $actividad->artefacto->sigla }}_….json</code>.</li>
             </ol>
-            <a class="boton" href="{{ route('calificador.ensayo.examen', $actividad) }}">Descargar examen de ensayo</a>
+            <div class="fila">
+                @foreach ($actividad->artefacto->bancos() as $b)
+                    <a @class(['boton', 'boton-sec' => $b === 2]) href="{{ route('calificador.ensayo.examen', ['actividad' => $actividad, 'banco' => $b]) }}">Descargar examen de ensayo{{ count($actividad->artefacto->bancos()) > 1 ? " (banco {$b})" : '' }}</a>
+                @endforeach
+            </div>
+            @if (count($actividad->artefacto->versiones()) > 1)<p class="suave">La versión sale del documento que escriba: pruebe con dos documentos distintos para ver las dos versiones.</p>@endif
         </section>
         <section class="tarjeta">
             <h2 style="margin-top:0">3. Cerrar el ciclo</h2>

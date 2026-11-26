@@ -24,7 +24,7 @@
         </section>
     </div>
 
-    <h2>Calificación de la entrega <span class="suave">· parte del servidor: {{ $num($ensayo->puntaje_servidor) }}</span></h2>
+    <h2>Calificación de la entrega @if ($version)<span class="etiqueta-tipo">versión {{ $version }}</span>@endif <span class="suave">· parte del servidor: {{ $num($ensayo->puntaje_servidor) }}</span></h2>
     <script src="{{ asset('js/ejecutor.js') }}"></script>
     @foreach ($items as $it)
         <section class="tarjeta">

@@ -15,10 +15,18 @@ final class GeneradorExamen
 {
     public function __construct(private readonly ClavesDictado $claves) {}
 
-    /** Con $ensayo, el mismo examen marcado como ensayo (5.6): verifica el equipo y su entrega no cuenta. */
-    public function html(Actividad $actividad, bool $ensayo = false): string
+    /**
+     * Con $ensayo, el mismo examen marcado como ensayo (5.6): verifica el equipo y su entrega no cuenta.
+     * $banco elige el banco (5.4.2): el archivo lleva sus versiones (A y B, o 2A y 2B) y el navegador
+     * le asigna a cada estudiante la suya según su documento.
+     */
+    public function html(Actividad $actividad, bool $ensayo = false, int $banco = 1): string
     {
         $artefacto = $actividad->artefacto()->with('items.pregunta')->firstOrFail();
+        $versiones = $artefacto->versionesDelBanco($banco);
+        if ($versiones === []) {
+            throw new RuntimeException("El examen no tiene banco {$banco}.");
+        }
         $dictado = $actividad->componente->division->dictado()->with('materia')->first();
         $config = $artefacto->configuracion;
 
@@ -40,9 +48,11 @@ final class GeneradorExamen
             'anexo' => (bool) ($config['anexo'] ?? false),
             'grupos' => $actividad->grupos()->pluck('nombre')->all() ?: $dictado->grupos()->pluck('nombre')->all(),
             'clave_publica' => $this->claves->publicaSpkiBase64($dictado),
-            'items' => $artefacto->items->map(fn ($ap) => array_merge(
+            'banco' => $banco,
+            'versiones' => $versiones,
+            'items' => $artefacto->items->filter(fn ($ap) => in_array($ap->banco, $versiones, true))->map(fn ($ap) => array_merge(
                 $ap->pregunta->enunciado,
-                ['id' => $ap->id, 'tipo' => $ap->pregunta->tipo, 'peso' => $this->peso($ap->peso)],
+                ['id' => $ap->id, 'tipo' => $ap->pregunta->tipo, 'peso' => $this->peso($ap->peso), 'version' => $ap->banco],
             ))->values()->all(),
         ];
 

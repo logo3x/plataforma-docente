@@ -16,7 +16,7 @@ Archivo JSON con una actividad evaluable (quiz, parcial o taller). Se importa en
 ```
 
 - `sigla`: identificador único del examen. Viaja dentro de cada entrega y le permite al calificador reconocer el examen sin elegirlo a mano (6.1.3).
-- `valor`: la suma de los `peso` de todos los ítems debe ser exactamente este valor. Si no coincide, el banco no se importa (9.2.4).
+- `valor`: la suma de los `peso` de los ítems de cada versión debe ser exactamente este valor. Si no coincide, el banco no se importa (9.2.4).
 
 ## `configuracion` (todo opcional)
 
@@ -52,6 +52,19 @@ Todos llevan `tipo`, `enunciado` y `peso`. Opcionales: `tema`, `dificultad` (`ba
 - `prueba` es una expresión que debe dar exactamente `true`, por ejemplo `total([]) === 0`. Se evalúa después del código del estudiante, en un Worker aislado, sin red y con límite de tiempo.
 - `nombre` es lo que se lee en el detalle: escríbalo en lenguaje natural («Un carrito vacío suma cero»), no como expresión técnica (6.4).
 - Una verificación con `"reservada": true` no se muestra al estudiante. El examen solo anuncia cuántas hay (4.3.3).
+
+## Versiones y segundo banco (5.4.2)
+
+Cada ítem puede llevar `"version"`: `A` (si no se indica), `B`, `2A` o `2B`.
+
+- **A y B** son dos versiones del mismo examen, con el mismo temario y distinto contexto. El examen lleva las dos y a cada estudiante le asigna una según su documento: siempre la misma, aunque cierre y vuelva a abrir. Se califica solo con los ítems de su versión.
+- **2A y 2B** forman un segundo banco, con los mismos temas y pesos pero otros datos, para aplicarlo en otra jornada. Una foto del examen de la mañana no sirve en la noche. Cada banco se descarga como un archivo aparte.
+- Cada versión debe sumar el `valor`. A y B, y 2A y 2B, deben tener los mismos tipos de ítem con los mismos pesos.
+- Si una entrega trae una versión distinta a la que le corresponde por su documento, el calificador lo marca con una alerta.
+
+```json
+{ "version": "B", "tipo": "unica", "peso": "1", "enunciado": "En la fila del taller…", "opciones": { "a": "Cola", "b": "Pila" }, "correcta": "a" }
+```
 
 ## Qué no sale nunca en el examen
 

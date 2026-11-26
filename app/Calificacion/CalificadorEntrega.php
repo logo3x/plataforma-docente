@@ -24,7 +24,9 @@ final class CalificadorEntrega
      */
     public function calificarServidor(Entrega $entrega, array $respuestasPorItem): void
     {
-        $items = $entrega->actividad->artefacto->items()->with('pregunta')->get();
+        // Solo los ítems de la versión que respondió (5.4.2); los de la otra versión no le cuentan
+        $items = $entrega->actividad->artefacto->items()->with('pregunta')
+            ->when($entrega->version, fn ($q, $v) => $q->where('banco', $v))->get();
         $hayRetos = false;
 
         DB::transaction(function () use ($entrega, $respuestasPorItem, $items, &$hayRetos) {

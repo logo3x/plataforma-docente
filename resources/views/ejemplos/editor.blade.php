@@ -45,7 +45,7 @@
     <div x-data="editorEjemplos(@js($contenido), @js($materia->codigoVerificable()))">
         <form method="POST" action="{{ $accion }}">
             @csrf @if ($existente || $generacion) @method('PUT') @endif
-            <input type="hidden" name="ejemplos" x-bind:value="json()">
+            <input type="hidden" name="contenido" x-bind:value="json()">
             <div class="tarjeta">
                 <div class="campo"><label for="titulo">Título</label><input id="titulo" type="text" x-model="d.titulo" required maxlength="255" placeholder="Pilas en problemas cotidianos"></div>
                 <div class="campo"><label for="proposito">Qué aprende el estudiante</label><input id="proposito" type="text" x-model="d.proposito"></div>

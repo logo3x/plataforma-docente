@@ -149,7 +149,7 @@ class EjemplosPracticosTest extends TestCase
 
         $this->get(route('ejemplos.borrador', $g))->assertSee('al menos dos pasos');
         $this->post(route('ejemplos.aprobar', $g))->assertSessionHas('error_ia');
-        $this->put(route('ejemplos.borrador.editar', $g), ['ejemplos' => json_encode($this->conjunto(['titulo' => 'Arreglado'])), 'aprobar' => '1'])->assertRedirect();
+        $this->put(route('ejemplos.borrador.editar', $g), ['contenido' => json_encode($this->conjunto(['titulo' => 'Arreglado'])), 'aprobar' => '1'])->assertRedirect();
         $this->assertSame('Arreglado', Material::query()->sole()->titulo);
         $this->assertSame([], app(GeneradorEjemplos::class)->errores(GeneracionIa::query()->sole()->borrador));
     }
@@ -159,12 +159,12 @@ class EjemplosPracticosTest extends TestCase
     {
         $this->get(route('ejemplos.create', ['materia' => $this->materia, 'temas' => [$this->pilas->id]]))->assertOk()
             ->assertSee('Agregar ejemplo')->assertSee('\\u0022tema\\u0022:\\u0022Pilas\\u0022', false);
-        $this->post(route('ejemplos.store', $this->materia), ['ejemplos' => json_encode($this->conjunto(['titulo' => '']))])->assertSessionHas('observaciones');
-        $this->post(route('ejemplos.store', $this->materia), ['ejemplos' => json_encode($this->conjunto())])->assertRedirect();
+        $this->post(route('ejemplos.store', $this->materia), ['contenido' => json_encode($this->conjunto(['titulo' => '']))])->assertSessionHas('observaciones');
+        $this->post(route('ejemplos.store', $this->materia), ['contenido' => json_encode($this->conjunto())])->assertRedirect();
         $m = Material::query()->sole();
         $this->assertNull($m->generacion_ia_id);
 
-        $this->put(route('ejemplos.update', $m), ['ejemplos' => json_encode($this->conjunto(['titulo' => 'Otro']))])->assertRedirect(route('ejemplos.show', $m));
+        $this->put(route('ejemplos.update', $m), ['contenido' => json_encode($this->conjunto(['titulo' => 'Otro']))])->assertRedirect(route('ejemplos.show', $m));
         $this->get(route('ejemplos.index', $this->materia))->assertSee('Otro')->assertSee('pilas');
         $this->delete(route('ejemplos.destroy', $m))->assertRedirect();
         $this->assertSame(0, Material::query()->count());

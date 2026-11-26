@@ -169,6 +169,37 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
  ]}
 TXT,
 
+        'debate' => <<<'TXT'
+Tarea: proponga preguntas para debatir en clase: abiertas, que admitan posturas razonadas y obliguen a usar los conceptos del tema.
+
+Tema:        {{tema}}
+Cantidad:    {{cantidad}} preguntas
+Enfoque:     {{enfoque}}
+Dinámica:    {{dinamica}}
+Tiempo:      unos {{minutos}} minutos por pregunta
+Contexto:    {{contexto}}
+Grupo:       {{grupo}}
+
+Reglas:
+- Nada de preguntas de definición o de dato («¿Qué es…?», «¿Cuántos…?»): cada pregunta admite al menos dos posturas defendibles.
+- «contexto» es un caso breve y concreto que sitúa la pregunta; se proyecta a los estudiantes.
+- En «posturas» escriba al menos dos posiciones, cada una con argumentos que usen los conceptos del tema: es la guía del docente.
+- «seguimiento» son repreguntas para profundizar o para destrabar la discusión.
+- «cierre» es la idea o el concepto que debe quedar claro al terminar.
+- «enfoque» es dilema, caso, controversia, prediccion o comparacion; «dinamica» es individual, parejas, grupos o plenaria.
+- En «tema» escriba el nombre del tema tal como aparece arriba.
+- Cíñase al material de referencia y al alcance del grupo.
+{{memoria}}
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"formato":"plataforma-debate","version":1,"titulo":"...","proposito":"qué se busca con el debate",
+ "preguntas":[
+  {"pregunta":"¿...?","tema":"...","enfoque":"dilema","contexto":"...","dinamica":"grupos","minutos":"{{minutos}}",
+   "posturas":[{"postura":"...","argumentos":["..."]},{"postura":"...","argumentos":["..."]}],
+   "seguimiento":["..."],"cierre":"..."}
+ ]}
+TXT,
+
         'temario' => <<<'TXT'
 Tarea: lea el plan curricular de la materia y extraiga su temario como estructura.
 

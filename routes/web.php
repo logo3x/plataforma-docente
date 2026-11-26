@@ -5,6 +5,7 @@ use App\Http\Controllers\CalificadorController;
 use App\Http\Controllers\CargaNotasController;
 use App\Http\Controllers\CierreController;
 use App\Http\Controllers\ContenidoController;
+use App\Http\Controllers\DebateController;
 use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\DictadoController;
 use App\Http\Controllers\EjemploController;
@@ -112,20 +113,23 @@ Route::middleware('auth')->group(function () {
     Route::post('/generaciones/{generacion}/unidad/corregir', [UnidadDidacticaController::class, 'corregir'])->name('unidades.corregir');
     Route::post('/generaciones/{generacion}/unidad/aprobar', [UnidadDidacticaController::class, 'aprobar'])->name('unidades.aprobar');
     Route::post('/generaciones/{generacion}/unidad/descartar', [UnidadDidacticaController::class, 'descartar'])->name('unidades.descartar');
-    Route::get('/materias/{materia}/ejemplos', [EjemploController::class, 'index'])->name('ejemplos.index');
-    Route::get('/materias/{materia}/ejemplos/nuevos', [EjemploController::class, 'create'])->name('ejemplos.create');
-    Route::post('/materias/{materia}/ejemplos', [EjemploController::class, 'store'])->name('ejemplos.store');
-    Route::post('/materias/{materia}/ejemplos/prompt', [EjemploController::class, 'preparar'])->name('ejemplos.preparar');
-    Route::post('/materias/{materia}/ejemplos/generar', [EjemploController::class, 'generar'])->name('ejemplos.generar');
-    Route::get('/ejemplos/{material}', [EjemploController::class, 'show'])->name('ejemplos.show');
-    Route::get('/ejemplos/{material}/editar', [EjemploController::class, 'edit'])->name('ejemplos.edit');
-    Route::put('/ejemplos/{material}', [EjemploController::class, 'update'])->name('ejemplos.update');
-    Route::delete('/ejemplos/{material}', [EjemploController::class, 'destroy'])->name('ejemplos.destroy');
-    Route::get('/generaciones/{generacion}/ejemplos', [EjemploController::class, 'borrador'])->name('ejemplos.borrador');
-    Route::put('/generaciones/{generacion}/ejemplos', [EjemploController::class, 'editarBorrador'])->name('ejemplos.borrador.editar');
-    Route::post('/generaciones/{generacion}/ejemplos/corregir', [EjemploController::class, 'corregir'])->name('ejemplos.corregir');
-    Route::post('/generaciones/{generacion}/ejemplos/aprobar', [EjemploController::class, 'aprobar'])->name('ejemplos.aprobar');
-    Route::post('/generaciones/{generacion}/ejemplos/descartar', [EjemploController::class, 'descartar'])->name('ejemplos.descartar');
+    // Generadores de material del catálogo (7.4): mismas pantallas y flujo de borrador para cada tipo
+    foreach (['ejemplos' => EjemploController::class, 'debates' => DebateController::class] as $r => $c) {
+        Route::get("/materias/{materia}/{$r}", [$c, 'index'])->name("{$r}.index");
+        Route::get("/materias/{materia}/{$r}/nuevo", [$c, 'create'])->name("{$r}.create");
+        Route::post("/materias/{materia}/{$r}", [$c, 'store'])->name("{$r}.store");
+        Route::post("/materias/{materia}/{$r}/prompt", [$c, 'preparar'])->name("{$r}.preparar");
+        Route::post("/materias/{materia}/{$r}/generar", [$c, 'generar'])->name("{$r}.generar");
+        Route::get("/{$r}/{material}", [$c, 'show'])->name("{$r}.show");
+        Route::get("/{$r}/{material}/editar", [$c, 'edit'])->name("{$r}.edit");
+        Route::put("/{$r}/{material}", [$c, 'update'])->name("{$r}.update");
+        Route::delete("/{$r}/{material}", [$c, 'destroy'])->name("{$r}.destroy");
+        Route::get("/generaciones/{generacion}/{$r}", [$c, 'borrador'])->name("{$r}.borrador");
+        Route::put("/generaciones/{generacion}/{$r}", [$c, 'editarBorrador'])->name("{$r}.borrador.editar");
+        Route::post("/generaciones/{generacion}/{$r}/corregir", [$c, 'corregir'])->name("{$r}.corregir");
+        Route::post("/generaciones/{generacion}/{$r}/aprobar", [$c, 'aprobar'])->name("{$r}.aprobar");
+        Route::post("/generaciones/{generacion}/{$r}/descartar", [$c, 'descartar'])->name("{$r}.descartar");
+    }
     Route::get('/materias/{materia}/reclamos', [ReclamoController::class, 'materia'])->name('reclamos.materia');
     Route::get('/materias/{materia}/temario', [TemarioController::class, 'show'])->name('temario.show');
     Route::post('/materias/{materia}/temario/extraer', [TemarioController::class, 'extraer'])->name('temario.extraer');

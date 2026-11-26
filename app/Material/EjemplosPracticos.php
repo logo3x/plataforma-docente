@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
  * cada ejemplo puede traer su código final y una comprobación que se ejecuta para verificar que
  * el código realmente funciona: la IA se equivoca con código que «parece» correcto.
  */
-final class EjemplosPracticos
+final class EjemplosPracticos implements TipoMaterial
 {
     public const TIPO = 'ejemplos';
 
@@ -20,6 +20,49 @@ final class EjemplosPracticos
     public const MAX_EJEMPLOS = 15;
 
     public const DIFICULTADES = ['baja' => 'Baja', 'media' => 'Media', 'alta' => 'Alta'];
+
+    public function tipo(): string
+    {
+        return self::TIPO;
+    }
+
+    public function formato(): string
+    {
+        return self::FORMATO;
+    }
+
+    public function coleccion(): string
+    {
+        return 'ejemplos';
+    }
+
+    public function nombreElemento(array $elemento): string
+    {
+        return (string) ($elemento['titulo'] ?? '');
+    }
+
+    public function reglasGeneracion(): array
+    {
+        return [
+            'cantidad' => ['required', 'integer', 'between:1,'.self::MAX_EJEMPLOS],
+            'dificultad' => ['required', 'in:mixta,baja,media,alta'],
+            'contexto' => ['nullable', 'string', 'max:500'],
+        ];
+    }
+
+    public function variables(Materia $materia, array $op): array
+    {
+        return [
+            'cantidad' => (string) max(1, min(self::MAX_EJEMPLOS, (int) ($op['cantidad'] ?? 3))),
+            'dificultad' => ['mixta' => 'mixta: de menor a mayor', 'baja' => 'baja', 'media' => 'media', 'alta' => 'alta'][$op['dificultad'] ?? 'mixta'] ?? 'mixta: de menor a mayor',
+            'contexto' => filled($op['contexto'] ?? null) ? trim($op['contexto']) : 'situaciones cotidianas o del entorno profesional del programa',
+            'reglas_codigo' => $materia->codigoVerificable()
+                ? "- Si el ejemplo es de programación, escriba el código en JavaScript. En «codigo» ponga el programa final completo y en «comprobacion»\n"
+                  ."  una expresión de JavaScript que dé exactamente true cuando ese código es correcto (por ejemplo: sumar([1,2,3]) === 6).\n"
+                  .'  La comprobación se ejecutará de verdad: no use DOM, red ni archivos.'
+                : '- Esta materia no verifica código en el navegador: deje «codigo» y «comprobacion» vacíos; si hace falta código, póngalo en el paso.',
+        ];
+    }
 
     /** @return array{titulo: string, proposito: string, ejemplos: array<int, array>} */
     public function normalizar(array $d): array

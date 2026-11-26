@@ -110,7 +110,7 @@ class ConfiguracionActividadTest extends TestCase
         $this->assertStringContainsString('function revisarSintaxis(codigo)', $js);
         $this->assertStringContainsString("if (nivel === 'minimo') return;", $js);
         // Catálogo explicado solo en el nivel completo; salida esperada solo en el completo
-        $this->assertStringContainsString("if ((D.nivel_ayuda || 'completo') !== 'completo') return r;", $js);
+        $this->assertStringContainsString('if (completo && ex) r.mensaje =', $js);
         $this->assertStringContainsString("c.esperada !== undefined && nivel === 'completo'", $js);
         $this->assertStringContainsString('if (D.contar_salidas !== false) vigilarFoco();', $js);
     }

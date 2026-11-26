@@ -30,11 +30,17 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'perfil_ia' => 'array',
+            'catalogo_errores_en' => 'datetime',
         ];
     }
 
     public function materias(): HasMany
     {
         return $this->hasMany(Materia::class);
+    }
+
+    public function erroresFrecuentes(): HasMany
+    {
+        return $this->hasMany(ErrorFrecuente::class);
     }
 }

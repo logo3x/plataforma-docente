@@ -13,7 +13,7 @@ use RuntimeException;
  */
 final class GeneradorExamen
 {
-    public function __construct(private readonly ClavesDictado $claves) {}
+    public function __construct(private readonly ClavesDictado $claves, private readonly CatalogoErrores $catalogo) {}
 
     /**
      * Con $ensayo, el mismo examen marcado como ensayo (5.6): verifica el equipo y su entrega no cuenta.
@@ -58,6 +58,13 @@ final class GeneradorExamen
                 ['id' => $ap->id, 'tipo' => $ap->pregunta->tipo, 'peso' => $this->peso($ap->peso), 'version' => $ap->banco],
             ))->values()->all(),
         ];
+
+        // 4.4.4: el catálogo de errores del docente para los lenguajes de los retos de este examen
+        $lenguajes = collect($datos['items'])->where('tipo', 'reto')
+            ->flatMap(fn ($it) => match ($it['lenguaje'] ?? 'javascript') {
+                'html' => ['html', 'javascript'], default => [$it['lenguaje'] ?? 'javascript']
+            })->unique()->values()->all();
+        $datos['catalogo'] = $lenguajes === [] ? [] : $this->catalogo->paraExamen($dictado->materia->docente, $dictado->materia, $lenguajes);
 
         // JSON_HEX_TAG convierte < y > en </>: ningún texto puede cerrar la etiqueta <script> (4.5.5)
         $json = json_encode($datos, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);

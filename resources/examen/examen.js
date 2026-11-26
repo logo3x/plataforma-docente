@@ -146,7 +146,8 @@
     const nivel = D.nivel_ayuda || 'completo';
     const aviso = el('div', { class: 'aviso-sintaxis', role: 'status', 'aria-live': 'polite' });
     const html = it.lenguaje === 'html', sql = it.lenguaje === 'sql';
-    const revisar = () => { if (nivel === 'minimo') return; const p = html ? window.revisarHTML(area.value, revisarSintaxis) : sql ? window.revisarSQL(area.value) : revisarSintaxis(area.value); aviso.textContent = p ? '⚠ ' + p : ''; aviso.classList.toggle('oculto', !p); };
+    const lenguajesReto = html ? ['html', 'javascript'] : sql ? ['sql'] : ['javascript'];
+    const revisar = () => { if (nivel === 'minimo') return; const p = conCatalogo(area, lenguajesReto, html ? window.revisarHTML(area.value, revisarSintaxis) : sql ? window.revisarSQL(area.value) : revisarSintaxis(area.value)); aviso.textContent = p ? '⚠ ' + p : ''; aviso.classList.toggle('oculto', !p); };
     area.addEventListener('input', () => { E.respuestas[id] = area.value; clearTimeout(area._t); area._t = setTimeout(guardar, 400); clearTimeout(area._s); area._s = setTimeout(revisar, 500); });
     const salida = el('div', { class: 'resultado-reto' });
     const vista = html ? el('div', { class: 'contenedor-vista', 'aria-label': 'Vista previa de su página' }) : sql ? el('div', { class: 'contenedor-vista', 'aria-label': 'Tablas de la actividad' }) : null;
@@ -181,10 +182,10 @@
     async function probarHTML() {
       probar.disabled = true;
       try {
-        const r = traducir(await window.ejecutarHTML(area.value, '', D.tiempo_ms, vista));
+        const r = traducir(await window.ejecutarHTML(area.value, '', D.tiempo_ms, vista), ['html', 'javascript']);
         if (r.estado === 'no_compila') E.sesion.errores_sintaxis++;
         salida.append(tarjeta(r, null));
-        for (const c of nivel !== 'minimo' ? it.casos_visibles : []) salida.append(tarjeta(traducir(await window.ejecutarHTML(area.value, c.entrada || '', D.tiempo_ms)), c));
+        for (const c of nivel !== 'minimo' ? it.casos_visibles : []) salida.append(tarjeta(traducir(await window.ejecutarHTML(area.value, c.entrada || '', D.tiempo_ms), ['html', 'javascript']), c));
       } finally { probar.disabled = false; guardar(); }
     }
     /* 4.6 SQL: cada prueba usa una base nueva creada con el esquema del reto; se ven las tablas que devuelve
@@ -195,7 +196,14 @@
         el('tbody', {}, r.filas.slice(0, 200).map(f => el('tr', {}, f.map(v => el('td', v === null ? { class: 'nulo', texto: 'NULL' } : { texto: String(v) }))))));
       return el('div', { class: 'resultado-sql' }, t, el('p', { class: 'peso', texto: r.filas.length + (r.truncado ? '+' : '') + ' fila(s)' + (r.filas.length > 200 ? '; se muestran 200' : '') + '.' }));
     };
-    const mensajeSQL = (r) => !r.mensaje ? null : r.estado === 'tiempo' || nivel === 'completo' ? r.mensaje + (r.traducido && r.original ? '  (original: ' + r.original + ')' : '') : nivel === 'intermedio' ? (r.original || r.mensaje) : null;
+    const mensajeSQL = (r) => {
+      if (!r.mensaje) return null;
+      if (r.estado === 'tiempo') return r.mensaje;
+      const crudo = r.original || r.mensaje, ex = explicar(['sql'], crudo);
+      anotar(['sql'], crudo, ex, nivel === 'completo');
+      if (nivel === 'completo') return ex ? (/^Línea \d+: /.exec(crudo) || [''])[0] + ex.texto + '  (original: ' + crudo + ')' : crudo;
+      return nivel === 'intermedio' ? crudo : null;
+    };
     async function probarSQL() {
       probar.disabled = true;
       try {
@@ -221,7 +229,7 @@
     } }) : null;
     if (html || sql) area.rows = 16;
     revisar();
-    caja.append(area, aviso, el('p', {}, probar, ' ', verTablas, verTablas ? ' ' : null, it.reservadas ? el('span', { class: 'peso', texto: 'Hay ' + it.reservadas + ' verificación(es) adicional(es) que se evaluarán al calificar.' }) : null), vista, salida);
+    caja.append(area, aviso, guiaErrores(lenguajesReto), el('p', {}, probar, ' ', verTablas, verTablas ? ' ' : null, it.reservadas ? el('span', { class: 'peso', texto: 'Hay ' + it.reservadas + ' verificación(es) adicional(es) que se evaluarán al calificar.' }) : null), vista, salida);
   }
 
   /* 4.6 PHP y Laravel: no hay ejecución en el navegador. El estudiante escribe cada archivo, ve en lenguaje
@@ -244,13 +252,14 @@
       const area = el('textarea', { rows: varios ? 10 : 14, spellcheck: 'false', 'aria-label': 'Archivo ' + f.nombre, onpaste: () => { E.sesion.pegados++; guardar(); } });
       area.value = valorDe(f, i);
       const aviso = el('div', { class: 'aviso-sintaxis', role: 'status', 'aria-live': 'polite' });
-      const revisar = () => { if (nivel === 'minimo') return; const p = blade ? revisarBlade(area.value) : revisarPHP(area.value); aviso.textContent = p ? '⚠ ' + p : ''; };
+      const revisar = () => { if (nivel === 'minimo') return; const p = conCatalogo(area, ['php'], blade ? revisarBlade(area.value) : revisarPHP(area.value)); aviso.textContent = p ? '⚠ ' + p : ''; };
       area.addEventListener('keydown', ev => { if (ev.key === 'Tab') { ev.preventDefault(); const s = area.selectionStart; area.setRangeText('    ', s, area.selectionEnd, 'end'); } });
       area.addEventListener('input', () => { fijarTodo(); clearTimeout(area._t); area._t = setTimeout(guardar, 400); clearTimeout(area._s); area._s = setTimeout(revisar, 500); });
       areas.push([f, area]);
       caja.append(el('label', { class: 'archivo-php', texto: f.nombre }), area, aviso);
       revisar();
     });
+    caja.append(guiaErrores(['php']));
   }
 
   /* PHP: lo que está fuera de las etiquetas de PHP, los comentarios con # y los heredoc no cuentan para
@@ -360,26 +369,62 @@
     return new Promise(res => {
       const w = new Worker(URL_WORKER);
       const t = setTimeout(() => { w.terminate(); res({ estado: 'tiempo', mensaje: 'Se detuvo a los ' + (limite / 1000) + ' s: ¿un ciclo que no termina?', consola: [] }); }, limite);
-      w.onmessage = (ev) => { clearTimeout(t); w.terminate(); res(traducir(ev.data)); };
-      w.onerror = (ev) => { clearTimeout(t); w.terminate(); res(traducir({ estado: 'error', mensaje: ev.message, consola: [] })); ev.preventDefault(); };
+      w.onmessage = (ev) => { clearTimeout(t); w.terminate(); res(traducir(ev.data, ['javascript'])); };
+      w.onerror = (ev) => { clearTimeout(t); w.terminate(); res(traducir({ estado: 'error', mensaje: ev.message, consola: [] }, ['javascript'])); ev.preventDefault(); };
       w.postMessage({ codigo, entrada });
     });
   }
 
   /* Anexo A: mensajes del motor traducidos, con el original debajo (4.4.2). */
-  const CATALOGO = [
-    [/Unexpected end of input/i, 'El código terminó con algo sin cerrar. Cuente llaves y paréntesis.'],
-    [/Unexpected token/i, 'Hay un símbolo donde no se esperaba. Revise paréntesis, llaves o comas de esa zona.'],
-    [/(\w+) is not defined/i, 'Se usa «$1», que no existe todavía. Revise la ortografía y que esté declarado antes.'],
-    [/(\S+) is not a function/i, '«$1» no es una función. Revise el nombre del método y el tipo del valor.'],
-    [/Cannot read propert(?:y|ies) of (undefined|null)/i, 'Se pide un dato de algo que es $1. Revise qué valor tiene esa variable.'],
-    [/Assignment to constant variable/i, 'Se reasigna una constante. Use let si el valor debe cambiar.'],
-    [/Missing initializer in const/i, 'Una constante se declaró sin valor. Las constantes se inicializan al declararse.'],
-  ];
-  function traducir(r) {
-    if ((D.nivel_ayuda || 'completo') !== 'completo') return r;      // 4.4.6: el catálogo explicado es del nivel completo
-    if (r.mensaje) for (const [re, t] of CATALOGO) { const m = r.mensaje.match(re); if (m) { r.mensaje = t.replace('$1', m[1] || '') + '  (original: ' + r.mensaje + ')'; break; } }
+  /* 4.4.4 / anexo A: catálogo de errores frecuentes del docente. Explica el mensaje del motor y dice qué revisar
+     (nivel completo); en el intermedio se ve el original. La sesión registra qué entradas se mostraron y qué
+     mensajes no tenían explicación, para que el docente amplíe el catálogo con lo que aparece en el aula. */
+  const COMODIN = '([^\\s"\'«»]+)';
+  const CAT = (D.catalogo || []).map(e => {
+    try { return Object.assign({}, e, { re: new RegExp(e.regex ? e.patron : e.patron.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\{x\\\}/g, COMODIN), 'iu') }); }
+    catch (x) { return null; }
+  }).filter(Boolean);
+  function explicar(lenguajes, mensaje) {
+    for (const e of CAT) {
+      if (!lenguajes.includes(e.lenguaje)) continue;
+      const m = e.re.exec(mensaje);
+      if (m) { const x = m[1] || ''; return { id: e.id, texto: e.explicacion.split('{x}').join(x) + (e.revision ? ' Qué revisar: ' + e.revision.split('{x}').join(x) : '') }; }
+    }
+    return null;
+  }
+  function anotar(lenguajes, mensaje, ex, mostrada) {
+    const s = E.sesion;
+    if (ex) { if (mostrada) { s.catalogo = s.catalogo || {}; s.catalogo[ex.id] = (s.catalogo[ex.id] || 0) + 1; } return; }
+    const limpio = String(mensaje).replace(/^Línea \d+:\s*/, '').slice(0, 300);
+    if (!limpio || /^(El esquema|El juego de datos|El motor SQL|Se detuvo)/.test(limpio)) return;
+    s.sin_catalogo = s.sin_catalogo || [];
+    const previo = s.sin_catalogo.find(x => x.lenguaje === lenguajes[0] && x.mensaje === limpio);
+    if (previo) previo.veces++; else if (s.sin_catalogo.length < 30) s.sin_catalogo.push({ lenguaje: lenguajes[0], mensaje: limpio, veces: 1 });
+  }
+  function traducir(r, lenguajes) {
+    lenguajes = lenguajes || ['javascript'];
+    if (!r.mensaje || !['error', 'no_compila'].includes(r.estado)) return r;
+    const ex = explicar(lenguajes, r.mensaje), completo = (D.nivel_ayuda || 'completo') === 'completo';
+    if (E) anotar(lenguajes, r.mensaje, ex, completo);
+    if (completo && ex) r.mensaje = (/^Línea \d+: /.exec(r.mensaje) || [''])[0] + ex.texto + '  (original: ' + r.mensaje + ')';
     return r;
+  }
+  /* Aviso de la ayuda de sintaxis con su explicación del catálogo; se cuenta una vez por aviso distinto. */
+  function conCatalogo(area, lenguajes, p) {
+    if (!p || (D.nivel_ayuda || 'completo') !== 'completo') return p;
+    const ex = explicar(lenguajes, p);
+    if (ex && area._ultimo !== p) anotar(lenguajes, p, ex, true);
+    area._ultimo = p;
+    return ex ? p + ' — ' + ex.texto : p;
+  }
+  /* Nivel completo: la guía de errores frecuentes del lenguaje del reto, a la vista. */
+  function guiaErrores(lenguajes) {
+    if ((D.nivel_ayuda || 'completo') !== 'completo') return null;
+    const es = CAT.filter(e => lenguajes.includes(e.lenguaje));
+    if (!es.length) return null;
+    return el('details', { class: 'guia-errores' }, el('summary', { texto: 'Errores frecuentes y qué revisar (' + es.length + ')' }),
+      el('dl', {}, es.map(e => [el('dt', {}, el('code', { texto: e.regex ? e.patron : e.patron.split('{x}').join('…') })),
+        el('dd', { texto: e.explicacion.split('{x}').join('…') + (e.revision ? ' Qué revisar: ' + e.revision.split('{x}').join('…') : '') })])));
   }
 
   // ---------- Avance (5.5.5) ----------

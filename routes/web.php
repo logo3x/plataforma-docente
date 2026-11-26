@@ -4,6 +4,7 @@ use App\Http\Controllers\ApunteController;
 use App\Http\Controllers\Calificador\ResultadosNavegadorController;
 use App\Http\Controllers\CalificadorController;
 use App\Http\Controllers\CargaNotasController;
+use App\Http\Controllers\CatalogoErroresController;
 use App\Http\Controllers\CierreController;
 use App\Http\Controllers\ConfiguracionActividadController;
 use App\Http\Controllers\ContenidoController;
@@ -176,6 +177,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/generaciones/{generacion}/corregir', [GeneracionBancoController::class, 'corregir'])->name('generacion.corregir');
     Route::post('/generaciones/{generacion}/aprobar', [GeneracionBancoController::class, 'aprobar'])->name('generacion.aprobar');
     Route::post('/generaciones/{generacion}/descartar', [GeneracionBancoController::class, 'descartar'])->name('generacion.descartar');
+
+    Route::get('/catalogo-errores', [CatalogoErroresController::class, 'index'])->name('catalogo-errores.index');
+    Route::post('/catalogo-errores', [CatalogoErroresController::class, 'store'])->name('catalogo-errores.store');
+    Route::post('/catalogo-errores/restaurar', [CatalogoErroresController::class, 'restaurar'])->name('catalogo-errores.restaurar');
+    Route::put('/catalogo-errores/{error}', [CatalogoErroresController::class, 'update'])->name('catalogo-errores.update');
+    Route::delete('/catalogo-errores/{error}', [CatalogoErroresController::class, 'destroy'])->name('catalogo-errores.destroy');
 
     Route::prefix('calificador')->name('calificador.')->group(function () {
         Route::get('actividades/{actividad}', [CalificadorController::class, 'show'])->name('show');

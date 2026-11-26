@@ -9,6 +9,7 @@
             @else
                 <a class="boton boton-sec" href="{{ route('ejemplos.show', ['material' => $m, 'version' => 'estudiante']) }}">Versión sin soluciones</a>
             @endif
+            <a class="boton boton-sec" href="{{ route('publicacion.edit', $m) }}">Publicar</a>
             <button class="boton boton-sec" type="button" onclick="window.print()">Imprimir o guardar en PDF</button>
         </div>
     </div>

@@ -29,6 +29,7 @@ use App\Http\Controllers\MateriaController;
 use App\Http\Controllers\MotorIaController;
 use App\Http\Controllers\PlantillasIaController;
 use App\Http\Controllers\ProyectoController;
+use App\Http\Controllers\PublicacionController;
 use App\Http\Controllers\ReclamoController;
 use App\Http\Controllers\RegistroController;
 use App\Http\Controllers\RestauracionController;
@@ -161,6 +162,8 @@ Route::middleware('auth')->group(function () {
         Route::post("/generaciones/{generacion}/{$r}/aprobar", [$c, 'aprobar'])->name("{$r}.aprobar");
         Route::post("/generaciones/{generacion}/{$r}/descartar", [$c, 'descartar'])->name("{$r}.descartar");
     }
+    Route::get('/materiales/{material}/publicar', [PublicacionController::class, 'edit'])->name('publicacion.edit');
+    Route::post('/materiales/{material}/publicar', [PublicacionController::class, 'store'])->name('publicacion.store');
     Route::post('/apuntes/{material}/repositorio', [ApunteController::class, 'repositorio'])->name('apuntes.repositorio');
     Route::post('/vocabularios/{material}/glosario', [VocabularioController::class, 'glosario'])->name('vocabularios.glosario');
     Route::get('/examenes/{artefacto}/configuracion', [ConfiguracionActividadController::class, 'edit'])->name('configuracion.edit');

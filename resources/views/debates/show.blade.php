@@ -16,6 +16,7 @@
                 @else
                     <a class="boton boton-sec" href="{{ route('debates.show', ['material' => $m, 'version' => 'estudiante']) }}">Versión para estudiantes</a>
                 @endif
+                <a class="boton boton-sec" href="{{ route('publicacion.edit', $m) }}">Publicar</a>
                 <button class="boton boton-sec" type="button" onclick="window.print()">Imprimir</button>
             </div>
         </div>

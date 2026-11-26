@@ -6,6 +6,7 @@
         <h1 style="margin-bottom:0">{{ $m->titulo }} <span class="suave">· {{ ['lista' => 'lista', 'tarjetas' => 'tarjetas para repasar', 'repaso' => 'hoja de repaso'][$version] }}</span></h1>
         <div class="fila no-imprimir">
             <a class="boton boton-sec" href="{{ route('vocabularios.edit', $m) }}">Editar</a>
+            <a class="boton boton-sec" href="{{ route('publicacion.edit', $m) }}">Publicar</a>
             <button class="boton boton-sec" type="button" onclick="window.print()">Imprimir</button>
         </div>
     </div>

@@ -52,6 +52,29 @@ Además de lo anterior:
 - Copias de seguridad diarias de la base de datos, cifradas y guardadas fuera del servidor. El respaldo JSON por dictado (en la página del periodo) es un complemento, no un reemplazo.
 - `php artisan config:cache && php artisan route:cache && php artisan view:cache` después de cada actualización.
 
+## Correo institucional (devolución de informes)
+
+Para enviar a cada estudiante el enlace a su informe, configure en `.env` el servidor de correo de la institución.
+Pida los datos a la oficina de sistemas. En Microsoft 365 suele ser `smtp.office365.com`, puerto 587; en Google Workspace, `smtp.gmail.com`, puerto 587 con contraseña de aplicación.
+
+```
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.office365.com
+MAIL_PORT=587
+MAIL_USERNAME=plataforma.docente@ejemplo.edu.co
+MAIL_PASSWORD=la-contraseña-de-la-cuenta
+MAIL_FROM_ADDRESS=plataforma.docente@ejemplo.edu.co
+MAIL_FROM_NAME="Plataforma educativa"
+APP_URL=https://la-direccion-publica-de-la-plataforma
+CORREO_DOMINIO_INSTITUCIONAL=ejemplo.edu.co
+```
+
+- `APP_URL` debe ser la dirección con la que los estudiantes llegan a la plataforma: los enlaces del correo se arman con ella.
+- Con `CORREO_DOMINIO_INSTITUCIONAL` solo se envía a correos de ese dominio; los demás quedan señalados en la tabla de la devolución.
+- Los correos salen de inmediato. Para grupos grandes o un servidor lento, use `CORREO_EN_COLA=true` y deje corriendo `php artisan queue:work`.
+- Mientras `MAIL_MAILER=log`, la pantalla de devolución avisa que los correos no llegan: quedan en `storage/logs`.
+- El correo nunca lleva la nota: solo el enlace personal, que vence y se puede retirar.
+
 ## Actualizar
 
 ```bash

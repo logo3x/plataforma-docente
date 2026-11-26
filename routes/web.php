@@ -173,6 +173,8 @@ Route::middleware('auth')->group(function () {
         Route::get('actividades/{actividad}/informes.zip', [DevolucionController::class, 'zip'])->name('devolucion.zip');
         Route::get('actividades/{actividad}/enlaces.csv', [DevolucionController::class, 'enlaces'])->name('devolucion.enlaces');
         Route::post('devoluciones/{devolucion}/marcar', [DevolucionController::class, 'marcar'])->name('devolucion.marcar');
+        Route::post('actividades/{actividad}/devolucion/correo', [DevolucionController::class, 'correo'])->name('devolucion.correo')->middleware('throttle:10,1');
+        Route::post('devoluciones/{devolucion}/correo', [DevolucionController::class, 'correoUno'])->name('devolucion.correo.uno')->middleware('throttle:30,1');
         Route::get('actividades/{actividad}/reclamos', [ReclamoController::class, 'index'])->name('reclamos');
         Route::post('actividades/{actividad}/reclamos', [ReclamoController::class, 'store'])->name('reclamos.store');
         Route::post('reclamos/{reclamo}/resolver', [ReclamoController::class, 'resolver'])->name('reclamos.resolver');

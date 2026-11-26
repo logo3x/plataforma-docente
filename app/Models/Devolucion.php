@@ -19,6 +19,8 @@ class Devolucion extends Model
             'revocada_en' => 'datetime',
             'abierta_en' => 'datetime',
             'entregada_en' => 'datetime',
+            'correo_en_cola_en' => 'datetime',
+            'correo_enviado_en' => 'datetime',
         ];
     }
 

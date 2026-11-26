@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Calificacion\EnvioInformes;
 use App\Calificacion\InformeEstudiante;
 use App\Models\Actividad;
 use App\Models\Devolucion;
@@ -10,7 +11,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -31,17 +31,22 @@ class DevolucionController extends Controller
         $actividad->load('componente.division.dictado.materia', 'artefacto');
         $devoluciones = $actividad->devoluciones()->get()->keyBy('estudiante_id');
 
-        $filas = $this->informe->destinatarios($actividad)->map(fn (Estudiante $e) => [
-            'estudiante' => $e,
-            'presento' => $this->informe->presento($actividad, $e),
-            'devolucion' => $devoluciones->get($e->id),
-        ]);
+        $envio = app(EnvioInformes::class);
+        $filas = $this->informe->destinatarios($actividad)->map(function (Estudiante $e) use ($actividad, $devoluciones, $envio) {
+            $presento = $this->informe->presento($actividad, $e);
+            $d = $devoluciones->get($e->id)?->setRelation('estudiante', $e);
+
+            return ['estudiante' => $e, 'presento' => $presento, 'devolucion' => $d, 'impedimento' => $d ? $envio->impedimento($d, $presento) : null];
+        });
 
         return view('devolucion.index', [
             'actividad' => $actividad,
             'filas' => $filas,
             'pendientes' => $filas->where('presento', false)->count(),
             'recibidas' => $filas->filter(fn ($f) => $f['devolucion']?->recibida())->count(),
+            'enviables' => $filas->filter(fn ($f) => $f['devolucion'] && ! $f['impedimento'])->count(),
+            'correoSinConfigurar' => EnvioInformes::sinConfigurar(),
+            'dominio' => config('plataforma.correo_dominio'),
         ]);
     }
 
@@ -156,7 +161,50 @@ class DevolucionController extends Controller
 
     public function enlace(Devolucion $d): string
     {
-        return URL::temporarySignedRoute('informe.publico', $d->enlace_vence_en, ['devolucion' => $d->id]);
+        return app(EnvioInformes::class)->enlace($d);
+    }
+
+    /** Envía el enlace personal por correo institucional a todos los pendientes, o a todos (6.9.3). */
+    public function correo(Request $request, Actividad $actividad, EnvioInformes $envio): RedirectResponse
+    {
+        $this->autorizar($actividad);
+        if (! $actividad->devolucion_liberada_en) {
+            return back()->with('error_devolucion', 'Primero libere la devolución.');
+        }
+        $d = $request->validate(['mensaje' => ['nullable', 'string', 'max:1000'], 'alcance' => ['required', 'in:pendientes,todos']]);
+        @set_time_limit(300);
+        $r = $envio->enviarATodos($actividad, $request->user(), $d['mensaje'] ?? null, $d['alcance'] === 'pendientes');
+
+        $partes = array_filter([
+            $r['enviados'] ? "{$r['enviados']} correo(s) enviados" : null,
+            $r['en_cola'] ? "{$r['en_cola']} en cola de envío" : null,
+            $r['errores'] ? "{$r['errores']} fallaron (vea el motivo en la tabla)" : null,
+            $r['omitidos'] ? "{$r['omitidos']} omitidos porque ya lo tenían" : null,
+            $r['sin_enviar'] ? "{$r['sin_enviar']} sin enviar (sin correo válido o no presentaron)" : null,
+        ]);
+
+        return back()->withInput()->with($r['errores'] ? 'error_devolucion' : 'estado', $partes ? ucfirst(implode('; ', $partes)).'.' : 'No había a quién enviar.');
+    }
+
+    /** Envío o reenvío a un solo estudiante. */
+    public function correoUno(Request $request, Devolucion $devolucion, EnvioInformes $envio): RedirectResponse
+    {
+        $actividad = $devolucion->actividad;
+        $this->autorizar($actividad);
+        abort_unless($actividad->devolucion_liberada_en !== null, 409, 'Primero libere la devolución.');
+        if ($motivo = $envio->impedimento($devolucion, $this->informe->presento($actividad, $devolucion->estudiante))) {
+            return back()->with('error_devolucion', $motivo);
+        }
+        if ($devolucion->correo_enviado_en?->gt(now()->subMinutes(EnvioInformes::ESPERA_MINUTOS))) {
+            return back()->with('error_devolucion', 'Se le acaba de enviar; espere unos minutos antes de reenviar.');
+        }
+        $r = $envio->enviar($devolucion, $request->user(), $request->validate(['mensaje' => ['nullable', 'string', 'max:1000']])['mensaje'] ?? null);
+
+        return back()->with($r === 'errores' ? 'error_devolucion' : 'estado', match ($r) {
+            'enviados' => "Correo enviado a {$devolucion->estudiante->nombreCompleto()}.",
+            'en_cola' => "Correo para {$devolucion->estudiante->nombreCompleto()} en cola de envío.",
+            default => "No se pudo enviar: {$devolucion->fresh()->correo_error}",
+        });
     }
 
     private function html(Actividad $actividad, Estudiante $estudiante): string

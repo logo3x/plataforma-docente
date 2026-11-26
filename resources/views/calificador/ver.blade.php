@@ -59,6 +59,7 @@
                 <a class="boton boton-sec" href="{{ route('calificador.devolucion', $actividad) }}">Devolución a los estudiantes</a>
                 <a class="boton boton-sec" href="{{ route('calificador.reclamos', $actividad) }}">Reclamos</a>
                 <a class="boton boton-sec" href="{{ route('calificador.similitud', $actividad) }}">Similitud entre entregas</a>
+                <a class="boton boton-sec" href="{{ route('bitacora.index', ['actividad' => $actividad->id]) }}#nueva">Anotar en la bitácora</a>
                 <form method="POST" action="{{ route('calificador.registro', $actividad) }}">@csrf
                     <button class="boton" type="submit" @disabled($indicadores['calificadas'] === 0)>Pasar notas al registro</button></form>
             </div>

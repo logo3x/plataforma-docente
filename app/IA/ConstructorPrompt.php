@@ -2,6 +2,7 @@
 
 namespace App\IA;
 
+use App\Calificacion\BitacoraAula;
 use App\Models\Contenido;
 use App\Models\Dictado;
 use App\Models\Materia;
@@ -82,9 +83,13 @@ final class ConstructorPrompt
 
         [$material, $recortado, $meta] = $this->material($contenidos);
 
+        // Anexo B: lo aprendido en el aula con esta materia, para no repetir los mismos tropiezos
+        $lecciones = app(BitacoraAula::class)->leccionesParaIa($materia);
+
         return [
             'sistema' => "Usted es el asistente de un docente universitario para crear material de clase y evaluaciones.\n\n"
-                ."## Contexto general\n{$capa1}\n\n## Estilo de la materia\n{$capa2}",
+                ."## Contexto general\n{$capa1}\n\n## Estilo de la materia\n{$capa2}"
+                .($lecciones !== '' ? "\n\n## Lecciones aprendidas en el aula con esta materia (téngalas en cuenta)\n{$lecciones}" : ''),
             'usuario' => "{$capa3}\n\n## Material de referencia del docente\n".($material ?: '(No se seleccionó material: use solo el tema indicado.)'),
             'plantillas' => [
                 'contexto' => $p1['version'], 'materia' => $p2['version'], $claveTarea => $p3['version'],

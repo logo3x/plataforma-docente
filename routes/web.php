@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ApunteController;
+use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\Calificador\ResultadosNavegadorController;
 use App\Http\Controllers\CalificadorController;
 use App\Http\Controllers\CargaNotasController;
@@ -178,6 +179,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/generaciones/{generacion}/aprobar', [GeneracionBancoController::class, 'aprobar'])->name('generacion.aprobar');
     Route::post('/generaciones/{generacion}/descartar', [GeneracionBancoController::class, 'descartar'])->name('generacion.descartar');
 
+    Route::get('/bitacora', [BitacoraController::class, 'index'])->name('bitacora.index');
+    Route::get('/bitacora/anexo-b.md', [BitacoraController::class, 'anexo'])->name('bitacora.anexo');
+    Route::post('/bitacora', [BitacoraController::class, 'store'])->name('bitacora.store');
+    Route::post('/bitacora/sugerencias', [BitacoraController::class, 'sugerencia'])->name('bitacora.sugerencia');
+    Route::put('/bitacora/{entrada}', [BitacoraController::class, 'update'])->name('bitacora.update');
+    Route::delete('/bitacora/{entrada}', [BitacoraController::class, 'destroy'])->name('bitacora.destroy');
     Route::get('/catalogo-errores', [CatalogoErroresController::class, 'index'])->name('catalogo-errores.index');
     Route::post('/catalogo-errores', [CatalogoErroresController::class, 'store'])->name('catalogo-errores.store');
     Route::post('/catalogo-errores/restaurar', [CatalogoErroresController::class, 'restaurar'])->name('catalogo-errores.restaurar');

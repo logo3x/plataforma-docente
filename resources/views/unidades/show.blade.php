@@ -32,6 +32,7 @@
                     <span class="fila no-imprimir" style="gap:.4rem">
                         <a class="boton boton-sec boton-chico" href="{{ route('ejemplos.index', ['materia' => $u->materia, 'temas' => $ids->all()]) }}#generar">Ejemplos prácticos</a>
                         <a class="boton boton-sec boton-chico" href="{{ route('debates.index', ['materia' => $u->materia, 'temas' => $ids->all()]) }}#generar">Preguntas de debate</a>
+                        <a class="boton boton-sec boton-chico" href="{{ route('vocabularios.index', ['materia' => $u->materia, 'temas' => $ids->all()]) }}#generar">Vocabulario</a>
                         <a class="boton boton-sec boton-chico" href="{{ route('generacion.create', ['materia' => $u->materia, 'temas' => $ids->all()]) }}">Quiz de estos temas</a>
                     </span>
                 @endif

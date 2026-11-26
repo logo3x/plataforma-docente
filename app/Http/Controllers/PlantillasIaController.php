@@ -25,6 +25,7 @@ class PlantillasIaController extends Controller
         'unidad' => 'Capa 3 — Tarea: planear una unidad didáctica',
         'ejemplos' => 'Capa 3 — Tarea: ejemplos prácticos resueltos',
         'debate' => 'Capa 3 — Tarea: preguntas de debate',
+        'vocabulario' => 'Capa 3 — Tarea: lista de vocabulario',
         'temario' => 'Capa 3 — Tarea: extraer el temario del plan', 'sugerencias' => 'Capa 3 — Tarea: sugerir organización de la clase'];
 
     public function edit(Request $request, ConstructorPrompt $prompts): View

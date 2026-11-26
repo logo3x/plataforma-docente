@@ -141,3 +141,16 @@ pre.codigo { font-family: ui-monospace, Consolas, monospace; font-size: .88rem; 
 .proyector-controles button { background: transparent; color: #fff; border: 1px solid #94a3b8; border-radius: var(--radio); padding: .45rem .9rem; font-size: 1rem; cursor: pointer; }
 .proyector-controles button:disabled { opacity: .4; cursor: default; }
 [x-cloak] { display: none !important; }
+
+/* Vocabulario: lista, tarjetas y hoja de repaso */
+dl.vocabulario { display: grid; gap: .6rem; }
+dl.vocabulario .termino { background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio); padding: .6rem .9rem; break-inside: avoid; }
+dl.vocabulario dt { font-weight: 700; }
+dl.vocabulario dd { margin: .2rem 0 0; }
+.tarjetas-vocabulario { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .8rem; }
+.tarjeta-voc { min-height: 8rem; padding: 1rem; border: 2px solid var(--marino); border-radius: var(--radio); background: var(--blanco); color: var(--texto); font: inherit; cursor: pointer; text-align: center; break-inside: avoid; }
+.tarjeta-voc[aria-pressed="true"] { background: #eef6ff; text-align: left; }
+.tarjeta-voc:focus-visible { outline: 3px solid var(--cian); outline-offset: 2px; }
+.repaso-voc li { margin-bottom: .9rem; line-height: 1.6; }
+.linea-respuesta { display: inline-block; width: 11rem; border-bottom: 1px solid var(--texto); margin-right: .5rem; vertical-align: bottom; }
+@media print { .tarjeta-voc .reverso { display: block !important; font-size: .9rem; margin-top: .4rem; } }

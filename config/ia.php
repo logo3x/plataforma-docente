@@ -200,6 +200,33 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
  ]}
 TXT,
 
+        'vocabulario' => <<<'TXT'
+Tarea: arme una lista de vocabulario con los términos clave del tema, para que el estudiante los entienda y los use con precisión.
+
+Tema:        {{tema}}
+Cantidad:    {{cantidad}} términos
+Nivel:       {{nivel}}
+Contexto:    {{contexto}}
+Grupo:       {{grupo}}
+
+Reglas:
+- Solo términos que el estudiante necesita para el tema; nada de relleno ni de términos de otros temas.
+- La definición tiene una o dos frases, en palabras sencillas y sin usar el mismo término que define.
+- «ejemplo» muestra el término en una situación concreta del contexto indicado.
+- «relacionados» son otros términos de la lista con los que se conecta o se confunde.
+{{reglas_ingles}}
+- En «tema» escriba el nombre del tema tal como aparece arriba.
+- Use el vocabulario del material de referencia y cíñase al alcance del grupo.
+{{glosario_actual}}
+{{memoria}}
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"formato":"plataforma-vocabulario","version":1,"titulo":"...","proposito":"para qué le sirve al estudiante",
+ "terminos":[
+  {"termino":"...","tema":"...","definicion":"...","ejemplo":"...","ingles":"","relacionados":["..."]}
+ ]}
+TXT,
+
         'temario' => <<<'TXT'
 Tarea: lea el plan curricular de la materia y extraiga su temario como estructura.
 

@@ -17,6 +17,7 @@
                 <a href="{{ route('unidades.index', $materia) }}">Unidades didácticas</a> ·
                 <a href="{{ route('ejemplos.index', $materia) }}">Ejemplos prácticos</a> ·
                 <a href="{{ route('debates.index', $materia) }}">Preguntas de debate</a> ·
+                <a href="{{ route('vocabularios.index', $materia) }}">Vocabulario</a> ·
                 <a href="{{ route('reclamos.materia', $materia) }}">Reclamos</a> ·
                 <a href="{{ route('contenido.index', $materia) }}">Contenido</a> ·
                 <a href="{{ route('materias.estilo', $materia) }}">Estilo para la IA</a>

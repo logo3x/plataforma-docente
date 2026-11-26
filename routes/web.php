@@ -25,6 +25,7 @@ use App\Http\Controllers\SegundaOportunidadController;
 use App\Http\Controllers\SeguridadController;
 use App\Http\Controllers\TemarioController;
 use App\Http\Controllers\UnidadDidacticaController;
+use App\Http\Controllers\VocabularioController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/inicio');
@@ -114,7 +115,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/generaciones/{generacion}/unidad/aprobar', [UnidadDidacticaController::class, 'aprobar'])->name('unidades.aprobar');
     Route::post('/generaciones/{generacion}/unidad/descartar', [UnidadDidacticaController::class, 'descartar'])->name('unidades.descartar');
     // Generadores de material del catálogo (7.4): mismas pantallas y flujo de borrador para cada tipo
-    foreach (['ejemplos' => EjemploController::class, 'debates' => DebateController::class] as $r => $c) {
+    foreach (['ejemplos' => EjemploController::class, 'debates' => DebateController::class, 'vocabularios' => VocabularioController::class] as $r => $c) {
         Route::get("/materias/{materia}/{$r}", [$c, 'index'])->name("{$r}.index");
         Route::get("/materias/{materia}/{$r}/nuevo", [$c, 'create'])->name("{$r}.create");
         Route::post("/materias/{materia}/{$r}", [$c, 'store'])->name("{$r}.store");
@@ -130,6 +131,7 @@ Route::middleware('auth')->group(function () {
         Route::post("/generaciones/{generacion}/{$r}/aprobar", [$c, 'aprobar'])->name("{$r}.aprobar");
         Route::post("/generaciones/{generacion}/{$r}/descartar", [$c, 'descartar'])->name("{$r}.descartar");
     }
+    Route::post('/vocabularios/{material}/glosario', [VocabularioController::class, 'glosario'])->name('vocabularios.glosario');
     Route::get('/materias/{materia}/reclamos', [ReclamoController::class, 'materia'])->name('reclamos.materia');
     Route::get('/materias/{materia}/temario', [TemarioController::class, 'show'])->name('temario.show');
     Route::post('/materias/{materia}/temario/extraer', [TemarioController::class, 'extraer'])->name('temario.extraer');

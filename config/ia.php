@@ -284,6 +284,33 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
  "resumen":["..."],"preguntas":[{"pregunta":"...","respuesta":"..."}],"fuentes":["..."]}
 TXT,
 
+        'comentarios' => <<<'TXT'
+Tarea: proponga un comentario breve para cada respuesta abierta de esta pregunta, como lo escribiría el docente después de leerla.
+
+Pregunta:
+{{pregunta}}
+
+Respuesta de referencia del docente:
+{{referencia}}
+
+Rúbrica:
+{{rubrica}}
+
+Respuestas, cada una con el puntaje que ya le puso el docente:
+{{respuestas}}
+
+Reglas (voz del docente):
+- Una a tres frases por respuesta, en el trato y el tono indicados en el contexto, como se habla en clase.
+- Diga primero qué está bien, luego qué falta o qué corregir, en concreto y sobre lo que el estudiante escribió.
+- Coherente con el puntaje, pero SIN mencionar cifras, puntajes, porcentajes, niveles de rúbrica ni conteos.
+- Nada de fórmulas de máquina («Excelente trabajo», «Sigue así») ni listas: frases de profesor.
+- No invente lo que la respuesta no dice. No use el nombre del estudiante.
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"comentarios":[{"id":123,"comentario":"..."}]}
+Use exactamente los números entre corchetes como «id».
+TXT,
+
         'temario' => <<<'TXT'
 Tarea: lea el plan curricular de la materia y extraiga su temario como estructura.
 

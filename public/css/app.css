@@ -171,3 +171,6 @@ pre.comparacion { white-space: pre-wrap; word-break: break-word; font-family: in
 pre.comparacion-codigo { font-family: ui-monospace, Consolas, monospace; font-size: .85rem; }
 pre.comparacion mark { background: #fde68a; outline: 1px solid #d97706; }
 @media (max-width: 800px) { .lado-a-lado { grid-template-columns: 1fr; } }
+
+/* Borrador de comentario propuesto por la IA (8.5) */
+.borrador-ia { margin-top: .5rem; padding: .5rem .7rem; border: 1px dashed var(--cian); border-radius: var(--radio); background: #f0f9ff; }

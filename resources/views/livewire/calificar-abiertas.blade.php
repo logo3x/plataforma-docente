@@ -42,6 +42,30 @@
                     <label for="buscar" style="margin:0">Resaltar términos</label>
                     <input id="buscar" type="text" wire:model.live.debounce.300ms="buscar" placeholder="requisito, restricción" style="max-width:24rem">
                 </div>
+                <details style="margin-top:.6rem">
+                    <summary>Comentarios frecuentes <span class="suave">({{ $frecuentes->count() }})</span></summary>
+                    <p class="suave" style="margin:.3rem 0">Frases de un clic para lo que se repite («falta justificar», «confunde requisito con restricción»). Se insertan en el comentario y se pueden editar.</p>
+                    <ul style="margin:.2rem 0">
+                        @foreach ($frecuentes as $f)
+                            <li>{{ $f->texto }} <span class="suave">· {{ $f->pregunta_id ? 'esta pregunta' : 'toda la materia' }} · usado {{ $f->usos }} vez/veces</span>
+                                <button type="button" class="enlace" wire:click="eliminarFrecuente({{ $f->id }})" wire:confirm="¿Quitar este comentario frecuente?">Quitar</button></li>
+                        @endforeach
+                    </ul>
+                    <div class="fila">
+                        <label for="nuevo-frecuente" class="sr-only">Nuevo comentario frecuente</label>
+                        <input id="nuevo-frecuente" type="text" wire:model="nuevoFrecuente" maxlength="300" placeholder="Falta un ejemplo propio" style="flex:1">
+                        <select wire:model="alcanceFrecuente" aria-label="Para qué preguntas"><option value="pregunta">Para esta pregunta</option><option value="materia">Para toda la materia</option></select>
+                        <button type="button" class="boton boton-sec boton-chico" wire:click="guardarFrecuente">Agregar</button>
+                    </div>
+                </details>
+                <div class="fila" style="margin-top:.6rem">
+                    <button type="button" class="boton boton-sec boton-chico" wire:click="proponerComentarios" wire:loading.attr="disabled" wire:target="proponerComentarios" @disabled(! $sinComentario)>
+                        <span wire:loading.remove wire:target="proponerComentarios">Proponer comentarios con IA ({{ $sinComentario }})</span>
+                        <span wire:loading wire:target="proponerComentarios">La IA está redactando… con un modelo local puede tardar</span>
+                    </button>
+                    <span class="suave">Para las respuestas ya calificadas sin comentario. Quedan como borrador hasta que usted los use.</span>
+                </div>
+                @if ($avisoIa)<div @class(['aviso', 'aviso-error' => $avisoIaError, 'aviso-info' => ! $avisoIaError]) role="status" style="margin-top:.5rem">{{ $avisoIa }}</div>@endif
             </div>
 
             @foreach ($respuestas as $r)
@@ -84,7 +108,28 @@
                         @isset($errores[$r->id])<span class="error" role="alert">{{ $errores[$r->id] }}</span>@endisset
                     </div>
                     <label for="c-{{ $r->id }}" style="margin-top:.5rem">Comentario para el estudiante</label>
-                    <input id="c-{{ $r->id }}" type="text" value="{{ $r->comentario }}" x-on:change="$wire.comentar({{ $r->id }}, $event.target.value)" placeholder="Breve, como lo diría en clase">
+                    {{-- La clave cambia con el texto: al insertar un frecuente o usar un borrador, la casilla muestra el valor nuevo --}}
+                    <input id="c-{{ $r->id }}" wire:key="c-{{ $r->id }}-{{ md5((string) $r->comentario) }}" type="text" value="{{ $r->comentario }}" x-on:change="$wire.comentar({{ $r->id }}, $event.target.value)" placeholder="Breve, como lo diría en clase">
+                    @if ($frecuentes->isNotEmpty())
+                        <div class="fila frecuentes" style="margin-top:.3rem;gap:.3rem">
+                            @foreach ($frecuentes->take(8) as $f)
+                                <button type="button" class="boton boton-sec boton-chico" wire:click="insertarFrecuente({{ $r->id }}, {{ $f->id }})" title="Agregar al comentario">+ {{ \Illuminate\Support\Str::limit($f->texto, 40) }}</button>
+                            @endforeach
+                        </div>
+                    @endif
+                    @if ($r->comentario_borrador)
+                        <div class="borrador-ia" x-data="{ texto: @js($r->comentario_borrador) }">
+                            <label for="b-{{ $r->id }}"><strong>Borrador de la IA</strong> <span class="suave">(el estudiante aún no lo ve; edítelo si hace falta)</span></label>
+                            <textarea id="b-{{ $r->id }}" rows="2" x-model="texto" style="font-family:inherit"></textarea>
+                            @if (\App\Calificacion\ComentariosIA::delataCalculo($r->comentario_borrador))
+                                <p class="estado estado-incompleto" style="margin:.3rem 0">Menciona cifras o puntajes: un comentario de docente no los dice (8.5).</p>
+                            @endif
+                            <div class="fila" style="margin-top:.3rem">
+                                <button type="button" class="boton boton-chico" x-on:click="$wire.usarBorrador({{ $r->id }}, texto)">Usar este comentario</button>
+                                <button type="button" class="enlace" wire:click="descartarBorrador({{ $r->id }})">Descartar</button>
+                            </div>
+                        </div>
+                    @endif
                 </section>
             @endforeach
         @endif

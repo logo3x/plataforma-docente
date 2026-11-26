@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Calificacion\RevisionEstatica;
 use App\Calificacion\Similitud;
 use App\Models\Actividad;
 use App\Models\Entrega;
@@ -47,8 +48,9 @@ class SimilitudController extends Controller
             ->filter(fn ($r) => in_array($r->item->pregunta->tipo, ['abierta', 'reto'], true) && isset($respB[$r->item->pregunta_id]))
             ->map(function ($r) use ($respB, $similitud, $puntajes) {
                 $codigo = $r->item->pregunta->tipo === 'reto';
-                $ta = is_string($r->respuesta['valor'] ?? null) ? $r->respuesta['valor'] : '';
-                $tb = is_string($respB[$r->item->pregunta_id]->respuesta['valor'] ?? null) ? $respB[$r->item->pregunta_id]->respuesta['valor'] : '';
+                // Un reto de PHP con varios archivos se compara como un solo texto
+                $ta = RevisionEstatica::texto($r->respuesta['valor'] ?? null);
+                $tb = RevisionEstatica::texto($respB[$r->item->pregunta_id]->respuesta['valor'] ?? null);
 
                 return ['numero' => $r->item->orden + 1, 'enunciado' => $r->item->pregunta->enunciado['texto'] ?? '', 'codigo' => $codigo,
                     'puntaje' => $puntajes[$r->item->pregunta_id]['puntaje'] ?? null, 'lados' => $similitud->comparar($ta, $tb, $codigo)];

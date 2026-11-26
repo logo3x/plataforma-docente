@@ -19,6 +19,12 @@ final class CalificadorDeterminista
 {
     public const TIPOS_SERVIDOR = ['unica', 'vf', 'multiple', 'emparejar', 'ordenar', 'completar'];
 
+    /** Los califica el servidor: los tipos deterministas y los retos de revisión estática (PHP y Laravel). */
+    public static function loCalificaElServidor(string $tipo, array $clave): bool
+    {
+        return in_array($tipo, self::TIPOS_SERVIDOR, true) || ($tipo === 'reto' && ($clave['lenguaje'] ?? null) === 'php');
+    }
+
     /**
      * @param  array<string, mixed>  $clave  solucionario del ítem (Pregunta::clave)
      */
@@ -32,7 +38,10 @@ final class CalificadorDeterminista
             'ordenar' => $this->ordenar($clave, $respuesta, $max),
             'completar' => $this->completar($clave, $respuesta, $max),
             'abierta' => ResultadoItem::pendiente($max, 'docente'),
-            'reto' => ResultadoItem::pendiente($max, 'navegador'),
+            // PHP y Laravel no se ejecutan: el servidor los revisa con criterios estáticos (4.6)
+            'reto' => ($clave['lenguaje'] ?? null) === 'php'
+                ? (new RevisionEstatica)->calificar($clave, $respuesta, $max)
+                : ResultadoItem::pendiente($max, 'navegador'),
             default => throw new InvalidArgumentException("Tipo de pregunta desconocido: {$tipo}."),
         };
     }

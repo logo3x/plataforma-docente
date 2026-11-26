@@ -48,7 +48,7 @@ Todos llevan `tipo`, `enunciado` y `peso`. Opcionales: `tema`, `dificultad` (`ba
 | `ordenar` | `pasos` {clave: texto}, `orden` [claves] | Posición por posición; el examen baraja los pasos |
 | `completar` | `plantilla` con `___` por hueco, `huecos` [respuesta o [alternativas]] | Hueco por hueco, sin distinguir mayúsculas, espacios ni `@` inicial |
 | `abierta` | `referencia`, `rubrica`, `lineas` | La califica el docente, por pregunta |
-| `reto` | `lenguaje` (`javascript`, `html` o `sql`), `esquema` (solo SQL), `plantilla_codigo`, `casos_visibles` [{entrada, esperada, descripcion}], `verificaciones` [{id, nombre, fraccion, prueba, reservada}] | En el navegador del docente; las fracciones suman 1 |
+| `reto` | `lenguaje` (`javascript`, `html`, `sql` o `php`), `esquema` (solo SQL), `archivos` y `alcance` (solo PHP), `plantilla_codigo`, `casos_visibles` [{entrada, esperada, descripcion}], `verificaciones` [{id, nombre, fraccion, prueba, reservada}] | En el navegador del docente; las fracciones suman 1 |
 
 ### Retos de código
 
@@ -101,6 +101,38 @@ El estudiante escribe sus consultas y con «Probar» las ejecuta en un SQLite qu
     { "id": "v2", "nombre": "Funciona con órdenes nuevas", "fraccion": "0.3", "reservada": true,
       "datos": "INSERT INTO ordenes VALUES (4, 1, 10);",
       "consulta": "SELECT e.nombre, SUM(o.horas) FROM equipos e JOIN ordenes o ON o.equipo_id = e.id WHERE e.planta = 'Barrancabermeja' GROUP BY e.nombre" } ] }
+```
+
+### Retos de PHP y Laravel (`"lenguaje": "php"`)
+
+PHP y Laravel **no se ejecutan**, ni en el navegador ni en el servidor. El código se revisa con criterios estáticos explicados en lenguaje natural, y la revisión nunca se presenta como ejecución (4.6):
+
+- En el examen, el reto dice «Este reto no se ejecuta» y lista en español los criterios que se revisarán (los reservados solo se cuentan), además del `alcance`: lo que **no** se comprueba. No hay botón «Probar»; sí hay ayuda de sintaxis al escribir: llaves, paréntesis y comillas en PHP, y en Blade las directivas sin su cierre (`@foreach` sin `@endforeach`) y los `{{ }}` sin cerrar.
+- `archivos`: los archivos que escribe el estudiante, cada uno con su editor: `[{ "nombre": "routes/web.php", "plantilla": "<?php\n" }, …]`, hasta 6. Sin `archivos` hay uno solo, `codigo.php`, con `plantilla_codigo`.
+- Cada verificación tiene **un** criterio:
+  - `patron`: expresión regular (sin delimitadores) que debe aparecer; con `"ausente": true`, que **no** debe aparecer (por ejemplo, `DB::select` en un controlador que debe usar Eloquent).
+  - `contiene`: texto que debe aparecer, sin importar espacios ni saltos de línea.
+  - `"sintaxis": true`: el archivo se analiza sin errores. En PHP con el analizador de PHP; en una vista `.blade.php`, compilándola a PHP. **Analizar no es ejecutar**: no corre ninguna línea del estudiante.
+  - `archivo` (opcional) limita el criterio a uno de los archivos.
+- Los comentarios no cuentan: escribir `// Route::get('/productos'…` no cumple un patrón. Con `"comentarios": true` sí se revisan.
+- La revisión la hace el servidor al procesar la entrega: la nota sale de inmediato, sin «Ejecutar retos». El detalle y el informe dicen «Revisión estática, sin ejecutar el código» con el alcance, y cada criterio como «Cumple» o «No cumple»; un error de sintaxis se explica en español con su línea.
+- Si el proyecto completo debe funcionar, pídalo además como **entrega de archivo libre** (un .zip) en una actividad aparte, y márquelo como anexo en la configuración del examen.
+
+```json
+{ "tipo": "reto", "lenguaje": "php", "peso": "3", "enunciado": "Liste los productos en /productos.",
+  "archivos": [
+    { "nombre": "routes/web.php", "plantilla": "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n" },
+    { "nombre": "app/Http/Controllers/ProductoController.php", "plantilla": "<?php\n\nnamespace App\\Http\\Controllers;\n" },
+    { "nombre": "resources/views/productos/index.blade.php", "plantilla": "" } ],
+  "alcance": "No se comprobó que la página cargue ni que la base de datos tenga productos.",
+  "verificaciones": [
+    { "id": "v1", "nombre": "La ruta GET /productos llama a ProductoController@index", "fraccion": "0.3", "archivo": "routes/web.php",
+      "patron": "Route::get\\(\\s*['\"]/productos['\"]\\s*,\\s*\\[\\s*ProductoController::class\\s*,\\s*['\"]index['\"]" },
+    { "id": "v2", "nombre": "El controlador entrega los productos a la vista productos.index", "fraccion": "0.3",
+      "archivo": "app/Http/Controllers/ProductoController.php", "patron": "view\\(\\s*['\"]productos\\.index['\"]" },
+    { "id": "v3", "nombre": "La vista recorre los productos con @foreach", "fraccion": "0.2",
+      "archivo": "resources/views/productos/index.blade.php", "patron": "@foreach\\s*\\(\\s*\\$productos\\s+as" },
+    { "id": "v4", "nombre": "Los tres archivos no tienen errores de sintaxis", "fraccion": "0.2", "sintaxis": true, "reservada": true } ] }
 ```
 
 ## Versiones y segundo banco (5.4.2)

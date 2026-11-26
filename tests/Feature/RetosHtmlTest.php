@@ -75,8 +75,8 @@ class RetosHtmlTest extends TestCase
     #[Test]
     public function rechaza_lenguajes_que_no_se_pueden_probar_en_el_navegador(): void
     {
-        $errores = app(ImportadorBanco::class)->validar(['sigla' => 'DW-OTRO'] + $this->banco(['lenguaje' => 'php']));
-        $this->assertTrue(collect($errores)->contains(fn ($e) => str_contains($e, '«lenguaje» debe ser «javascript», «html» o «sql»')));
+        $errores = app(ImportadorBanco::class)->validar(['sigla' => 'DW-OTRO'] + $this->banco(['lenguaje' => 'python']));
+        $this->assertTrue(collect($errores)->contains(fn ($e) => str_contains($e, '«lenguaje» debe ser «javascript», «html», «sql» o «php»')));
     }
 
     #[Test]

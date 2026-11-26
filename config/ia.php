@@ -70,6 +70,12 @@ Reglas de contenido:
   ORDER BY), o una «prueba» que da 1 después de ejecutar su código (para INSERT, UPDATE o CREATE). Una
   verificación reservada puede traer «datos» propios, INSERT adicionales, para que no sirva escribir el
   resultado a mano.
+- Si la materia trabaja PHP o Laravel, el reto lleva "lenguaje":"php" y NO se ejecuta: se revisa con criterios
+  estáticos. «archivos» lista los archivos que escribe el estudiante ([{"nombre":"routes/web.php","plantilla":"<?php\n"}]).
+  Cada verificación tiene un solo criterio: «patron» (expresión regular sin delimitadores, sobre el código sin
+  comentarios; "ausente": true si NO debe aparecer), «contiene» (texto, sin importar espacios) o "sintaxis": true
+  (el archivo se analiza sin errores). Use «archivo» para revisar uno solo. Su «nombre» dice en español qué se
+  revisa («La ruta GET /productos llama a ProductoController@index»). En «alcance» diga qué NO se comprueba.
 - Los pesos de todos los ítems deben sumar exactamente {{valor}}.
 {{no_repetir}}
 

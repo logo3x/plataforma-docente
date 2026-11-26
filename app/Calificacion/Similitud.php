@@ -59,12 +59,13 @@ final class Similitud
         $porItem = [];
         foreach ($entregas as $e) {
             foreach ($e->respuestas as $r) {
-                if (! in_array($r->item->pregunta->tipo, ['abierta', 'reto'], true) || ! is_string($r->respuesta['valor'] ?? null)) {
+                $texto = RevisionEstatica::texto($r->respuesta['valor'] ?? null);
+                if (! in_array($r->item->pregunta->tipo, ['abierta', 'reto'], true) || $texto === '') {
                     continue;
                 }
                 $porItem[$r->item->pregunta_id]['tipo'] = $r->item->pregunta->tipo;
                 $porItem[$r->item->pregunta_id]['pregunta'] = $r->item->pregunta;
-                $porItem[$r->item->pregunta_id]['entregas'][$e->id] = $r->respuesta['valor'];
+                $porItem[$r->item->pregunta_id]['entregas'][$e->id] = $texto;
                 $porItem[$r->item->pregunta_id]['numero'][$e->id] = $r->item->orden + 1;
             }
         }

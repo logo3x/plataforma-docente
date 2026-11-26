@@ -48,12 +48,18 @@
                 @if ($r->comentario)<p><strong>Comentario del docente:</strong> {{ $r->comentario }}</p>@endif
                 @break
             @case('reto')
-                @php($codigo = is_string($r->respuesta['valor'] ?? null) ? $r->respuesta['valor'] : '')
+                @php($codigo = \App\Calificacion\RevisionEstatica::texto($r->respuesta['valor'] ?? null))
                 <pre class="texto-estudiante" style="font-family:ui-monospace,Consolas,monospace">{{ $codigo }}</pre>
                 @if (($p->enunciado['lenguaje'] ?? null) === 'html' && trim($codigo) !== '')@include('calificador._vista-html', ['codigo' => $codigo])@endif
+                @if (! empty($d['estatica']))
+                    {{-- 4.6: la revisión estática no se presenta como ejecución --}}
+                    <p class="aviso aviso-info" style="margin:.5rem 0"><strong>Revisión estática, sin ejecutar el código.</strong>
+                        {{ $d['alcance'] ?? \App\Calificacion\RevisionEstatica::ALCANCE }}</p>
+                @endif
                 @if (! empty($d['verificaciones']))
-                    <table><thead><tr><th>Verificación</th><th>Resultado</th><th class="num">Valor</th></tr></thead><tbody>
-                        @foreach ($d['verificaciones'] as $v)<tr><td>{{ $v['nombre'] }}</td><td>{{ $v['superada'] ? '✓ Superada' : '✗ No superada' }}</td><td class="num">{{ $num($v['valor']) }}</td></tr>@endforeach
+                    <table><thead><tr><th>{{ empty($d['estatica']) ? 'Verificación' : 'Criterio revisado' }}</th><th>Resultado</th><th class="num">Valor</th></tr></thead><tbody>
+                        @foreach ($d['verificaciones'] as $v)<tr><td>{{ $v['nombre'] }}@if (! empty($v['nota']))<div class="suave">{{ $v['nota'] }}</div>@endif</td>
+                            <td>{{ $v['superada'] ? (empty($d['estatica']) ? '✓ Superada' : '✓ Cumple') : (empty($d['estatica']) ? '✗ No superada' : '✗ No cumple') }}</td><td class="num">{{ $num($v['valor']) }}</td></tr>@endforeach
                     </tbody></table>
                 @else <p class="suave">Pendiente de ejecutar en el calificador.</p>@endif
                 @foreach ($d['casos'] ?? [] as $c)

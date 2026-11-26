@@ -3,6 +3,7 @@
 namespace App\Evaluacion;
 
 use App\Calificacion\CalificadorDeterminista;
+use App\Calificacion\RevisionEstatica;
 use App\Models\Actividad;
 use App\Models\Ensayo;
 use App\Models\User;
@@ -51,9 +52,13 @@ final class EnsayoExamen
             $tipo = $it->pregunta->tipo;
             $respuesta = $carga['respuestas'][(string) $it->id] ?? null;
             $fila = ['numero' => $it->orden + 1, 'tipo' => $tipo, 'enunciado' => $it->pregunta->enunciado['texto'] ?? '', 'peso' => (string) $it->peso, 'respuesta' => $respuesta];
-            if (in_array($tipo, CalificadorDeterminista::TIPOS_SERVIDOR, true)) {
+            if (CalificadorDeterminista::loCalificaElServidor($tipo, $it->pregunta->clave)) {
                 $r = $this->determinista->calificar($tipo, $it->pregunta->clave, $respuesta, (string) $it->peso);
                 $fila['puntaje'] = $r->puntaje;
+                if ($tipo === 'reto') {
+                    $fila['codigo'] = RevisionEstatica::texto($respuesta);
+                    $fila['estatica'] = $r->desglose['verificaciones'];
+                }
                 $puntaje = $puntaje->plus($r->puntaje);
             } elseif ($tipo === 'reto') {
                 // Se ejecutan en el navegador del docente, igual que en el calificador (calificación híbrida)

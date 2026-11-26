@@ -2,6 +2,7 @@
 
 namespace App\Evaluacion;
 
+use App\Calificacion\RevisionEstatica;
 use App\Models\Artefacto;
 use App\Models\ArtefactoPregunta;
 use App\Models\Materia;
@@ -26,9 +27,10 @@ final class ImportadorBanco
 
     /**
      * javascript: se ejecuta en un Worker; html: página con HTML, CSS y JavaScript en una vista previa aislada;
-     * sql: consultas sobre una base SQLite en memoria creada con el «esquema» del reto (4.6).
+     * sql: consultas sobre una base SQLite en memoria creada con el «esquema» del reto;
+     * php: PHP y Laravel, sin ejecución, revisados en el servidor con criterios estáticos (4.6).
      */
-    public const LENGUAJES_RETO = ['javascript', 'html', 'sql'];
+    public const LENGUAJES_RETO = ['javascript', 'html', 'sql', 'php'];
 
     /** Lo que el navegador del docente necesita para evaluar una verificación: prueba, o consulta de SQL con sus datos. */
     public static function criterio(array $v): array
@@ -37,12 +39,23 @@ final class ImportadorBanco
             'orden' => (bool) ($v['orden'] ?? false), 'datos' => $v['datos'] ?? null], fn ($x) => $x !== null);
     }
 
+    /** Archivos de un reto de PHP: [{nombre, plantilla}]; sin «archivos», uno solo con la plantilla del reto. */
+    public static function archivosPhp(array $x): array
+    {
+        $a = array_values(array_filter((array) ($x['archivos'] ?? []), 'is_array'));
+
+        return $a !== []
+            ? array_map(fn ($f) => ['nombre' => (string) ($f['nombre'] ?? ''), 'plantilla' => (string) ($f['plantilla'] ?? '')], $a)
+            : [['nombre' => 'codigo.php', 'plantilla' => (string) ($x['plantilla_codigo'] ?? '')]];
+    }
+
     /** Lo que el examen necesita saber del lenguaje de un reto; nada para JavaScript, el de siempre. */
     private static function publicoDeLenguaje(array $x): array
     {
         return match ($x['lenguaje'] ?? 'javascript') {
             'html' => ['lenguaje' => 'html'],
             'sql' => ['lenguaje' => 'sql', 'esquema' => (string) ($x['esquema'] ?? '')],
+            'php' => array_filter(['lenguaje' => 'php', 'archivos' => self::archivosPhp($x), 'alcance' => filled($x['alcance'] ?? null) ? (string) $x['alcance'] : null]),
             default => [],
         };
     }
@@ -245,7 +258,7 @@ final class ImportadorBanco
             'valor' => (string) ($a->configuracion['valor'] ?? '0'), 'items' => array_map(fn ($it) => ['version' => 'A'] + $it, $items)]);
 
         // Un reto de HTML sigue siendo de HTML en la otra versión
-        $firma = fn (iterable $xs) => collect($xs)->map(fn ($x) => ($x['tipo'] ?? '?').(in_array($x['lenguaje'] ?? null, ['html', 'sql'], true) ? ' de '.strtoupper($x['lenguaje']) : '').':'.(is_numeric($x['peso'] ?? null) ? BigDecimal::of((string) $x['peso'])->strippedOfTrailingZeros() : '?'))->sort()->values()->all();
+        $firma = fn (iterable $xs) => collect($xs)->map(fn ($x) => ($x['tipo'] ?? '?').(in_array($x['lenguaje'] ?? null, ['html', 'sql', 'php'], true) ? ' de '.strtoupper($x['lenguaje']) : '').':'.(is_numeric($x['peso'] ?? null) ? BigDecimal::of((string) $x['peso'])->strippedOfTrailingZeros() : '?'))->sort()->values()->all();
         $origen = self::origenDe($a, $version);
         $base = $a->items()->with('pregunta')->where('banco', $origen)->get()->map(fn ($ap) => ['tipo' => $ap->pregunta->tipo, 'lenguaje' => $ap->pregunta->enunciado['lenguaje'] ?? null, 'peso' => (string) $ap->peso]);
         if ($firma($items) !== $firma($base)) {
@@ -319,7 +332,14 @@ final class ImportadorBanco
                 'plantilla_codigo' => $it['plantilla_codigo'] ?? '',
                 'casos_visibles' => array_values($it['casos_visibles'] ?? []),
                 'reservadas' => count(array_filter($it['verificaciones'], fn ($v) => $v['reservada'] ?? false)),
-            ], ['verificaciones' => array_values($it['verificaciones'])]],
+            ] + (($it['lenguaje'] ?? null) === 'php' ? [
+                // Revisión estática: el estudiante sabe qué se va a revisar (4.6), sin ver cómo
+                'criterios_visibles' => array_values(array_map(fn ($v) => $v['nombre'], array_filter($it['verificaciones'], fn ($v) => empty($v['reservada'])))),
+            ] : []), ['verificaciones' => array_values($it['verificaciones'])] + (($it['lenguaje'] ?? null) === 'php' ? [
+                'lenguaje' => 'php',
+                'archivos' => array_column(self::archivosPhp($it), 'nombre'),
+                'alcance' => filled($it['alcance'] ?? null) ? (string) $it['alcance'] : null,
+            ] : [])],
         };
     }
 
@@ -375,7 +395,13 @@ final class ImportadorBanco
             case 'reto':
                 $lenguaje = $it['lenguaje'] ?? 'javascript';
                 if (! in_array($lenguaje, self::LENGUAJES_RETO, true)) {
-                    $e[] = '«lenguaje» debe ser «javascript», «html» o «sql».';
+                    $e[] = '«lenguaje» debe ser «javascript», «html», «sql» o «php».';
+                }
+                if ($lenguaje === 'php') {
+                    $nombres = array_column(self::archivosPhp($it), 'nombre');
+                    if (count($nombres) > 6 || in_array('', $nombres, true) || count(array_unique($nombres)) !== count($nombres)) {
+                        $e[] = '«archivos» admite hasta 6, cada uno con un «nombre» distinto (por ejemplo routes/web.php).';
+                    }
                 }
                 if ($lenguaje === 'sql' && (! is_string($it['esquema'] ?? null) || trim($it['esquema']) === '')) {
                     $e[] = 'un reto de SQL necesita «esquema»: las instrucciones que crean y llenan sus tablas.';
@@ -389,11 +415,25 @@ final class ImportadorBanco
                 $ids = [];
                 foreach ($v as $ver) {
                     // En SQL se compara con una «consulta» de referencia o se evalúa una «prueba» que da 1
-                    $criterio = $lenguaje === 'sql' ? filled($ver['prueba'] ?? null) || filled($ver['consulta'] ?? null) : filled($ver['prueba'] ?? null);
+                    // En PHP, un solo criterio estático: «patron», «contiene» o «sintaxis»
+                    $criterio = match ($lenguaje) {
+                        'sql' => filled($ver['prueba'] ?? null) || filled($ver['consulta'] ?? null),
+                        'php' => count(array_filter([filled($ver['patron'] ?? null), filled($ver['contiene'] ?? null), ! empty($ver['sintaxis'])])) === 1,
+                        default => filled($ver['prueba'] ?? null),
+                    };
                     if (blank($ver['id'] ?? null) || blank($ver['nombre'] ?? null) || ! $criterio) {
-                        $e[] = $lenguaje === 'sql' ? 'cada verificación necesita id, nombre legible y una «consulta» de referencia o una «prueba».'
-                            : 'cada verificación necesita id, nombre legible y prueba.';
+                        $e[] = match ($lenguaje) {
+                            'sql' => 'cada verificación necesita id, nombre legible y una «consulta» de referencia o una «prueba».',
+                            'php' => 'cada verificación necesita id, nombre legible y un solo criterio: «patron», «contiene» o «sintaxis».',
+                            default => 'cada verificación necesita id, nombre legible y prueba.',
+                        };
                         break 2;
+                    }
+                    if ($lenguaje === 'php' && filled($ver['patron'] ?? null) && ! RevisionEstatica::patronValido((string) $ver['patron'])) {
+                        $e[] = "el patrón de «{$ver['id']}» no es una expresión regular válida.";
+                    }
+                    if ($lenguaje === 'php' && isset($ver['archivo']) && ! in_array($ver['archivo'], array_column(self::archivosPhp($it), 'nombre'), true)) {
+                        $e[] = "«{$ver['id']}» revisa el archivo «{$ver['archivo']}», que el reto no tiene.";
                     }
                     $ids[] = $ver['id'];
                     try {

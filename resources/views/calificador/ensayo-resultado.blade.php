@@ -32,7 +32,11 @@
         <section class="tarjeta">
             <div class="fila" style="justify-content:space-between"><strong>{{ $it['numero'] }}. {{ \Illuminate\Support\Str::limit($it['enunciado'], 140) }}</strong>
                 <span>@isset($it['puntaje']){{ $num($it['puntaje']) }} / {{ $num($it['peso']) }}@else<span class="suave">máximo {{ $num($it['peso']) }}</span>@endisset</span></div>
-            @if ($it['tipo'] === 'reto')
+            @if ($it['tipo'] === 'reto' && isset($it['estatica']))
+                <pre class="comparacion comparacion-codigo">{{ $it['codigo'] ?: '(sin código)' }}</pre>
+                <p class="suave">Revisión estática en el servidor, sin ejecutar el código:</p>
+                <ul>@foreach ($it['estatica'] as $v)<li>{{ $v['superada'] ? '✓' : '✗' }} {{ $v['nombre'] }}@if (! empty($v['nota'])) — {{ $v['nota'] }}@endif</li>@endforeach</ul>
+            @elseif ($it['tipo'] === 'reto')
                 <pre class="comparacion comparacion-codigo">{{ $it['codigo'] ?: '(sin código)' }}</pre>
                 @php($html = ($it['lenguaje'] ?? 'javascript') === 'html')
                 @if ($html && $it['codigo'])@include('calificador._vista-html', ['codigo' => $it['codigo']])@endif

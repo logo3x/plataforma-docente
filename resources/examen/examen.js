@@ -139,6 +139,7 @@
 
   // ---------- Entorno de prueba de código (sección 4) ----------
   function renderReto(caja, it, id) {
+    if (it.lenguaje === 'php') return renderRetoPHP(caja, it, id);
     const area = el('textarea', { rows: 14, spellcheck: 'false', 'aria-label': 'Código', onpaste: () => { E.sesion.pegados++; guardar(); } });
     area.value = E.respuestas[id] !== undefined ? E.respuestas[id] : (it.plantilla_codigo || '');
     area.addEventListener('keydown', ev => { if (ev.key === 'Tab') { ev.preventDefault(); const s = area.selectionStart; area.setRangeText('  ', s, area.selectionEnd, 'end'); } });
@@ -221,6 +222,84 @@
     if (html || sql) area.rows = 16;
     revisar();
     caja.append(area, aviso, el('p', {}, probar, ' ', verTablas, verTablas ? ' ' : null, it.reservadas ? el('span', { class: 'peso', texto: 'Hay ' + it.reservadas + ' verificación(es) adicional(es) que se evaluarán al calificar.' }) : null), vista, salida);
+  }
+
+  /* 4.6 PHP y Laravel: no hay ejecución en el navegador. El estudiante escribe cada archivo, ve en lenguaje
+     natural qué se revisará y tiene la ayuda de sintaxis; nada aquí sugiere que el código "corre". */
+  function renderRetoPHP(caja, it, id) {
+    const archivos = it.archivos && it.archivos.length ? it.archivos : [{ nombre: 'codigo.php', plantilla: it.plantilla_codigo || '' }];
+    const varios = archivos.length > 1, nivel = D.nivel_ayuda || 'completo';
+    const previo = E.respuestas[id];
+    const valorDe = (f, i) => varios ? (previo && typeof previo === 'object' && typeof previo[f.nombre] === 'string' ? previo[f.nombre] : f.plantilla)
+      : (typeof previo === 'string' ? previo : f.plantilla);
+    const areas = [];
+    const fijarTodo = () => { E.respuestas[id] = varios ? Object.fromEntries(areas.map(([f, a]) => [f.nombre, a.value])) : areas[0][1].value; };
+    caja.append(el('div', { class: 'aviso-estatico' },
+      el('strong', { texto: 'Este reto no se ejecuta.' }), ' Al calificar se revisa el código con estos criterios, sin ejecutarlo:',
+      el('ul', {}, (it.criterios_visibles || []).map(n => el('li', { texto: n })),
+        it.reservadas ? el('li', { class: 'peso', texto: 'y ' + it.reservadas + ' criterio(s) más que se revisan al calificar.' }) : null),
+      el('p', { class: 'peso', texto: it.alcance || 'Que el código cumpla los criterios no garantiza que el proyecto funcione: pruébelo en su equipo si la actividad lo permite.' })));
+    archivos.forEach((f, i) => {
+      const blade = /\.blade\.php$/.test(f.nombre);
+      const area = el('textarea', { rows: varios ? 10 : 14, spellcheck: 'false', 'aria-label': 'Archivo ' + f.nombre, onpaste: () => { E.sesion.pegados++; guardar(); } });
+      area.value = valorDe(f, i);
+      const aviso = el('div', { class: 'aviso-sintaxis', role: 'status', 'aria-live': 'polite' });
+      const revisar = () => { if (nivel === 'minimo') return; const p = blade ? revisarBlade(area.value) : revisarPHP(area.value); aviso.textContent = p ? '⚠ ' + p : ''; };
+      area.addEventListener('keydown', ev => { if (ev.key === 'Tab') { ev.preventDefault(); const s = area.selectionStart; area.setRangeText('    ', s, area.selectionEnd, 'end'); } });
+      area.addEventListener('input', () => { fijarTodo(); clearTimeout(area._t); area._t = setTimeout(guardar, 400); clearTimeout(area._s); area._s = setTimeout(revisar, 500); });
+      areas.push([f, area]);
+      caja.append(el('label', { class: 'archivo-php', texto: f.nombre }), area, aviso);
+      revisar();
+    });
+  }
+
+  /* PHP: lo que está fuera de las etiquetas de PHP, los comentarios con # y los heredoc no cuentan para
+     llaves y paréntesis; se reemplazan por líneas vacías para conservar la numeración. */
+  function revisarPHP(c) {
+    const blanco = (s) => s.replace(/[^\n]/g, ' ');
+    let t = c;
+    if (/<\?php|<\?=/.test(t)) t = t.replace(/(^|\?>)([\s\S]*?)(<\?php|<\?=|$)/g, (m, a, fuera, b) => a + blanco(fuera) + b);
+    t = t.replace(/<<<\s*['"]?(\w+)['"]?\n[\s\S]*?\n\s*\1\b/g, (m) => blanco(m));
+    t = t.replace(/(^|[^\w$'"])#(?!\[)[^\n]*/g, (m, a) => a + blanco(m.slice(a.length)));
+    t = t.replace(/<\?php|<\?=|\?>/g, (m) => blanco(m));
+    return revisarSintaxis(t);
+  }
+
+  /* Blade (4.4.1): directivas sin su pareja de cierre y {{ }} sin cerrar. */
+  const PAREJAS_BLADE = { if: ['endif'], unless: ['endunless'], isset: ['endisset'], foreach: ['endforeach'], forelse: ['endforelse'], for: ['endfor'], while: ['endwhile'],
+    switch: ['endswitch'], auth: ['endauth'], guest: ['endguest'], can: ['endcan'], cannot: ['endcannot'], error: ['enderror'], push: ['endpush'], prepend: ['endprepend'],
+    once: ['endonce'], env: ['endenv'], production: ['endproduction'], component: ['endcomponent'], slot: ['endslot'], verbatim: ['endverbatim'],
+    section: ['endsection', 'show', 'stop', 'append', 'overwrite'], php: ['endphp'], empty: ['endempty'], fragment: ['endfragment'] };
+  function revisarBlade(c) {
+    const t = c.replace(/\{\{--[\s\S]*?--\}\}/g, (m) => m.replace(/[^\n]/g, ' '));
+    const lineaEn = (i) => t.slice(0, i).split('\n').length;
+    for (const [a, b] of [['{{', '}}'], ['{!!', '!!}']]) {
+      let i = 0;
+      while ((i = t.indexOf(a, i)) >= 0) { if (t[i - 1] === '@') { i += a.length; continue; } const f = t.indexOf(b, i + a.length); const otra = t.indexOf(a, i + a.length);
+        if (f < 0 || (otra >= 0 && otra < f && a === '{!!')) return 'Línea ' + lineaEn(i) + ': se abrió «' + a + '» y no se cerró con «' + b + '».'; i = f + b.length; }
+    }
+    const cierres = {}; Object.entries(PAREJAS_BLADE).forEach(([k, v]) => v.forEach(x => { cierres[x] = k; }));
+    const pila = []; const re = /(^|[^\w@])@(\w+)/g; let m;
+    while ((m = re.exec(t))) {
+      const nombre = m[2], pos = m.index + m[1].length; let j = pos + 1 + nombre.length; let args = null;
+      const k = /^\s*\(/.exec(t.slice(j)); if (k) { let d = 0, q = null; const ini = j + k[0].length - 1;
+        for (j = ini; j < t.length; j++) { const ch = t[j]; if (q) { if (ch === '\\') j++; else if (ch === q) q = null; continue; } if (ch === "'" || ch === '"') q = ch; else if (ch === '(') d++; else if (ch === ')' && --d === 0) break; }
+        if (j >= t.length) return 'Línea ' + lineaEn(pos) + ': el paréntesis de @' + nombre + ' no se cerró.'; args = t.slice(ini + 1, j); re.lastIndex = j + 1; }
+      if (PAREJAS_BLADE[nombre]) {
+        // Formas que no llevan cierre: @section('t', 'valor'), @php($x = 1), @empty sin paréntesis dentro de @forelse
+        const coma = args !== null && /^\s*(['"]).*?\1\s*,/.test(args);
+        if ((nombre === 'section' || nombre === 'push' || nombre === 'prepend') && coma) continue;
+        if ((nombre === 'php' && args !== null) || (nombre === 'empty' && args === null)) continue;
+        pila.push({ nombre, linea: lineaEn(pos) });
+        if (nombre === 'verbatim') { const f = t.indexOf('@endverbatim', re.lastIndex); if (f < 0) break; re.lastIndex = f; }
+      } else if (cierres[nombre]) {
+        const abierto = pila.pop();
+        if (!abierto) return 'Línea ' + lineaEn(pos) + ': sobra @' + nombre + ': no hay un @' + cierres[nombre] + ' abierto.';
+        if (abierto.nombre !== cierres[nombre]) return 'Línea ' + lineaEn(pos) + ': @' + nombre + ' cierra un @' + cierres[nombre] + ', pero lo último abierto es @' + abierto.nombre + ' de la línea ' + abierto.linea + '.';
+      }
+    }
+    const sin = pila.pop();
+    return sin ? 'Línea ' + sin.linea + ': @' + sin.nombre + ' no tiene su @' + PAREJAS_BLADE[sin.nombre][0] + '.' : null;
   }
 
   /* 4.4.1: verificación al escribir, sin ejecutar. Paréntesis, llaves, corchetes y comillas sin cerrar,
@@ -307,6 +386,10 @@
   function respondida(it) {
     const v = E.respuestas[String(it.id)];
     if (v === undefined || v === null || v === '') return false;
+    if (it.tipo === 'reto' && it.lenguaje === 'php') {
+      const base = Object.fromEntries((it.archivos || []).map(f => [f.nombre, f.plantilla]));
+      return typeof v === 'string' ? v.trim() !== '' && v !== ((it.archivos || [])[0] || {}).plantilla : Object.entries(v).some(([n, c]) => typeof c === 'string' && c.trim() !== '' && c !== base[n]);
+    }
     if (Array.isArray(v)) return v.some(x => x !== null && x !== '');
     if (typeof v === 'object') return Object.values(v).some(Boolean);
     if (it.tipo === 'reto') return v.trim() !== '' && v !== (it.plantilla_codigo || '');

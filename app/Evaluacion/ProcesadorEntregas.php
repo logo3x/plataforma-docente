@@ -3,6 +3,7 @@
 namespace App\Evaluacion;
 
 use App\Calificacion\CalificadorEntrega;
+use App\Calificacion\RevisionEstatica;
 use App\Models\Actividad;
 use App\Models\Alerta;
 use App\Models\Artefacto;
@@ -226,11 +227,14 @@ final class ProcesadorEntregas
 
         $grupos = [];
         foreach ($respuestas as $r) {
-            $texto = json_decode($r->respuesta, true)['valor'] ?? null;
-            if (! is_string($texto)) {
+            $texto = RevisionEstatica::texto(json_decode($r->respuesta, true)['valor'] ?? null);
+            if ($texto === '') {
                 continue;
             }
-            $plantilla = $r->tipo === 'reto' ? (Pregunta::query()->find($r->pregunta_id)?->enunciado['plantilla_codigo'] ?? '') : '';
+            $enunciado = $r->tipo === 'reto' ? (Pregunta::query()->find($r->pregunta_id)?->enunciado ?? []) : [];
+            $plantilla = count($enunciado['archivos'] ?? []) > 1
+                ? RevisionEstatica::texto(array_column($enunciado['archivos'], 'plantilla', 'nombre'))
+                : ($enunciado['plantilla_codigo'] ?? '');
             $norm = $this->normalizar($texto, $r->tipo === 'reto');
             if (mb_strlen($norm) < 25 || $norm === $this->normalizar($plantilla, true)) {
                 continue;   // respuestas muy cortas o la plantilla sin tocar no son señal

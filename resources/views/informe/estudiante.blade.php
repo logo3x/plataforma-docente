@@ -56,7 +56,13 @@ main { max-width: 900px; }
         </div>
     @endforeach
 
-    @if ($entrega)
+    @if ($entrega && $entrega->tipo === 'archivo')
+        <h2>Detalle de la calificación</h2>
+        <p class="suave">Trabajo entregado: {{ $entrega->archivo_nombre }}@if ($entrega->calificada_en), calificado el {{ $entrega->calificada_en->format('d/m/Y') }}@endif.</p>
+        @if (! empty($entrega->desglose['rubrica']))
+            <div class="tarjeta">@include('calificador._rubrica', ['rubrica' => $entrega->desglose['rubrica']])</div>
+        @endif
+    @elseif ($entrega)
         <h2>Detalle de la calificación</h2>
         <p class="suave">Para cada ítem: el enunciado, su respuesta, la respuesta correcta y el puntaje obtenido sobre el máximo.</p>
         @include('calificador._items', ['respuestas' => $entrega->respuestas])

@@ -87,7 +87,7 @@
                                                     <button class="boton boton-sec boton-chico" wire:click="mover({{ $a->id }}, -1)">← Mover</button>
                                                     <button class="boton boton-sec boton-chico" wire:click="mover({{ $a->id }}, 1)">Mover →</button>
                                                 </div>
-                                                @if ($a->artefacto_id)<a class="boton boton-sec boton-chico" href="{{ route('calificador.show', $a) }}">Abrir calificador</a>@endif
+                                                @if ($a->artefacto_id)<a class="boton boton-sec boton-chico" href="{{ route('calificador.show', $a) }}">Abrir calificador</a>@else<a class="boton boton-sec boton-chico" href="{{ route('calificador.archivos', $a) }}">Entregas de archivo</a>@endif
                                                 <button class="boton boton-sec boton-chico" wire:click="vaciasACeros({{ $a->id }})">Convertir vacías en cero</button>
                                                 @php($conNota = $a->notas()->count())
                                                 <div>

@@ -12,6 +12,7 @@ use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\DictadoController;
 use App\Http\Controllers\EjemploController;
 use App\Http\Controllers\EnsayoController;
+use App\Http\Controllers\EntregaArchivoController;
 use App\Http\Controllers\EstadisticasController;
 use App\Http\Controllers\EstudianteController;
 use App\Http\Controllers\ExportacionController;
@@ -208,6 +209,13 @@ Route::middleware('auth')->group(function () {
         Route::post('items/{item}/anular', [EstadisticasController::class, 'anular'])->name('items.anular');
         Route::post('items/{item}/restaurar', [EstadisticasController::class, 'restaurar'])->name('items.restaurar');
         Route::post('items/{item}/tema', [EstadisticasController::class, 'tema'])->name('items.tema');
+        Route::get('actividades/{actividad}/archivos', [EntregaArchivoController::class, 'index'])->name('archivos');
+        Route::put('actividades/{actividad}/archivos/configuracion', [EntregaArchivoController::class, 'configurar'])->name('archivos.configurar');
+        Route::post('actividades/{actividad}/archivos', [EntregaArchivoController::class, 'subir'])->name('archivos.subir');
+        Route::get('archivos/{entrega}', [EntregaArchivoController::class, 'calificar'])->name('archivos.calificar');
+        Route::put('archivos/{entrega}', [EntregaArchivoController::class, 'guardar'])->name('archivos.guardar');
+        Route::get('archivos/{entrega}/archivo', [EntregaArchivoController::class, 'archivo'])->name('archivos.archivo');
+        Route::delete('archivos/{entrega}', [EntregaArchivoController::class, 'eliminar'])->name('archivos.eliminar');
         Route::post('entregas/{entrega}/resultados-navegador', ResultadosNavegadorController::class)
             ->name('entregas.resultados-navegador');
     });

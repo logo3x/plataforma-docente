@@ -38,7 +38,8 @@ final class PasoAlRegistro
 
                     continue;
                 }
-                $this->asignacion->asignar($e, $nota, motivoExtra: $motivo);
+                // En un trabajo entregado como archivo, el comentario del docente acompaña la nota
+                $this->asignacion->asignar($e, $nota, $e->tipo === 'archivo' ? $e->comentario : null, motivoExtra: $motivo);
                 $pasadas++;
             }
         });

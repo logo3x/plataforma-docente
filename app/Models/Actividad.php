@@ -32,6 +32,11 @@ class Actividad extends Model
         return $this->belongsTo(Componente::class);
     }
 
+    public function rubrica(): BelongsTo
+    {
+        return $this->belongsTo(Rubrica::class);
+    }
+
     public function artefacto(): BelongsTo
     {
         return $this->belongsTo(Artefacto::class);

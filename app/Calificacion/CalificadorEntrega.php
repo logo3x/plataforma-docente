@@ -63,6 +63,11 @@ final class CalificadorEntrega
      */
     public function nota(Entrega $entrega): ?string
     {
+        // Entrega de archivo: el docente la calificó directamente en la escala de la actividad
+        if ($entrega->tipo === 'archivo') {
+            return $entrega->puntaje === null ? null : Calculo::normalizar(BigDecimal::of($entrega->puntaje));
+        }
+
         $respuestas = $entrega->respuestas()->with('item')->get();
         $obtenido = BigDecimal::zero();
         $posible = BigDecimal::zero();

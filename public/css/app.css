@@ -182,3 +182,12 @@ pre.comparacion mark { background: #fde68a; outline: 1px solid #d97706; }
 .examen-papel header { border-bottom: 2px solid var(--texto); margin-bottom: 1rem; }
 .pregunta-papel { margin-bottom: 1.2rem; break-inside: avoid; }
 .opciones-papel { list-style: none; padding-left: .5rem; }
+
+/* Entregas de archivo: el trabajo a la izquierda, la calificación a la derecha */
+.calificar-archivo { display: grid; grid-template-columns: minmax(0, 3fr) minmax(20rem, 2fr); gap: 1rem; align-items: start; }
+.visor-archivo iframe { width: 100%; height: 78vh; border: 1px solid var(--borde); border-radius: var(--radio); background: #f4f4f5; }
+.rubrica-archivo fieldset { border: 1px solid var(--borde); border-radius: var(--radio); padding: .5rem .75rem; margin: 0 0 .6rem; }
+.nivel-rubrica { display: grid; grid-template-columns: auto 1fr; gap: 0 .5rem; font-weight: normal; padding: .3rem .4rem; border-radius: var(--radio); cursor: pointer; }
+.nivel-rubrica small { grid-column: 2; }
+.nivel-rubrica:has(input:checked) { background: var(--ok-fondo); }
+@media (max-width: 900px) { .calificar-archivo { grid-template-columns: 1fr; } .visor-archivo iframe { height: 60vh; } }

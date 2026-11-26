@@ -44,16 +44,7 @@
                 @break
             @case('abierta')
                 <div class="texto-estudiante">{{ is_string($r->respuesta['valor'] ?? null) ? $r->respuesta['valor'] : '' }}</div>
-                @if (! empty($d['rubrica']['criterios']))
-                    <table style="margin-top:.5rem"><caption class="suave" style="text-align:left">Calificada con la rúbrica «{{ $d['rubrica']['titulo'] }}»</caption>
-                        <thead><tr><th>Criterio</th><th>Nivel alcanzado</th><th class="num">Puntos</th></tr></thead><tbody>
-                        @foreach ($d['rubrica']['criterios'] as $c)
-                            <tr><td>{{ $c['nombre'] }} <span class="suave">({{ $c['peso'] }} %)</span></td>
-                                <td>@if ($c['nivel'])<strong>{{ $c['nivel'] }}</strong>@if ($c['descripcion'])<div class="suave">{{ $c['descripcion'] }}</div>@endif @else <span class="suave">sin evaluar</span>@endif</td>
-                                <td class="num">{{ $num($c['valor']) }} / {{ $num($c['maximo']) }}</td></tr>
-                        @endforeach
-                    </tbody></table>
-                @endif
+                @include('calificador._rubrica', ['rubrica' => $d['rubrica'] ?? null])
                 @if ($r->comentario)<p><strong>Comentario del docente:</strong> {{ $r->comentario }}</p>@endif
                 @break
             @case('reto')

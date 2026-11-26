@@ -18,6 +18,9 @@ class Entrega extends Model
     {
         return [
             'cifrada' => 'boolean',
+            'puntaje' => 'decimal:4',
+            'desglose' => 'array',
+            'calificada_en' => 'datetime',
             'sesion' => 'array',
             'procesada_en' => 'datetime',
         ];

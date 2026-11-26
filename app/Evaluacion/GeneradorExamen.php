@@ -61,9 +61,13 @@ final class GeneradorExamen
 
         // JSON_HEX_TAG convierte < y > en </>: ningún texto puede cerrar la etiqueta <script> (4.5.5)
         $json = json_encode($datos, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-        $js = file_get_contents(resource_path('examen/examen.js'));
-        if (stripos($js, '</script') !== false) {
-            throw new RuntimeException('El código del examen contiene una etiqueta de cierre de script.');
+        // El entorno de los retos de HTML es el mismo de la plataforma: un solo código (4.6)
+        $js = file_get_contents(public_path('js/ejecutor-dom.js'))."\n".file_get_contents(resource_path('examen/examen.js'));
+        // Dentro de <script>, «<!--» y «<script» cambian cómo el navegador busca el cierre (4.5.5)
+        foreach (['</script' => 'una etiqueta de cierre de script', '<script' => 'una etiqueta de apertura de script', '<!--' => 'una apertura de comentario HTML'] as $sec => $que) {
+            if (stripos($js, $sec) !== false) {
+                throw new RuntimeException("El código del examen contiene {$que}.");
+            }
         }
 
         return view('examen.estudiante', [

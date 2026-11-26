@@ -48,14 +48,16 @@
                 @if ($r->comentario)<p><strong>Comentario del docente:</strong> {{ $r->comentario }}</p>@endif
                 @break
             @case('reto')
-                <pre class="texto-estudiante" style="font-family:ui-monospace,Consolas,monospace">{{ is_string($r->respuesta['valor'] ?? null) ? $r->respuesta['valor'] : '' }}</pre>
+                @php($codigo = is_string($r->respuesta['valor'] ?? null) ? $r->respuesta['valor'] : '')
+                <pre class="texto-estudiante" style="font-family:ui-monospace,Consolas,monospace">{{ $codigo }}</pre>
+                @if (($p->enunciado['lenguaje'] ?? null) === 'html' && trim($codigo) !== '')@include('calificador._vista-html', ['codigo' => $codigo])@endif
                 @if (! empty($d['verificaciones']))
                     <table><thead><tr><th>Verificación</th><th>Resultado</th><th class="num">Valor</th></tr></thead><tbody>
                         @foreach ($d['verificaciones'] as $v)<tr><td>{{ $v['nombre'] }}</td><td>{{ $v['superada'] ? '✓ Superada' : '✗ No superada' }}</td><td class="num">{{ $num($v['valor']) }}</td></tr>@endforeach
                     </tbody></table>
                 @else <p class="suave">Pendiente de ejecutar en el calificador.</p>@endif
                 @foreach ($d['casos'] ?? [] as $c)
-                    <p class="suave" style="margin-bottom:0">Caso <code>{{ $c['entrada'] }}</code>@if ($c['esperada'] !== null) · esperada <code>{{ $c['esperada'] }}</code>@endif @if ($c['error'])· error: {{ $c['error'] }}@endif</p>
+                    <p class="suave" style="margin-bottom:0">Caso <code>{{ $c['entrada'] }}</code>@if ($c['esperada'] !== null) · esperada <code>{{ $c['esperada'] }}</code>@endif @if (($c['retorno'] ?? null) !== null) · obtuvo <code>{{ \Illuminate\Support\Str::limit((string) $c['retorno'], 200) }}</code>@endif @if ($c['error'])· error: {{ $c['error'] }}@endif</p>
                     @if ($c['consola'])<pre class="texto-estudiante" style="background:#111827;color:#e5e7eb;border:0">{{ implode("\n", $c['consola']) }}</pre>@endif
                 @endforeach
                 @break

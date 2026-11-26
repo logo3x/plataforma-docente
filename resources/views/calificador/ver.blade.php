@@ -91,6 +91,7 @@
     @endif
 
     <script src="{{ asset('js/ejecutor.js') }}"></script>
+    <script src="{{ asset('js/ejecutor-dom.js') }}"></script>
     <script>
     /* Calificación híbrida: los retos se ejecutan aquí, en el navegador del docente, aislados en un Worker
        sin red y con límite de tiempo. Solo se envía qué verificaciones pasaron; el puntaje lo calcula el servidor. */
@@ -98,7 +99,12 @@
         const boton = document.getElementById('ejecutar-retos');
         const estado = document.getElementById('estado-retos');
         const token = '{{ csrf_token() }}';
-        const correr = (codigo, prueba, ms) => window.ejecutarJS(codigo, prueba, ms);
+        // Retos de HTML: la página del estudiante en una vista previa aislada, una por verificación (4.3.5, 4.6)
+        const correr = async (lenguaje, codigo, prueba, ms) => {
+            if (lenguaje !== 'html') return window.ejecutarJS(codigo, prueba, ms);
+            const r = await window.ejecutarHTML(codigo, prueba, ms);
+            return {ok: r.ok, consola: r.consola.map(l => l.texto), error: r.estado === 'con_salida' ? null : r.mensaje, retorno: r.retorno};
+        };
         boton?.addEventListener('click', async () => {
             boton.disabled = true; estado.textContent = 'Buscando retos pendientes…';
             const datos = await (await fetch('{{ route('calificador.retos', $actividad) }}', {headers: {Accept: 'application/json'}})).json();
@@ -107,8 +113,8 @@
             const porEntrega = {};
             for (const p of datos.pendientes) {
                 const verificaciones = {}; const casos = [];
-                for (const v of p.verificaciones) verificaciones[v.id] = (await correr(p.codigo, v.prueba, datos.tiempo_ms)).ok;
-                for (const c of p.casos) { const r = await correr(p.codigo, c.entrada || 'undefined', datos.tiempo_ms); casos.push({entrada: c.entrada, esperada: c.esperada ?? null, consola: r.consola, error: r.error ?? null}); }
+                for (const v of p.verificaciones) verificaciones[v.id] = (await correr(p.lenguaje, p.codigo, v.prueba, datos.tiempo_ms)).ok;
+                for (const c of p.casos) { const r = await correr(p.lenguaje, p.codigo, c.entrada || 'undefined', datos.tiempo_ms); casos.push({entrada: c.entrada, esperada: c.esperada ?? null, consola: r.consola, error: r.error ?? null, retorno: r.retorno ?? null}); }
                 (porEntrega[p.entrega] ||= []).push({item: p.item, verificaciones, casos});
                 estado.textContent = 'Ejecutados ' + (++n) + ' de ' + datos.pendientes.length + '…';
             }

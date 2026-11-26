@@ -144,11 +144,14 @@
     area.addEventListener('keydown', ev => { if (ev.key === 'Tab') { ev.preventDefault(); const s = area.selectionStart; area.setRangeText('  ', s, area.selectionEnd, 'end'); } });
     const nivel = D.nivel_ayuda || 'completo';
     const aviso = el('div', { class: 'aviso-sintaxis', role: 'status', 'aria-live': 'polite' });
-    const revisar = () => { if (nivel === 'minimo') return; const p = revisarSintaxis(area.value); aviso.textContent = p ? '⚠ ' + p : ''; aviso.classList.toggle('oculto', !p); };
+    const html = it.lenguaje === 'html';
+    const revisar = () => { if (nivel === 'minimo') return; const p = html ? window.revisarHTML(area.value, revisarSintaxis) : revisarSintaxis(area.value); aviso.textContent = p ? '⚠ ' + p : ''; aviso.classList.toggle('oculto', !p); };
     area.addEventListener('input', () => { E.respuestas[id] = area.value; clearTimeout(area._t); area._t = setTimeout(guardar, 400); clearTimeout(area._s); area._s = setTimeout(revisar, 500); });
     const salida = el('div', { class: 'resultado-reto' });
+    const vista = html ? el('div', { class: 'contenedor-vista', 'aria-label': 'Vista previa de su página' }) : null;
     const probar = el('button', { class: 'boton boton-sec', texto: '▶ Probar', onclick: async () => {
       E.sesion.ejecuciones++; salida.innerHTML = '';
+      if (html) return probarHTML();
       // 4.4.6: en el nivel mínimo solo se ejecuta el código tal cual; los casos del enunciado quedan para los otros niveles
       const casos = nivel !== 'minimo' && it.casos_visibles.length ? it.casos_visibles : [{ entrada: '', descripcion: 'Ejecutar el código' }];
       for (const c of casos) {
@@ -164,8 +167,27 @@
       }
       guardar();
     } });
+    /* 4.6: la página del estudiante en una vista previa aislada e interactiva; los casos se evalúan cada uno
+       en su propia página, para que lo que haga uno no contamine al siguiente (4.3.5). */
+    const tarjeta = (r, c) => el('div', { class: 'tarjeta' },
+      el('div', {}, el('span', { class: 'estado ' + ({ con_salida: 'e-ok', sin_salida: 'e-pend' }[r.estado] || 'e-mal'), texto: r.estado === 'con_salida' && !c ? '✓ La página se muestra' : ETIQUETAS[r.estado] }),
+        c && c.descripcion ? ' ' + c.descripcion : '', c && c.entrada ? el('code', { texto: '  ' + c.entrada }) : null),
+      r.mensaje && (nivel !== 'minimo' || r.estado === 'tiempo') ? el('div', { class: 'aviso mal', texto: r.mensaje }) : null,
+      c && r.retorno !== undefined ? el('div', {}, 'Valor obtenido: ', el('code', { texto: r.retorno })) : null,
+      c && c.esperada !== undefined && nivel === 'completo' ? el('div', {}, 'Valor esperado (enunciado): ', el('code', { texto: String(c.esperada) })) : null,
+      el('div', { class: 'consola' }, el('div', { class: 'sis', texto: '— consola —' }), r.consola.map(l => el('div', { class: l.nivel, texto: l.texto }))));
+    async function probarHTML() {
+      probar.disabled = true;
+      try {
+        const r = traducir(await window.ejecutarHTML(area.value, '', D.tiempo_ms, vista));
+        if (r.estado === 'no_compila') E.sesion.errores_sintaxis++;
+        salida.append(tarjeta(r, null));
+        for (const c of nivel !== 'minimo' ? it.casos_visibles : []) salida.append(tarjeta(traducir(await window.ejecutarHTML(area.value, c.entrada || '', D.tiempo_ms)), c));
+      } finally { probar.disabled = false; guardar(); }
+    }
+    if (html) area.rows = 16;
     revisar();
-    caja.append(area, aviso, el('p', {}, probar, ' ', it.reservadas ? el('span', { class: 'peso', texto: 'Hay ' + it.reservadas + ' verificación(es) adicional(es) que se evaluarán al calificar.' }) : null), salida);
+    caja.append(area, aviso, el('p', {}, probar, ' ', it.reservadas ? el('span', { class: 'peso', texto: 'Hay ' + it.reservadas + ' verificación(es) adicional(es) que se evaluarán al calificar.' }) : null), vista, salida);
   }
 
   /* 4.4.1: verificación al escribir, sin ejecutar. Paréntesis, llaves, corchetes y comillas sin cerrar,
@@ -330,6 +352,15 @@
         const res = await ejecutar(codigo, '', esperado === 'tiempo' ? 1000 : (D.tiempo_ms || 2000));
         if (res.estado !== esperado) throw new Error('Reportó «' + (ETIQUETAS[res.estado] || res.estado) + '» en lugar de «' + nombre + '».');
         return 'lo reporta bien';
+      });
+    }
+    const S = '<' + '/script>';
+    for (const [nombre, html, expr, esperado] of [['Vista previa de HTML y CSS', '<style>p{color:red}</style><p id="x">hola</p>', "getComputedStyle(document.getElementById('x')).color === 'rgb(255, 0, 0)'", 'con_salida'],
+      ['Ciclo infinito en una página', '<' + 'script>while (true) {}' + S, '', 'tiempo']]) {
+      await chequear('Retos de HTML: «' + nombre + '»', async () => {
+        const res = await window.ejecutarHTML(html, expr, 1000);
+        if (res.estado !== esperado || (expr && !res.ok)) throw new Error('Reportó «' + (ETIQUETAS[res.estado] || res.estado) + '»' + (expr && !res.ok ? ' y la página no se evaluó bien' : '') + '.');
+        return esperado === 'tiempo' ? 'se detiene sin congelar el examen' : 'se muestra y se evalúa';
       });
     }
     E.sesion.ensayo = { verificaciones: r, navegador: navigator.userAgent, pantalla: screen.width + '×' + screen.height, fecha: new Date().toISOString() };

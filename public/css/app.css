@@ -191,3 +191,6 @@ pre.comparacion mark { background: #fde68a; outline: 1px solid #d97706; }
 .nivel-rubrica small { grid-column: 2; }
 .nivel-rubrica:has(input:checked) { background: var(--ok-fondo); }
 @media (max-width: 900px) { .calificar-archivo { grid-template-columns: 1fr; } .visor-archivo iframe { height: 60vh; } }
+
+/* Retos de HTML: vista previa de la página entregada */
+.vista-previa-html, .vista-previa { width: 100%; height: 280px; border: 1px solid var(--borde); border-radius: var(--radio); background: #fff; margin-top: .5rem; }

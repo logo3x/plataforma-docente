@@ -48,7 +48,7 @@ Todos llevan `tipo`, `enunciado` y `peso`. Opcionales: `tema`, `dificultad` (`ba
 | `ordenar` | `pasos` {clave: texto}, `orden` [claves] | Posición por posición; el examen baraja los pasos |
 | `completar` | `plantilla` con `___` por hueco, `huecos` [respuesta o [alternativas]] | Hueco por hueco, sin distinguir mayúsculas, espacios ni `@` inicial |
 | `abierta` | `referencia`, `rubrica`, `lineas` | La califica el docente, por pregunta |
-| `reto` | `plantilla_codigo`, `casos_visibles` [{entrada, esperada, descripcion}], `verificaciones` [{id, nombre, fraccion, prueba, reservada}] | En el navegador del docente; las fracciones suman 1 |
+| `reto` | `lenguaje` (`javascript` o `html`), `plantilla_codigo`, `casos_visibles` [{entrada, esperada, descripcion}], `verificaciones` [{id, nombre, fraccion, prueba, reservada}] | En el navegador del docente; las fracciones suman 1 |
 
 ### Retos de código
 
@@ -56,6 +56,28 @@ Todos llevan `tipo`, `enunciado` y `peso`. Opcionales: `tema`, `dificultad` (`ba
 - `prueba` es una expresión que debe dar exactamente `true`, por ejemplo `total([]) === 0`. Se evalúa después del código del estudiante, en un Worker aislado, sin red y con límite de tiempo.
 - `nombre` es lo que se lee en el detalle: escríbalo en lenguaje natural («Un carrito vacío suma cero»), no como expresión técnica (6.4).
 - Una verificación con `"reservada": true` no se muestra al estudiante. El examen solo anuncia cuántas hay (4.3.3).
+
+### Retos de HTML y CSS (`"lenguaje": "html"`)
+
+El estudiante escribe una página completa (HTML, CSS y, si el reto lo pide, JavaScript) y con «Probar» la ve en una vista previa con la que puede interactuar. La ayuda señala las etiquetas sin cerrar o mal cerradas.
+
+- `plantilla_codigo` es el HTML inicial.
+- `entrada` y `prueba` son expresiones de JavaScript que se evalúan **sobre la página ya cargada**: `document.querySelectorAll('nav a').length === 3`, `getComputedStyle(document.querySelector('h1')).color === 'rgb(255, 0, 0)'` (los colores se comparan en formato `rgb(…)`), o una interacción: `(document.getElementById('contar').click(), document.getElementById('total').textContent === '3')`. También puede devolver una promesa.
+- Cada verificación corre en su propia página de 1024 × 768, para que lo que haga una no afecte a la siguiente.
+- La página corre aislada: sin red, sin acceso al examen ni a la plataforma, y con un límite de tiempo que corta los ciclos infinitos sin congelar el examen.
+- En el detalle y en el informe se ve la página entregada sin ejecutar sus scripts.
+
+```json
+{ "tipo": "reto", "lenguaje": "html", "peso": "2", "enunciado": "Maquete un menú <nav> con tres enlaces en rojo.",
+  "plantilla_codigo": "<!DOCTYPE html>\n<html>\n<body>\n  <nav>\n  </nav>\n</body>\n</html>\n",
+  "casos_visibles": [{ "entrada": "document.querySelectorAll('nav a').length", "esperada": "3", "descripcion": "Enlaces en el menú" }],
+  "verificaciones": [
+    { "id": "v1", "nombre": "El menú tiene tres enlaces", "fraccion": "0.5", "prueba": "document.querySelectorAll('nav a').length === 3" },
+    { "id": "v2", "nombre": "Los enlaces son rojos", "fraccion": "0.5", "reservada": true,
+      "prueba": "[...document.querySelectorAll('nav a')].every(a => getComputedStyle(a).color === 'rgb(255, 0, 0)')" } ] }
+```
+
+Como en los retos de JavaScript, las verificaciones se ejecutan en el navegador del docente sobre el código del estudiante. Un estudiante que reescriba a propósito las funciones del navegador que usan las pruebas (por ejemplo `document.querySelectorAll`) podría engañarlas: el código queda siempre a la vista en el detalle de la entrega.
 
 ## Versiones y segundo banco (5.4.2)
 

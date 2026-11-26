@@ -60,6 +60,10 @@ Reglas de contenido:
 - En los retos de código, «prueba» es una expresión de JavaScript que da exactamente true cuando el código es correcto,
   «nombre» describe en español lo que se comprueba, y al menos una verificación es reservada ("reservada": true).
   Las fracciones de las verificaciones de un reto suman 1.
+- Si la materia trabaja HTML y CSS, el reto lleva "lenguaje":"html": el estudiante escribe una página, su
+  «plantilla_codigo» es HTML, y cada «prueba» o «entrada» es una expresión de JavaScript sobre esa página
+  (document.querySelector, getComputedStyle, .click()), por ejemplo
+  "document.querySelectorAll('nav a').length === 3".
 - Los pesos de todos los ítems deben sumar exactamente {{valor}}.
 {{no_repetir}}
 
@@ -321,7 +325,7 @@ Reglas:
   no sirva para el nuevo. No basta con reordenar opciones ni con cambiar una palabra.
 - Las respuestas correctas deben ser correctas para los datos NUEVOS: recalcúlelas.
 - En los retos de código, la tarea es la misma con otros datos: ajuste «casos_visibles» y las «prueba» de las
-  verificaciones a los datos nuevos, conserve cuáles son reservadas y que las fracciones sumen 1.
+  verificaciones a los datos nuevos, conserve cuáles son reservadas, el «lenguaje» del reto y que las fracciones sumen 1.
 - Mantenga el formato de cada tipo exactamente como en el original.
 - Indicaciones del docente: {{indicaciones}}
 

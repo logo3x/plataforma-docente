@@ -85,6 +85,7 @@ Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 | Flujo común de los generadores de material: un tipo define sus reglas y variables; pantallas, rutas, borrador, corrección y aprobación son compartidos | `app/Material/GeneradorMaterial.php`, `app/Http/Controllers/MaterialController.php` | 7.4 (regla 3) |
 | Ejemplos prácticos: generador con IA por temas (contexto, dificultad, alcance, memoria), editor con pasos y código, verificación del código en el navegador con corrección por la IA de lo que falla, versión con y sin soluciones | `app/Material/EjemplosPracticos.php`, `app/Material/GeneradorEjemplos.php`, `public/js/ejecutor.js` | 7.4 |
 | Unidades didácticas: generador con IA desde el temario (temas, resultados, sugerencias, alcance del grupo, memoria de lo ya planeado), editor por sesiones con errores y advertencias, vista imprimible y enlace al generador de quices por sesión | `app/Planificacion/UnidadesDidacticas.php`, `app/Planificacion/GeneradorUnidad.php` | 7.1, 7.3, 7.4 |
+| Retos de HTML y CSS: vista previa aislada e interactiva en el examen (sin red, sin acceso al examen), ciclos infinitos cortados sin congelar la página, ayuda de etiquetas sin cerrar, verificaciones sobre la página en el calificador y el ensayo, y vista previa sin scripts en el detalle y el informe | `public/js/ejecutor-dom.js`, `docs/formato-banco.md` | 4.1–4.6 |
 | Entregas de archivo para trabajos y talleres: PDF consolidado (rechaza capturas y otros formatos) o archivo libre, reconocimiento del estudiante por el documento en el nombre, visor del PDF junto a la rúbrica, nota a mano o por niveles, comentario que viaja con la nota, entrega grupal con tope y paso al registro con deshacer | `app/Calificacion/EntregasArchivo.php`, `app/Http/Controllers/EntregaArchivoController.php` | 5.1, 5.7, 6.6, 6.8 |
 | Rúbricas: generador con IA (prompt editable, borrador, corrección), editor visual a mano, asociación a preguntas abiertas, calificación por niveles con puntaje calculado y detalle por criterio en el informe | `app/Evaluacion/Rubricas.php`, `app/Evaluacion/GeneradorRubrica.php` | 6.7.11, 7.4 |
 | Reclamos: registro, rechazo con respuesta, anulación, corrección de clave con recalificación de todo el grupo, ajuste individual, registro por materia, marca en el análisis de ítems, respuesta en el informe del estudiante y memoria para la IA | `app/Calificacion/Reclamos.php`, `app/Calificacion/AjustesDeExamen.php` | 6.5.4, 6.5.6 |
@@ -96,7 +97,6 @@ Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 ### Siguientes fases
 
 - **Adaptador del calificador HTML anterior**, para migrar las entregas del corte en curso. Hace falta un archivo de entrega real y el calificador actual.
-- Retos con DOM (HTML y CSS) y vista previa: hoy los retos son de JavaScript puro, en un Worker.
 - Presentaciones (7.2), que esperan la decisión sobre la API externa, y corrección de verificaciones de retos de código.
 
 ### Reglas que el código garantiza
@@ -127,4 +127,4 @@ php artisan test
 ## Próximos pasos
 
 1. Adaptador de entregas del calificador HTML anterior.
-2. Retos con DOM (HTML y CSS) y vista previa en el examen y en el calificador.
+2. Retos de SQL con un motor embebido en el navegador (4.6): tabla de resultados y mensajes de error traducidos.

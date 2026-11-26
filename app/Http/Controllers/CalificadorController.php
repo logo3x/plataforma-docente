@@ -161,6 +161,7 @@ class CalificadorController extends Controller
                     'entrega' => $e->id,
                     'item' => $r->artefacto_pregunta_id,
                     'codigo' => is_string($r->respuesta['valor'] ?? null) ? $r->respuesta['valor'] : '',
+                    'lenguaje' => $r->item->pregunta->enunciado['lenguaje'] ?? 'javascript',
                     'casos' => $r->item->pregunta->enunciado['casos_visibles'] ?? [],
                     'verificaciones' => collect($r->item->pregunta->clave['verificaciones'])->map(fn ($v) => ['id' => $v['id'], 'prueba' => $v['prueba']])->values(),
                 ]))

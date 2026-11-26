@@ -17,15 +17,18 @@ final class RespaldoDictado
 {
     public const FORMATO = 'plataforma-educativa/respaldo-dictado';
 
-    public const VERSION = 1;
+    public const VERSION = 2;          // 2: orden, clave de actividad (para la bitácora), valores y examen aplicado
 
     /** @return array<string, mixed> */
     public function exportar(Dictado $dictado): array
     {
         $dictado->load([
             'materia',
+            'divisiones.componentes' => fn ($q) => $q->orderBy('orden'),
+            'divisiones.componentes.actividades' => fn ($q) => $q->orderBy('orden')->orderBy('id'),
             'divisiones.componentes.actividades.notas',
             'divisiones.componentes.actividades.grupos',
+            'divisiones.componentes.actividades.artefacto',
             'grupos.estudiantes',
             'estudiantes',
         ]);
@@ -40,6 +43,7 @@ final class RespaldoDictado
             'dictado' => $dictado->only(['periodo', 'escala_min', 'escala_max', 'nota_aprobatoria', 'decimales', 'redondeo', 'estado']),
             'grupos' => $dictado->grupos->map(fn ($g) => [
                 'nombre' => $g->nombre,
+                'jornada' => $g->jornada,
                 'estudiantes' => $g->estudiantes->map(fn ($e) => ['documento' => $e->documento, 'activo' => (bool) $e->pivot->activo])->values(),
             ])->values(),
             'estudiantes' => $dictado->estudiantes->map(fn ($e) => $e->makeVisible(['email', 'telefono', 'observacion'])->only([
@@ -52,8 +56,14 @@ final class RespaldoDictado
                     'nombre' => $c->nombre,
                     'peso' => $c->peso,
                     'actividades' => $c->actividades->map(fn ($a) => [
+                        'clave' => $a->id,                                       // la bitácora la nombra así
                         'nombre' => $a->nombre,
                         'fecha' => $a->fecha?->toDateString(),
+                        'valor_max' => $a->valor_max,
+                        'es_grupal' => (bool) $a->es_grupal,
+                        'tamano_grupo' => $a->tamano_grupo,
+                        'tope_exceso' => $a->tope_exceso,
+                        'examen' => $a->artefacto?->sigla,
                         'grupos' => $a->grupos->pluck('nombre')->values(),
                         'notas' => $a->notas->map(fn ($n) => [
                             'documento' => $dictado->estudiantes->firstWhere('id', $n->estudiante_id)?->documento,

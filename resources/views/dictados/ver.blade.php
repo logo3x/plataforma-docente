@@ -4,6 +4,10 @@
     <p class="suave">Escala {{ $dictado->escala()->mostrar($dictado->escala_min) }} a {{ $dictado->escala()->mostrar($dictado->escala_max) }},
         aprueba con {{ $dictado->escala()->mostrar($dictado->nota_aprobatoria) }}.
         <a href="{{ route('historial.index', ['materia' => $dictado->materia, 'dictado' => $dictado->id]) }}">Historial de actividades del periodo</a></p>
+    @if ($r = \App\Models\Restauracion::query()->where('dictado_id', $dictado->id)->latest()->first())
+        <div class="aviso aviso-info">Periodo restaurado el {{ $r->created_at->format('Y-m-d') }} desde un respaldo de {{ $r->periodo_original }}@if ($r->generado_en) generado el {{ $r->generado_en->format('Y-m-d H:i') }}@endif.
+            @if (count($r->bitacora_original)) <a href="{{ route('restauracion.bitacora', $dictado) }}">Ver la bitácora original ({{ count($r->bitacora_original) }} cambios)</a>@endif</div>
+    @endif
 
     <h2>Grupos</h2>
     <div class="rejilla">

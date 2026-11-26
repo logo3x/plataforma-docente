@@ -61,6 +61,7 @@ Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 | Estadísticas y análisis de ítems: resumen del grupo, distribución por rangos, acierto, discriminación (27 % superior e inferior), distribución de opciones, candidatos a revisión, vista para proyectar, CSV, anulación de ítem con reproceso de todos los grupos y desempeño por tema en la lista de chequeo | `app/Calificacion/EstadisticasActividad.php`, `app/Calificacion/DesempenoTemas.php` | 6.5.4, 6.5.5, 6.10 |
 | Supletorios, recuperaciones y habilitaciones: eventos que no se editan ni se borran (se anulan con motivo), reglas reemplaza, promedia o tope, simulación previa, marcas S, R y H en el registro con la nota original, lista del periodo, bitácora y respaldo | `app/Notas/SegundasOportunidades.php`, `app/Http/Controllers/SegundaOportunidadController.php` | 3.6, 3.7.4 |
 | Informe individual y devolución: detalle autoexplicativo compartido con la vista del docente, nota vigente y la original opcional, liberación explícita con aviso de pendientes, ZIP de informes autocontenidos, enlaces firmados con vencimiento y revocación, registro de apertura o entrega | `app/Calificacion/InformeEstudiante.php`, `app/Http/Controllers/DevolucionController.php` | 3.6.5, 6.5, 6.9 |
+| Restaurar un respaldo: vista previa, siempre como periodo nuevo (nunca sobrescribe), en otra instalación crea la materia, notas por el registro con su origen y comentario, segundas oportunidades, bitácora original guardada tal cual | `app/Dictados/RestauradorDictado.php` | 3.1.10 |
 | Similitud entre entregas: fragmentos normalizados (comentarios, espaciado y nombres no esconden la copia), copia parcial, plantilla y respuestas comunes descontadas, lado a lado con resaltado, otros periodos con el mismo examen, conclusión del docente sin efecto en la nota | `app/Calificacion/Similitud.php` | 6.11 |
 | Devolución por correo institucional: enlace personal sin la nota, respuesta al docente, solo al dominio institucional si se configura, registro por estudiante (enviado, falló, en cola), reenvío y envío en cola opcional | `app/Calificacion/EnvioInformes.php`, `app/Mail/EnlaceInforme.php` | 6.9.3, 6.9.5 |
 | Historial de actividades de la materia y del periodo: origen (motor y material), periodo de creación y de aplicación, filtros, volver a aplicar y copiar para ajustar | `app/Historial/HistorialMateria.php` | 7.3 |
@@ -83,7 +84,7 @@ Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 - **Adaptador del calificador HTML anterior**, para migrar las entregas del corte en curso. Hace falta un archivo de entrega real y el calificador actual.
 - Retos con DOM (HTML y CSS) y vista previa: hoy los retos son de JavaScript puro, en un Worker.
 - Versiones A/B y segundo banco, modo de ensayo con las pruebas de la sección 9.2 en pantalla, anulación de ítems y plantillas de comentarios desde la interfaz.
-- Presentaciones (7.2), que esperan la decisión sobre la API externa, corrección de verificaciones de retos de código y restaurar un respaldo.
+- Presentaciones (7.2), que esperan la decisión sobre la API externa, y corrección de verificaciones de retos de código.
 
 ### Reglas que el código garantiza
 
@@ -113,4 +114,4 @@ php artisan test
 ## Próximos pasos
 
 1. Adaptador de entregas del calificador HTML anterior.
-2. Restauración de un respaldo del periodo y modo de ensayo del examen en el equipo de la sala (5.6).
+2. Modo de ensayo del examen en el equipo de la sala (5.6), para verificar navegador, guardado y cifrado antes de aplicarlo.

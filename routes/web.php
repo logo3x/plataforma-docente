@@ -23,6 +23,7 @@ use App\Http\Controllers\PlantillasIaController;
 use App\Http\Controllers\ProyectoController;
 use App\Http\Controllers\ReclamoController;
 use App\Http\Controllers\RegistroController;
+use App\Http\Controllers\RestauracionController;
 use App\Http\Controllers\RubricaController;
 use App\Http\Controllers\SegundaOportunidadController;
 use App\Http\Controllers\SeguridadController;
@@ -57,6 +58,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/grupos/{grupo}/cierre', CierreController::class)->name('cierre');
     Route::get('/grupos/{grupo}/exportar.xlsx', [ExportacionController::class, 'xlsx'])->name('exportar.xlsx');
     Route::get('/grupos/{grupo}/planilla.csv', [ExportacionController::class, 'csv'])->name('exportar.csv');
+    Route::get('/respaldos/restaurar', [RestauracionController::class, 'create'])->name('restauracion.create');
+    Route::post('/respaldos/revisar', [RestauracionController::class, 'revisar'])->name('restauracion.revisar');
+    Route::post('/respaldos/restaurar', [RestauracionController::class, 'restaurar'])->name('restauracion.restaurar');
+    Route::get('/dictados/{dictado}/bitacora-original', [RestauracionController::class, 'bitacora'])->name('restauracion.bitacora');
     Route::get('/dictados/{dictado}/respaldo.json', [ExportacionController::class, 'respaldo'])->name('respaldo');
     Route::get('/grupos/{grupo}/estudiantes/{estudiante}', [EstudianteController::class, 'edit'])->name('estudiantes.edit');
     Route::put('/grupos/{grupo}/estudiantes/{estudiante}', [EstudianteController::class, 'update'])->name('estudiantes.update');

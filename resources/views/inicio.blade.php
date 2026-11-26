@@ -1,7 +1,10 @@
 <x-app titulo="Mis materias">
     <div class="fila" style="justify-content: space-between">
         <h1>Mis materias</h1>
-        <a class="boton" href="{{ route('materias.create') }}">Nueva materia</a>
+        <div class="fila">
+            <a class="boton boton-sec" href="{{ route('restauracion.create') }}">Restaurar un respaldo</a>
+            <a class="boton" href="{{ route('materias.create') }}">Nueva materia</a>
+        </div>
     </div>
 
     @forelse ($materias as $materia)

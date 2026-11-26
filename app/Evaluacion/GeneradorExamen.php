@@ -3,6 +3,7 @@
 namespace App\Evaluacion;
 
 use App\Models\Actividad;
+use App\Models\SesionVivo;
 use Brick\Math\BigDecimal;
 use RuntimeException;
 
@@ -20,7 +21,7 @@ final class GeneradorExamen
      * $banco elige el banco (5.4.2): el archivo lleva sus versiones (A y B, o 2A y 2B) y el navegador
      * le asigna a cada estudiante la suya según su documento.
      */
-    public function html(Actividad $actividad, bool $ensayo = false, int $banco = 1): string
+    public function html(Actividad $actividad, bool $ensayo = false, int $banco = 1, ?SesionVivo $vivo = null): string
     {
         $artefacto = $actividad->artefacto()->with('items.pregunta')->firstOrFail();
         $versiones = $artefacto->versionesDelBanco($banco);
@@ -40,7 +41,10 @@ final class GeneradorExamen
             'valor' => $valor,
             'instrucciones' => $config['instrucciones'],
             'reloj_minutos' => $config['reloj_minutos'],
-            'modo_desconectado' => $config['modo_desconectado'],
+            // En vivo la sala tiene internet a propósito: el bloqueo por conexión no aplica (sección 13)
+            'modo_desconectado' => $vivo ? false : $config['modo_desconectado'],
+            'vivo' => $vivo ? ['codigo' => $vivo->codigo, 'unirse' => route('vivo.unirse', $vivo->codigo), 'latido' => route('vivo.latido', $vivo->codigo),
+                'entrega' => route('vivo.entrega', $vivo->codigo), 'intervalo' => 10] : null,
             'sonda' => $config['sonda'],
             'intervalo_sonda' => $config['intervalo_sonda'],
             'tiempo_ms' => $config['tiempo_ejecucion_ms'],
@@ -82,6 +86,7 @@ final class GeneradorExamen
             'datos' => $datos,
             'json' => $json,
             'motorSql' => $this->motorSql($datos['items']),
+            'conectarA' => $vivo ? "'self' https:" : 'https:',
             'css' => file_get_contents(resource_path('examen/examen.css')),
             'js' => $js,
         ])->render();

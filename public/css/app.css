@@ -204,3 +204,11 @@ pre.comparacion mark { background: #fde68a; outline: 1px solid #d97706; }
 .sugerencias-bitacora li { padding: .5rem 0; border-top: 1px solid var(--borde); }
 .bitacora .leccion { margin-top: .35rem; padding: .3rem .5rem; background: var(--ok-fondo); border-radius: var(--radio); }
 .bitacora details.menu .contenido { min-width: 30rem; }
+
+/* Sesión en vivo */
+.codigo-vivo { font-family: ui-monospace, Consolas, monospace; font-size: 1.15rem; font-weight: 700; color: var(--marino); word-break: break-all; }
+.indicadores-vivo { gap: 1.5rem; font-size: 1.05rem; }
+.tabla-vivo tr.finalizado td { color: var(--suave); }
+.proyectar-vivo { text-align: center; padding: 6vh 2rem; font-size: 1.6rem; }
+.proyectar-vivo .url { font-family: ui-monospace, Consolas, monospace; font-size: 2.6rem; font-weight: 700; color: var(--marino); word-break: break-all; margin: .5rem 0 2rem; }
+.proyectar-vivo .codigo { font-family: ui-monospace, Consolas, monospace; font-size: 6rem; font-weight: 800; letter-spacing: .3em; color: var(--marino); margin: 1rem 0; }

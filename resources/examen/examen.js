@@ -64,7 +64,7 @@
     );
   }
 
-  function iniciar() {
+  async function iniciar() {
     const doc = $('#documento').value.replace(/\D/g, '');
     const nombre = $('#nombre').value.trim();
     if (doc.length < 5 || nombre.length < 5) { const e = $('#error-portada'); e.textContent = 'Escriba su documento y su nombre completo.'; e.classList.remove('oculto'); return; }
@@ -79,11 +79,15 @@
     }
     // 5.4.2: la versión sale del documento (siempre la misma al reabrir) y solo se muestran sus ítems
     E.version = E.version || versionPara(E.documento);
+    if (D.vivo) {
+      const r = await unirseVivo();
+      if (r === false) { E = null; return; }       // la plataforma lo rechazó: el motivo queda en la portada
+    }
     D.items = D.items.filter(it => (it.version || 'A') === E.version);
     $('#portada').classList.add('oculto');
     $('#examen').classList.remove('oculto');
     $('#quien').textContent = E.nombre + ' · ' + E.documento + ((D.versiones || []).length > 1 ? ' · versión ' + E.version : '');
-    renderItems(); guardar(); iniciarReloj(); if (D.contar_salidas !== false) vigilarFoco(); vigilarConexion();
+    renderItems(); guardar(); iniciarReloj(); if (D.contar_salidas !== false) vigilarFoco(); vigilarConexion(); latirVivo();
     if (D.ensayo) autoverificar();
     if (E.cierre) mostrarCierre();
   }
@@ -564,30 +568,86 @@
       if (!confirm(faltan.length ? 'Faltan por responder: ' + faltan.join(', ') + '.\n¿Finalizar de todos modos?' : '¿Finalizar el examen? No podrá cambiar sus respuestas.')) return;
     }
     if (!E.cierre) { E.cierre = { tipo, fin: new Date().toISOString() }; guardar(); }
-    const carga = { sigla: D.sigla, artefacto: D.uuid, documento: E.documento, nombre: E.nombre, grupo: E.grupo, integrantes: E.integrantes,
-      inicio: E.inicio, fin: E.cierre.fin, cierre: E.cierre.tipo, respuestas: E.respuestas, sesion: E.sesion, version: E.version };
-    const sobre = { formato: 'plataforma-entrega', version: 1, sigla: D.sigla, artefacto: D.uuid, documento: E.documento, generado: new Date().toISOString(), cifrado: null };
-    if (D.ensayo) sobre.ensayo = true;
-    try {
-      if (!window.crypto || !crypto.subtle) throw new Error('sin cifrado');
-      sobre.cifrado = await cifrar(JSON.stringify(carga));
-    } catch (e) { sobre.datos_planos = carga; }      // respaldo marcado en el calificador como «sin cifrar»
+    const sobre = await armarSobre(E.cierre.tipo, E.cierre.fin);
+    // Sesión en vivo (13.2): la entrega va sola al servidor; si no llega, se descarga el archivo como siempre
+    if (D.vivo && E.vivo && tipo !== 'descargar') {
+      const r = await enviarVivo('entrega', { sobre: JSON.stringify(sobre) });
+      if (r.ok) { E.vivo.entregada = true; guardar(); mostrarCierre(!!sobre.cifrado); return; }
+      E.vivo.error = r.mensaje || 'No se pudo enviar la entrega.';
+    }
     const blob = new Blob([JSON.stringify(sobre)], { type: 'application/json' });
     const a = el('a', { href: URL.createObjectURL(blob), download: (D.ensayo ? 'ENSAYO_' : '') + D.sigla + '_' + E.documento + '.json' });
     document.body.append(a); a.click(); a.remove();
     mostrarCierre(!!sobre.cifrado);
   }
 
+  /* El mismo sobre del archivo: lo usan la entrega, la descarga y la instantánea de la sesión en vivo. */
+  async function armarSobre(tipo, fin) {
+    const carga = { sigla: D.sigla, artefacto: D.uuid, documento: E.documento, nombre: E.nombre, grupo: E.grupo, integrantes: E.integrantes,
+      inicio: E.inicio, fin, cierre: tipo, respuestas: E.respuestas, sesion: E.sesion, version: E.version };
+    const sobre = { formato: 'plataforma-entrega', version: 1, sigla: D.sigla, artefacto: D.uuid, documento: E.documento, generado: new Date().toISOString(), cifrado: null };
+    if (D.ensayo) sobre.ensayo = true;
+    try {
+      if (!window.crypto || !crypto.subtle) throw new Error('sin cifrado');
+      sobre.cifrado = await cifrar(JSON.stringify(carga));
+    } catch (e) { sobre.datos_planos = carga; }      // respaldo marcado en el calificador como «sin cifrar»
+    return sobre;
+  }
+
+  // ---------- Sesión en vivo (sección 13) ----------
+  async function enviarVivo(que, datos) {
+    try {
+      const r = await fetch(D.vivo[que], { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, cache: 'no-store',
+        body: JSON.stringify(Object.assign({ clave: E.vivo ? E.vivo.clave : null }, datos)), signal: AbortSignal.timeout(que === 'entrega' ? 30000 : 10000) });
+      const j = await r.json().catch(() => ({}));
+      return Object.assign({ ok: r.ok, status: r.status }, j);
+    } catch (e) { return { ok: false, red: true, mensaje: 'Sin conexión con la plataforma.' }; }
+  }
+  async function unirseVivo() {
+    const boton = $('#iniciar'); boton.disabled = true;
+    const r = await enviarVivo('unirse', { documento: E.documento, nombre: E.nombre, version: E.version, total: D.items.filter(it => (it.version || 'A') === E.version).length });
+    boton.disabled = false;
+    if (r.ok) { E.vivo = { clave: r.clave }; return true; }
+    if (r.red) { E.vivo = null; avisoVivo('Sin conexión con la plataforma: siga respondiendo; al finalizar se descargará el archivo para entregarlo.'); return true; }
+    const e = $('#error-portada'); e.textContent = r.message || r.mensaje || 'La plataforma no admitió el ingreso.'; e.classList.remove('oculto');
+    return false;
+  }
+  function avisoVivo(texto) { let a = $('#aviso-vivo'); if (!a) { a = el('div', { id: 'aviso-vivo', class: 'aviso', role: 'status' }); $('#examen').prepend(a); } a.textContent = texto; }
+  /* Latido: avance y salidas para el panel del docente, y una instantánea cifrada de lo respondido cuando cambia,
+     para que una finalización masiva registre lo de este equipo aunque deje de responder (13.1). */
+  function latirVivo() {
+    if (!D.vivo || !E.vivo || E.cierre) return;
+    let ultima = null;
+    const latir = async () => {
+      if (!E.vivo || E.cierre) return;
+      const resp = JSON.stringify(E.respuestas), datos = { respondidas: D.items.filter(respondida).length, total: D.items.length,
+        salidas: E.sesion.salidas.length, segundos_fuera: E.sesion.salidas.reduce((a, s) => a + s.segundos, 0) };
+      // Solo cuando lo respondido cambió desde la última: a lo sumo una por latido
+      if (resp !== ultima) { datos.instantanea = JSON.stringify(await armarSobre('docente', new Date().toISOString())); }
+      const enviada = datos.instantanea ? resp : null;
+      const r = await enviarVivo('latido', datos);
+      if (r.ok && enviada !== null) ultima = enviada;      // si no llegó, se reintenta en el próximo latido
+      if (r.status === 403) { E.vivo = null; avisoVivo(r.message || 'Esta ventana ya no atiende el examen. Al finalizar se descargará el archivo.'); return; }
+      const a = $('#aviso-vivo'); if (r.ok && a) a.remove();
+      if (r.red) avisoVivo('Sin conexión con la plataforma: sus respuestas siguen guardadas en este equipo.');
+      if (r.cerrar && !E.cierre) { finalizar('docente'); }
+    };
+    latir(); setInterval(latir, (D.vivo.intervalo || 10) * 1000);
+  }
+
   function mostrarCierre(cifrada) {
     cerrado = true;
     $('#examen').querySelectorAll('input, textarea, select').forEach(x => x.disabled = true);
     const c = $('#cierre'); c.classList.remove('oculto'); c.innerHTML = '';
-    c.append(el('h2', { texto: 'Examen finalizado' + (E.cierre.tipo === 'automatico' ? ' por tiempo' : '') }),
-      el('p', {}, 'Se descargó el archivo ', el('strong', { texto: (D.ensayo ? 'ENSAYO_' : '') + D.sigla + '_' + E.documento + '.json' }),
+    const enLinea = D.vivo && E.vivo && E.vivo.entregada;
+    c.append(el('h2', { texto: 'Examen finalizado' + (E.cierre.tipo === 'automatico' ? ' por tiempo' : E.cierre.tipo === 'docente' ? ' por el docente' : '') }),
+      enLinea ? el('p', { class: 'aviso bien', texto: '✓ Su entrega llegó a la plataforma. No tiene que descargar ni subir nada.' }) : null,
+      D.vivo && E.vivo && E.vivo.error ? el('p', { class: 'aviso mal', texto: 'No se pudo enviar a la plataforma (' + E.vivo.error + '). Entregue el archivo descargado.' }) : null,
+      enLinea ? null : el('p', {}, 'Se descargó el archivo ', el('strong', { texto: (D.ensayo ? 'ENSAYO_' : '') + D.sigla + '_' + E.documento + '.json' }),
         D.ensayo ? '. Súbalo en la página de ensayo de la plataforma para cerrar el ciclo.' : '. Entréguelo como le indique el docente.'),
       cifrada === false ? el('p', { class: 'aviso mal', texto: 'Este navegador no permitió cifrar: la entrega se generó sin cifrar y el docente lo verá marcado.' }) : null,
       D.anexo ? el('p', { class: 'aviso', texto: 'Recuerde subir también el anexo de la parte práctica.' }) : null,
-      el('button', { class: 'boton boton-sec', texto: 'Descargar de nuevo', onclick: () => finalizar('descargar') }));
+      el('button', { class: 'boton boton-sec', texto: enLinea ? 'Descargar una copia' : 'Descargar de nuevo', onclick: () => finalizar('descargar') }));
     c.scrollIntoView();
   }
 

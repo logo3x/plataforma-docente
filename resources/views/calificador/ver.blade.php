@@ -2,7 +2,7 @@
 @php($tiposAlerta = ['manipulado' => '⚠ Identidad no coincide', 'grupo_no_cuadra' => 'Otro grupo', 'sin_cifrar' => 'Sin cifrar', 'texto_identico' => 'Texto idéntico',
     'salidas' => 'Salidas', 'pegados' => 'Pegados', 'duracion_anomala' => 'Duración corta', 'cierre_automatico' => 'Cierre por tiempo', 'reconexion' => 'Reconexión',
     'integrante_desconocido' => 'Integrante no está en la lista', 'estudiante_en_dos_entregas' => 'En dos entregas',
-    'version_no_coincide' => 'Versión distinta a la de su documento'])
+    'version_no_coincide' => 'Versión distinta a la de su documento', 'cierre_docente' => 'Cerrado por el docente'])
 <x-app :titulo="'Calificador — '.$actividad->nombre">
     <div class="migas"><a href="{{ route('inicio') }}">Mis materias</a> ›
         <a href="{{ route('artefactos.index', $dictado->materia) }}">Actividades evaluables</a> › {{ $actividad->nombre }}</div>
@@ -40,6 +40,20 @@
         </section>
         <section class="tarjeta">
             <h2 style="margin-top:0">2. Entregas</h2>
+            @php($vivo = \App\Models\SesionVivo::query()->where('actividad_id', $actividad->id)->whereNull('cerrada_en')->latest()->first())
+            <div class="aviso aviso-info" style="margin-bottom:.75rem">
+                @if ($vivo)
+                    <strong>Sesión en vivo abierta</strong> (código {{ $vivo->codigo }}).
+                    <a href="{{ route('calificador.vivo.panel', $vivo) }}">Ver el panel en vivo</a>
+                @else
+                    <strong>¿La sala tiene internet?</strong> Con una sesión en vivo los estudiantes abren el examen con un código, usted ve al grupo
+                    en tiempo real y las entregas llegan solas.
+                    <form method="POST" action="{{ route('calificador.vivo.abrir', $actividad) }}" class="fila" style="margin-top:.4rem">@csrf
+                        @if (count($bancos) > 1)<select name="banco" aria-label="Banco" style="width:auto">@foreach ($bancos as $b)<option value="{{ $b }}">Banco {{ $b }}</option>@endforeach</select>@endif
+                        <button class="boton boton-chico" type="submit">Abrir sesión en vivo</button></form>
+                    @error('vivo')<div class="error" role="alert">{{ $message }}</div>@enderror
+                @endif
+            </div>
             <form method="POST" action="{{ route('calificador.subir', $actividad) }}" enctype="multipart/form-data">
                 @csrf
                 <label for="entregas">Archivos .json de los estudiantes (puede seleccionar varios)</label>

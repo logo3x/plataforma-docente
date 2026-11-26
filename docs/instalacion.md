@@ -85,3 +85,15 @@ composer install --no-dev --optimize-autoloader
 php artisan migrate --force
 php artisan optimize
 ```
+
+## Sesión en vivo (sala con internet)
+
+Con una sesión en vivo los estudiantes abren el examen desde la plataforma con un código, el docente ve al grupo en tiempo real y las entregas llegan solas (sección 13). Para usarla:
+
+1. **Los equipos de la sala deben llegar al servidor.** `APP_URL` en `.env` debe ser la dirección que los estudiantes escriben: la IP del equipo del docente en la red de la sala (`http://192.168.1.20:8000`) o el dominio institucional. Con `http://localhost` los estudiantes no podrían entrar.
+2. **Use HTTPS si el servidor es público.** En una red de sala cerrada basta HTTP; fuera de ella, el examen y su credencial viajan por la red.
+3. Con WAMP, el servidor de Laravel debe escuchar en la red y no solo en el equipo: `php artisan serve --host=0.0.0.0 --port=8000`, y el cortafuegos de Windows debe permitir ese puerto.
+4. Los límites de frecuencia van por examen, no por IP: una sala entera detrás de una misma IP funciona.
+
+Si la red falla durante la sesión, cada examen sigue funcionando y guardando en su equipo; al finalizar sin conexión descarga el archivo como siempre, y se sube en el calificador.
+

@@ -32,10 +32,12 @@ use App\Http\Controllers\RestauracionController;
 use App\Http\Controllers\RubricaController;
 use App\Http\Controllers\SegundaOportunidadController;
 use App\Http\Controllers\SeguridadController;
+use App\Http\Controllers\SesionVivoController;
 use App\Http\Controllers\SimilitudController;
 use App\Http\Controllers\TemarioController;
 use App\Http\Controllers\UnidadDidacticaController;
 use App\Http\Controllers\VarianteController;
+use App\Http\Controllers\VivoEstudianteController;
 use App\Http\Controllers\VocabularioController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +46,13 @@ Route::redirect('/', '/inicio');
 // Informe del estudiante por enlace personal firmado: sin cuenta, solo lo suyo (6.9)
 Route::get('/informe/{devolucion}', [DevolucionController::class, 'publico'])
     ->middleware(['signed', 'throttle:30,1'])->name('informe.publico');
+
+// Sesión en vivo, lado del estudiante (sección 13): sin cuenta; el código abre el examen
+Route::get('/v', [VivoEstudianteController::class, 'entrar'])->name('vivo.entrar')->middleware('throttle:60,1');
+Route::get('/v/{codigo}', [VivoEstudianteController::class, 'examen'])->name('vivo.examen')->middleware('throttle:300,1');
+Route::post('/v/{codigo}/unirse', [VivoEstudianteController::class, 'unirse'])->name('vivo.unirse')->middleware('throttle:vivo');
+Route::post('/v/{codigo}/latido', [VivoEstudianteController::class, 'latido'])->name('vivo.latido')->middleware('throttle:vivo');
+Route::post('/v/{codigo}/entrega', [VivoEstudianteController::class, 'entrega'])->name('vivo.entrega')->middleware('throttle:vivo');
 
 Route::middleware('auth')->group(function () {
     Route::get('/inicio', InicioController::class)->name('inicio');
@@ -197,6 +206,9 @@ Route::middleware('auth')->group(function () {
         Route::post('actividades/{actividad}/entregas', [CalificadorController::class, 'subir'])->name('subir');
         Route::get('actividades/{actividad}/retos-pendientes', [CalificadorController::class, 'retosPendientes'])->name('retos');
         Route::post('actividades/{actividad}/registro', [CalificadorController::class, 'pasarAlRegistro'])->name('registro');
+        Route::post('actividades/{actividad}/en-vivo', [SesionVivoController::class, 'abrir'])->name('vivo.abrir');
+        Route::get('en-vivo/{sesion}', [SesionVivoController::class, 'panel'])->name('vivo.panel');
+        Route::get('en-vivo/{sesion}/proyectar', [SesionVivoController::class, 'proyectar'])->name('vivo.proyectar');
         Route::get('actividades/{actividad}/abiertas', [CalificadorController::class, 'abiertas'])->name('abiertas');
         Route::get('entregas/{entrega}', [CalificadorController::class, 'detalle'])->name('detalle');
         Route::get('actividades/{actividad}/estadisticas', [EstadisticasController::class, 'show'])->name('estadisticas');

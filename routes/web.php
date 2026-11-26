@@ -26,6 +26,7 @@ use App\Http\Controllers\RegistroController;
 use App\Http\Controllers\RubricaController;
 use App\Http\Controllers\SegundaOportunidadController;
 use App\Http\Controllers\SeguridadController;
+use App\Http\Controllers\SimilitudController;
 use App\Http\Controllers\TemarioController;
 use App\Http\Controllers\UnidadDidacticaController;
 use App\Http\Controllers\VocabularioController;
@@ -165,6 +166,9 @@ Route::middleware('auth')->group(function () {
         Route::get('actividades/{actividad}/abiertas', [CalificadorController::class, 'abiertas'])->name('abiertas');
         Route::get('entregas/{entrega}', [CalificadorController::class, 'detalle'])->name('detalle');
         Route::get('actividades/{actividad}/estadisticas', [EstadisticasController::class, 'show'])->name('estadisticas');
+        Route::get('actividades/{actividad}/similitud', [SimilitudController::class, 'index'])->name('similitud');
+        Route::get('actividades/{actividad}/similitud/{a}/{b}', [SimilitudController::class, 'ver'])->name('similitud.ver');
+        Route::post('actividades/{actividad}/similitud/{a}/{b}', [SimilitudController::class, 'revisar'])->name('similitud.revisar');
         Route::get('actividades/{actividad}/devolucion', [DevolucionController::class, 'index'])->name('devolucion');
         Route::get('actividades/{actividad}/devolucion/{estudiante}', [DevolucionController::class, 'ver'])->name('devolucion.ver');
         Route::post('actividades/{actividad}/devolucion/liberar', [DevolucionController::class, 'liberar'])->name('devolucion.liberar');

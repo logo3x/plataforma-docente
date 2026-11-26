@@ -164,3 +164,10 @@ dl.vocabulario dd { margin: .2rem 0 0; }
 
 /* Historial de actividades */
 .etiqueta-tipo { display: inline-block; font-size: .8rem; font-weight: 600; padding: .1rem .55rem; border-radius: 999px; background: #e0ecf8; color: var(--marino); }
+
+/* Similitud entre entregas: comparación lado a lado */
+.lado-a-lado { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+pre.comparacion { white-space: pre-wrap; word-break: break-word; font-family: inherit; font-size: .95rem; background: #fafafa; border: 1px solid var(--borde); border-radius: var(--radio); padding: .6rem .8rem; margin: 0; max-height: 28rem; overflow: auto; }
+pre.comparacion-codigo { font-family: ui-monospace, Consolas, monospace; font-size: .85rem; }
+pre.comparacion mark { background: #fde68a; outline: 1px solid #d97706; }
+@media (max-width: 800px) { .lado-a-lado { grid-template-columns: 1fr; } }

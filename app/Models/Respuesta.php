@@ -19,6 +19,7 @@ class Respuesta extends Model
         return [
             'respuesta' => 'array',
             'desglose' => 'array',
+            'sugerencia' => 'array',
             'puntaje' => 'decimal:4',
             'puntaje_max' => 'decimal:4',
         ];

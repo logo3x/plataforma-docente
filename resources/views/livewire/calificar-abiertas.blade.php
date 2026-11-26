@@ -65,6 +65,18 @@
                     </button>
                     <span class="suave">Para las respuestas ya calificadas sin comentario. Quedan como borrador hasta que usted los use.</span>
                 </div>
+                <div class="fila" style="margin-top:.4rem">
+                    <button type="button" class="boton boton-sec boton-chico" wire:click="sugerirPuntajes" wire:loading.attr="disabled" wire:target="sugerirPuntajes" @disabled(! $sinSugerencia)>
+                        <span wire:loading.remove wire:target="sugerirPuntajes">Sugerir puntajes con IA ({{ $sinSugerencia }})</span>
+                        <span wire:loading wire:target="sugerirPuntajes">La IA está leyendo las respuestas… con un modelo local puede tardar</span>
+                    </button>
+                    <span class="suave">Para las respuestas sin calificar. Solo con un motor local; nada cuenta hasta que usted lo acepte.</span>
+                </div>
+                @if ($calibracion['sugeridas'])
+                    <p class="suave calibracion-ia" style="margin:.4rem 0 0">Sugerencias de la IA en esta pregunta: {{ $calibracion['sugeridas'] }} ·
+                        aceptó tal cual {{ $calibracion['aceptadas'] }} · cambió {{ $calibracion['cambiadas'] }}@if ($calibracion['diferencia'] !== null) (diferencia media {{ $calibracion['diferencia'] }})@endif ·
+                        descartó {{ $calibracion['descartadas'] }}@if ($calibracion['pendientes']) · {{ $calibracion['pendientes'] }} por decidir @endif</p>
+                @endif
                 @if ($avisoIa)<div @class(['aviso', 'aviso-error' => $avisoIaError, 'aviso-info' => ! $avisoIaError]) role="status" style="margin-top:.5rem">{{ $avisoIa }}</div>@endif
             </div>
 
@@ -95,6 +107,24 @@
                                 </div>
                             @endforeach
                             @if ($sel !== [] && in_array(null, $sel, true))<p class="suave" style="margin:.2rem 0">Faltan criterios por evaluar: el puntaje se calcula al completarlos.</p>@endif
+                        </div>
+                    @endif
+                    @php($sug = $r->sugerencia)
+                    @if (is_array($sug) && $r->puntaje === null && ($sug['decision'] ?? null) === null)
+                        <div class="sugerencia-ia" role="note" aria-label="Sugerencia de la IA">
+                            <div class="fila" style="justify-content:space-between">
+                                <span><strong>Sugerencia de la IA:</strong> {{ \Brick\Math\BigDecimal::of($sug['puntaje'])->toScale(2, \Brick\Math\RoundingMode::HalfUp)->strippedOfTrailingZeros() }}
+                                    de {{ \Brick\Math\BigDecimal::of($r->puntaje_max)->strippedOfTrailingZeros() }}
+                                    @if ($rubrica && is_array($sug['seleccion'] ?? null))
+                                        <span class="suave">· {{ collect($sug['seleccion'])->map(fn ($ni, $ci) => ($rubrica->criterios[$ci]['nombre'] ?? '?').': '.($rubrica->criterios[$ci]['niveles'][$ni]['nombre'] ?? '?'))->join(' · ') }}</span>
+                                    @endif</span>
+                                <span class="fila" style="gap:.4rem">
+                                    <button type="button" class="boton boton-chico" wire:click="aceptarSugerencia({{ $r->id }})">Aceptar</button>
+                                    <button type="button" class="boton boton-sec boton-chico" wire:click="descartarSugerencia({{ $r->id }})">Descartar</button>
+                                </span>
+                            </div>
+                            @if (! empty($sug['justificacion']))<p style="margin:.3rem 0 0">{{ $sug['justificacion'] }}</p>@endif
+                            <p class="suave" style="margin:.2rem 0 0">Lea la respuesta antes de aceptar. Si no está de acuerdo, ponga su puntaje: la sugerencia no cuenta.</p>
                         </div>
                     @endif
                     <div class="fila puntaje-abierta">

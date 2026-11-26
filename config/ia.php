@@ -327,6 +327,38 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
 Use exactamente los números entre corchetes como «id».
 TXT,
 
+        'puntajes' => <<<'TXT'
+Tarea: sugiera un puntaje para cada respuesta abierta de esta pregunta, como lo haría el docente con su rúbrica.
+Usted no califica: propone. El docente lee cada respuesta y decide; su sugerencia solo le ahorra tiempo.
+
+Pregunta:
+{{pregunta}}
+
+Respuesta de referencia del docente:
+{{referencia}}
+
+Puntaje máximo: {{maximo}}
+
+Rúbrica:
+{{rubrica}}
+
+Respuestas, sin el nombre de quien las escribió:
+{{respuestas}}
+
+Reglas:
+- Juzgue solo lo que la respuesta dice. No premie la extensión, la ortografía ni el tono si la rúbrica no lo pide.
+- Si hay criterios numerados, elija para cada uno el número del nivel que mejor describe la respuesta, en
+  «niveles», en el mismo orden de los criterios. El puntaje lo calcula la plataforma con esos niveles.
+- Si no hay criterios numerados, dé «puntaje» entre 0 y {{maximo}}, con un decimal como máximo.
+- En «justificacion», una o dos frases PARA EL DOCENTE: qué cumple y qué le falta, citando lo que la respuesta dice.
+- Respuesta vacía, fuera de tema o que copia la pregunta: el nivel más bajo o puntaje 0, y dígalo.
+- Ante la duda entre dos niveles, elija el más bajo y explique la duda en la justificación.
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"sugerencias":[{"id":123,"niveles":[0,2],"puntaje":1.5,"justificacion":"..."}]}
+Use exactamente los números entre corchetes como «id». Con rúbrica, «niveles» es obligatorio; sin rúbrica, «puntaje».
+TXT,
+
         'variante' => <<<'TXT'
 Tarea: escriba la versión {{version}} de un examen ya aprobado, a partir de su versión {{origen}}: {{proposito}}.
 

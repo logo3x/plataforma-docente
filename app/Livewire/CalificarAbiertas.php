@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Calificacion\ComentariosIA;
+use App\Calificacion\SugerenciasIA;
 use App\Evaluacion\Rubricas;
 use App\IA\MotorNoDisponible;
 use App\IA\MotorNoPermitido;
@@ -67,6 +68,7 @@ class CalificarAbiertas extends Component
 
         if ($valor === '') {
             $r->update(['puntaje' => null, 'calificado_por' => null]);
+            SugerenciasIA::registrarDecision($r, null);
 
             return;
         }
@@ -85,6 +87,7 @@ class CalificarAbiertas extends Component
         }
         // El número escrito a mano reemplaza lo que se había elegido en la rúbrica
         $r->update(['puntaje' => (string) $v->toScale(4, RoundingMode::HalfUp), 'calificado_por' => 'docente', 'desglose' => null]);
+        SugerenciasIA::registrarDecision($r->fresh(), $r->puntaje);
     }
 
     /**
@@ -111,6 +114,48 @@ class CalificarAbiertas extends Component
             'calificado_por' => $puntaje === null ? null : 'docente',
             'desglose' => ['rubrica_id' => $rubrica->id] + $servicio->desglose($rubrica->only('titulo', 'criterios'), $seleccion, (string) $r->puntaje_max),
         ]);
+        SugerenciasIA::registrarDecision($r->fresh(), $puntaje);
+    }
+
+    /** Decisión 9: la IA sugiere puntajes para las respuestas sin calificar; nada se aplica hasta que el docente acepta. */
+    public function sugerirPuntajes(SugerenciasIA $sugerencias): void
+    {
+        $item = $this->itemActual();
+        $actividad = Actividad::query()->findOrFail($this->actividadId);
+        $this->avisoIaError = false;
+        try {
+            $n = $sugerencias->proponer(auth()->user(), $actividad, $item);
+            $resto = $sugerencias->candidatas($item, $actividad)->count();
+            $this->avisoIa = "La IA sugirió {$n} puntaje(s). Lea cada respuesta y decida: ninguno cuenta hasta que usted lo acepte o ponga el suyo."
+                .($resto ? " Quedan {$resto} sin sugerencia: pulse de nuevo." : '');
+        } catch (MotorNoDisponible|MotorNoPermitido|RespuestaRechazada|InvalidArgumentException $e) {
+            [$this->avisoIa, $this->avisoIaError] = [$e->getMessage(), true];
+        }
+    }
+
+    /** El docente acepta la sugerencia: se aplica como si la hubiera puesto él (con la rúbrica, nivel por nivel). */
+    public function aceptarSugerencia(int $respuestaId): void
+    {
+        $r = $this->respuesta($respuestaId);
+        $s = $r->sugerencia;
+        abort_if(! is_array($s) || ($s['decision'] ?? null) === 'descartada', 422);
+        $rubrica = $r->item->pregunta->rubrica;
+        if ($rubrica && ($s['rubrica_id'] ?? null) === $rubrica->id && is_array($s['seleccion'] ?? null)) {
+            foreach ($s['seleccion'] as $ci => $ni) {
+                $this->nivel($respuestaId, $ci, $ni);
+            }
+
+            return;
+        }
+        $this->puntuar($respuestaId, (string) BigDecimal::of($s['puntaje'])->strippedOfTrailingZeros());
+    }
+
+    public function descartarSugerencia(int $respuestaId): void
+    {
+        $r = $this->respuesta($respuestaId);
+        if (is_array($r->sugerencia)) {
+            $r->update(['sugerencia' => ['decision' => 'descartada'] + $r->sugerencia]);
+        }
     }
 
     /** Asocia a la pregunta una rúbrica de la materia, o la quita. */
@@ -201,6 +246,8 @@ class CalificarAbiertas extends Component
             'pendientes' => $respuestas->whereNull('puntaje')->count(),
             'frecuentes' => $item ? $this->frecuentes() : collect(),
             'sinComentario' => $item ? app(ComentariosIA::class)->candidatas($item, Actividad::query()->findOrFail($this->actividadId))->count() : 0,
+            'sinSugerencia' => $item ? app(SugerenciasIA::class)->candidatas($item, Actividad::query()->findOrFail($this->actividadId))->count() : 0,
+            'calibracion' => SugerenciasIA::calibracion($respuestas),
         ]);
     }
 

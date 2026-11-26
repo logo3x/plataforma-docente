@@ -30,6 +30,7 @@ class PlantillasIaController extends Controller
         'proyectos' => 'Capa 3 — Tarea: ideas de proyectos',
         'apuntes' => 'Capa 3 — Tarea: texto informativo o apunte',
         'comentarios' => 'Capa 3 — Tarea: comentarios de respuestas abiertas (voz del docente)',
+        'puntajes' => 'Capa 3 — Tarea: puntaje sugerido para respuestas abiertas',
         'temario' => 'Capa 3 — Tarea: extraer el temario del plan', 'sugerencias' => 'Capa 3 — Tarea: sugerir organización de la clase'];
 
     public function edit(Request $request, ConstructorPrompt $prompts): View

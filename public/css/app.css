@@ -227,3 +227,6 @@ th .suave { color: inherit; opacity: .85; }
 /* Estudiantes en dos grupos */
 .opcion-grupo { border: 1px solid var(--borde); border-radius: var(--radio); padding: .75rem 1rem; }
 .opcion-grupo.sugerida { border-color: var(--cian); box-shadow: inset 0 0 0 1px var(--cian); }
+
+/* Puntaje sugerido por IA (decisión 9): se distingue de la calificación del docente */
+.sugerencia-ia { border: 1px dashed var(--cian); background: #ecfeff; border-radius: var(--radio); padding: .5rem .75rem; margin: .5rem 0; }

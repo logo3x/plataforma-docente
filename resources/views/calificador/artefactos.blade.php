@@ -17,7 +17,7 @@
     </section>
 
     @forelse ($artefactos as $a)
-        <section class="tarjeta">
+        <section class="tarjeta" id="artefacto-{{ $a->id }}">
             <h2 style="margin-top:0">{{ $a->titulo }} <span class="suave">· {{ $a->sigla }} · {{ $a->items_count }} ítems · valor {{ $a->configuracion['valor'] ?? '' }}</span></h2>
             @if ($a->actividades->isNotEmpty())
                 <p style="margin:.25rem 0">Aplicada en:</p>

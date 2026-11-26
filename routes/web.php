@@ -14,6 +14,7 @@ use App\Http\Controllers\EstadisticasController;
 use App\Http\Controllers\EstudianteController;
 use App\Http\Controllers\ExportacionController;
 use App\Http\Controllers\GeneracionBancoController;
+use App\Http\Controllers\HistorialController;
 use App\Http\Controllers\ImportacionController;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\MateriaController;
@@ -135,6 +136,8 @@ Route::middleware('auth')->group(function () {
     }
     Route::post('/apuntes/{material}/repositorio', [ApunteController::class, 'repositorio'])->name('apuntes.repositorio');
     Route::post('/vocabularios/{material}/glosario', [VocabularioController::class, 'glosario'])->name('vocabularios.glosario');
+    Route::get('/materias/{materia}/historial', [HistorialController::class, 'index'])->name('historial.index');
+    Route::post('/materias/{materia}/historial/copiar', [HistorialController::class, 'copiar'])->name('historial.copiar');
     Route::get('/materias/{materia}/reclamos', [ReclamoController::class, 'materia'])->name('reclamos.materia');
     Route::get('/materias/{materia}/temario', [TemarioController::class, 'show'])->name('temario.show');
     Route::post('/materias/{materia}/temario/extraer', [TemarioController::class, 'extraer'])->name('temario.extraer');

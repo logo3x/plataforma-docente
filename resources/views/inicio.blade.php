@@ -11,6 +11,7 @@
             </h2>
             <p style="margin:.25rem 0">
                 <a href="{{ route('artefactos.index', $materia) }}">Actividades evaluables y calificador</a> ·
+                <a href="{{ route('historial.index', $materia) }}">Historial</a> ·
                 <a href="{{ route('generacion.create', $materia) }}">Generar con IA</a> ·
                 <a href="{{ route('rubricas.index', $materia) }}">Rúbricas</a> ·
                 <a href="{{ route('temario.show', $materia) }}">Temario</a> ·

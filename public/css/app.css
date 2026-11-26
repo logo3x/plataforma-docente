@@ -36,7 +36,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
 .aviso-info { background: #e0f2fe; border-color: var(--cian); color: #075985; }
 
 label { display: block; font-weight: 600; margin-bottom: .25rem; }
-input[type=text], input[type=email], input[type=password], input[type=number], input[type=file], select {
+input[type=text], input[type=search], input[type=email], input[type=password], input[type=number], input[type=file], select {
   width: 100%; padding: .5rem .6rem; border: 1px solid #6b7280; border-radius: var(--radio); font: inherit; background: var(--blanco); color: var(--texto); }
 .campo { margin-bottom: 1rem; }
 .error { color: var(--mal); font-size: .9rem; margin-top: .25rem; }
@@ -161,3 +161,6 @@ dl.vocabulario dd { margin: .2rem 0 0; }
 .apunte-proposito { font-size: 1.1rem; border-left: 4px solid var(--cian); padding-left: .8rem; }
 .idea-clave { background: var(--ok-fondo); border-radius: var(--radio); padding: .5rem .8rem; }
 .linea-larga { border-bottom: 1px solid var(--texto); height: 2.2rem; margin-bottom: .4rem; }
+
+/* Historial de actividades */
+.etiqueta-tipo { display: inline-block; font-size: .8rem; font-weight: 600; padding: .1rem .55rem; border-radius: 999px; background: #e0ecf8; color: var(--marino); }

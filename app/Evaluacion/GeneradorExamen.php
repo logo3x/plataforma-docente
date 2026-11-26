@@ -62,7 +62,8 @@ final class GeneradorExamen
         // JSON_HEX_TAG convierte < y > en </>: ningún texto puede cerrar la etiqueta <script> (4.5.5)
         $json = json_encode($datos, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         // El entorno de los retos de HTML es el mismo de la plataforma: un solo código (4.6)
-        $js = file_get_contents(public_path('js/ejecutor-dom.js'))."\n".file_get_contents(resource_path('examen/examen.js'));
+        $js = file_get_contents(public_path('js/ejecutor-dom.js'))."\n".file_get_contents(public_path('js/ejecutor-sql.js'))
+            ."\n".file_get_contents(resource_path('examen/examen.js'));
         // Dentro de <script>, «<!--» y «<script» cambian cómo el navegador busca el cierre (4.5.5)
         foreach (['</script' => 'una etiqueta de cierre de script', '<script' => 'una etiqueta de apertura de script', '<!--' => 'una apertura de comentario HTML'] as $sec => $que) {
             if (stripos($js, $sec) !== false) {
@@ -73,9 +74,26 @@ final class GeneradorExamen
         return view('examen.estudiante', [
             'datos' => $datos,
             'json' => $json,
+            'motorSql' => $this->motorSql($datos['items']),
             'css' => file_get_contents(resource_path('examen/examen.css')),
             'js' => $js,
         ])->render();
+    }
+
+    /**
+     * El motor SQLite (sql.js) viaja dentro del archivo, en base64, solo si el examen tiene retos de SQL:
+     * el examen funciona sin internet y los demás no cargan con su peso (unos 900 KB).
+     */
+    private function motorSql(array $items): ?string
+    {
+        if (! collect($items)->contains(fn ($it) => $it['tipo'] === 'reto' && ($it['lenguaje'] ?? null) === 'sql')) {
+            return null;
+        }
+
+        return json_encode([
+            'codigo' => base64_encode(file_get_contents(public_path('vendor/sql.js/sql-wasm.js'))),
+            'wasm' => base64_encode(file_get_contents(public_path('vendor/sql.js/sql-wasm.wasm'))),
+        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
     }
 
     private function peso(string $p): string

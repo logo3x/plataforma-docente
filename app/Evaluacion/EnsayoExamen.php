@@ -59,7 +59,8 @@ final class EnsayoExamen
                 // Se ejecutan en el navegador del docente, igual que en el calificador (calificación híbrida)
                 $fila['codigo'] = is_string($respuesta) ? $respuesta : '';
                 $fila['lenguaje'] = $it->pregunta->enunciado['lenguaje'] ?? 'javascript';
-                $fila['verificaciones'] = array_map(fn ($v) => ['nombre' => $v['nombre'], 'prueba' => $v['prueba'], 'reservada' => (bool) ($v['reservada'] ?? false)],
+                $fila['esquema'] = $it->pregunta->enunciado['esquema'] ?? null;
+                $fila['verificaciones'] = array_map(fn ($v) => ImportadorBanco::criterio($v) + ['reservada' => (bool) ($v['reservada'] ?? false)],
                     $it->pregunta->clave['verificaciones'] ?? []);
             }
             $items[] = $fila;

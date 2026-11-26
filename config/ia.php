@@ -64,6 +64,12 @@ Reglas de contenido:
   «plantilla_codigo» es HTML, y cada «prueba» o «entrada» es una expresión de JavaScript sobre esa página
   (document.querySelector, getComputedStyle, .click()), por ejemplo
   "document.querySelectorAll('nav a').length === 3".
+- Si la materia trabaja bases de datos, el reto lleva "lenguaje":"sql" y un «esquema» con los CREATE TABLE y los
+  INSERT de unos datos realistas y breves (SQLite). Cada verificación trae una «consulta» de referencia cuyo
+  resultado debe coincidir con el de la última consulta del estudiante ("orden": true solo si el enunciado pide
+  ORDER BY), o una «prueba» que da 1 después de ejecutar su código (para INSERT, UPDATE o CREATE). Una
+  verificación reservada puede traer «datos» propios, INSERT adicionales, para que no sirva escribir el
+  resultado a mano.
 - Los pesos de todos los ítems deben sumar exactamente {{valor}}.
 {{no_repetir}}
 

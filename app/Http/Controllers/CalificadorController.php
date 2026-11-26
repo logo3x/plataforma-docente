@@ -163,7 +163,8 @@ class CalificadorController extends Controller
                     'codigo' => is_string($r->respuesta['valor'] ?? null) ? $r->respuesta['valor'] : '',
                     'lenguaje' => $r->item->pregunta->enunciado['lenguaje'] ?? 'javascript',
                     'casos' => $r->item->pregunta->enunciado['casos_visibles'] ?? [],
-                    'verificaciones' => collect($r->item->pregunta->clave['verificaciones'])->map(fn ($v) => ['id' => $v['id'], 'prueba' => $v['prueba']])->values(),
+                    'esquema' => $r->item->pregunta->enunciado['esquema'] ?? null,
+                    'verificaciones' => collect($r->item->pregunta->clave['verificaciones'])->map(fn ($v) => ImportadorBanco::criterio($v) + ['id' => $v['id']])->values(),
                 ]))
             ->values();
 

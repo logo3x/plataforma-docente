@@ -92,6 +92,7 @@
 
     <script src="{{ asset('js/ejecutor.js') }}"></script>
     <script src="{{ asset('js/ejecutor-dom.js') }}"></script>
+    <script src="{{ asset('js/ejecutor-sql.js') }}" data-motor="{{ asset('vendor/sql.js') }}"></script>
     <script>
     /* Calificación híbrida: los retos se ejecutan aquí, en el navegador del docente, aislados en un Worker
        sin red y con límite de tiempo. Solo se envía qué verificaciones pasaron; el puntaje lo calcula el servidor. */
@@ -113,8 +114,16 @@
             const porEntrega = {};
             for (const p of datos.pendientes) {
                 const verificaciones = {}; const casos = [];
-                for (const v of p.verificaciones) verificaciones[v.id] = (await correr(p.lenguaje, p.codigo, v.prueba, datos.tiempo_ms)).ok;
-                for (const c of p.casos) { const r = await correr(p.lenguaje, p.codigo, c.entrada || 'undefined', datos.tiempo_ms); casos.push({entrada: c.entrada, esperada: c.esperada ?? null, consola: r.consola, error: r.error ?? null, retorno: r.retorno ?? null}); }
+                for (const v of p.verificaciones) verificaciones[v.id] = p.lenguaje === 'sql'
+                    ? (await window.verificarSQL(p.esquema, p.codigo, v, datos.tiempo_ms)).ok
+                    : (await correr(p.lenguaje, p.codigo, v.prueba, datos.tiempo_ms)).ok;
+                for (const c of p.casos) {
+                    if (p.lenguaje === 'sql') {
+                        const r = await window.ejecutarSQL(p.esquema, p.codigo, c.entrada || '', datos.tiempo_ms);
+                        casos.push({entrada: c.entrada, esperada: c.esperada ?? null, consola: window.textoSQL(r.consulta), error: ['con_salida', 'sin_salida'].includes(r.estado) ? null : r.mensaje, retorno: null});
+                        continue;
+                    }
+                    const r = await correr(p.lenguaje, p.codigo, c.entrada || 'undefined', datos.tiempo_ms); casos.push({entrada: c.entrada, esperada: c.esperada ?? null, consola: r.consola, error: r.error ?? null, retorno: r.retorno ?? null}); }
                 (porEntrega[p.entrega] ||= []).push({item: p.item, verificaciones, casos});
                 estado.textContent = 'Ejecutados ' + (++n) + ' de ' + datos.pendientes.length + '…';
             }

@@ -26,6 +26,7 @@
 </main>
 <div id="bloqueo" class="bloqueo oculto" role="alertdialog">Este examen debe presentarse sin internet.<br>Desconecte el equipo de la red para continuar.</div>
 <script type="application/json" id="datos-examen">{!! $json !!}</script>
+@if ($motorSql)<script type="application/json" id="motor-sql">{!! $motorSql !!}</script>@endif
 <script>{!! $js !!}</script>
 </body>
 </html>

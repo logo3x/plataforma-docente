@@ -48,7 +48,7 @@ Todos llevan `tipo`, `enunciado` y `peso`. Opcionales: `tema`, `dificultad` (`ba
 | `ordenar` | `pasos` {clave: texto}, `orden` [claves] | Posición por posición; el examen baraja los pasos |
 | `completar` | `plantilla` con `___` por hueco, `huecos` [respuesta o [alternativas]] | Hueco por hueco, sin distinguir mayúsculas, espacios ni `@` inicial |
 | `abierta` | `referencia`, `rubrica`, `lineas` | La califica el docente, por pregunta |
-| `reto` | `lenguaje` (`javascript` o `html`), `plantilla_codigo`, `casos_visibles` [{entrada, esperada, descripcion}], `verificaciones` [{id, nombre, fraccion, prueba, reservada}] | En el navegador del docente; las fracciones suman 1 |
+| `reto` | `lenguaje` (`javascript`, `html` o `sql`), `esquema` (solo SQL), `plantilla_codigo`, `casos_visibles` [{entrada, esperada, descripcion}], `verificaciones` [{id, nombre, fraccion, prueba, reservada}] | En el navegador del docente; las fracciones suman 1 |
 
 ### Retos de código
 
@@ -78,6 +78,30 @@ El estudiante escribe una página completa (HTML, CSS y, si el reto lo pide, Jav
 ```
 
 Como en los retos de JavaScript, las verificaciones se ejecutan en el navegador del docente sobre el código del estudiante. Un estudiante que reescriba a propósito las funciones del navegador que usan las pruebas (por ejemplo `document.querySelectorAll`) podría engañarlas: el código queda siempre a la vista en el detalle de la entrega.
+
+### Retos de SQL (`"lenguaje": "sql"`)
+
+El estudiante escribe sus consultas y con «Probar» las ejecuta en un SQLite que corre dentro del navegador: ve la tabla que devuelve cada instrucción, las filas afectadas por un INSERT, UPDATE o DELETE, y los errores redactados en español («La tabla «equipo» no existe…»), con el mensaje original debajo. «Ver tablas» muestra las tablas de la actividad con sus datos.
+
+- `esquema` son las instrucciones que crean y llenan las tablas (`CREATE TABLE`, `INSERT`). El estudiante las ve. Cada ejecución empieza con una base nueva creada con ellas: lo que haga una prueba no afecta a la siguiente.
+- `entrada` de un caso visible es una consulta que se ejecuta después del código del estudiante; útil para que vea el efecto de un INSERT o un UPDATE.
+- Cada verificación usa **una** de estas dos formas:
+  - `consulta`: una consulta de referencia. Pasa si la última consulta del estudiante devuelve los mismos valores (mismo número de columnas y filas; los nombres de las columnas no importan). El orden de las filas solo cuenta con `"orden": true`; úselo cuando el enunciado pida `ORDER BY`.
+  - `prueba`: una consulta que debe devolver 1 después del código del estudiante, por ejemplo `SELECT COUNT(*) = 1 FROM clientes WHERE nombre = 'Dora'`. Sirve para INSERT, UPDATE, DELETE y CREATE.
+- `datos` (opcional) son instrucciones que se agregan al esquema solo para esa verificación. En una reservada, con otros datos, una respuesta escrita a mano («SELECT 'Ana', 150») no pasa.
+- El motor (sql.js, SQLite 3.54 en WebAssembly, licencia MIT, en `public/vendor/sql.js`) viaja dentro del examen solo cuando el examen tiene retos de SQL: el archivo pesa cerca de 1 MB más y funciona sin internet. Una consulta que no termina se corta con el límite de tiempo, sin congelar el examen.
+
+```json
+{ "tipo": "reto", "lenguaje": "sql", "peso": "2", "enunciado": "Total de horas por equipo de la planta Barrancabermeja.",
+  "esquema": "CREATE TABLE equipos (id INTEGER PRIMARY KEY, nombre TEXT, planta TEXT);\nINSERT INTO equipos VALUES (1, 'Bomba P-101', 'Barrancabermeja'), (2, 'Compresor C-20', 'Cartagena');\nCREATE TABLE ordenes (id INTEGER PRIMARY KEY, equipo_id INTEGER, horas REAL);\nINSERT INTO ordenes VALUES (1, 1, 4.5), (2, 1, 2), (3, 2, 8);",
+  "plantilla_codigo": "SELECT\n",
+  "verificaciones": [
+    { "id": "v1", "nombre": "Total de horas por equipo", "fraccion": "0.7",
+      "consulta": "SELECT e.nombre, SUM(o.horas) FROM equipos e JOIN ordenes o ON o.equipo_id = e.id WHERE e.planta = 'Barrancabermeja' GROUP BY e.nombre" },
+    { "id": "v2", "nombre": "Funciona con órdenes nuevas", "fraccion": "0.3", "reservada": true,
+      "datos": "INSERT INTO ordenes VALUES (4, 1, 10);",
+      "consulta": "SELECT e.nombre, SUM(o.horas) FROM equipos e JOIN ordenes o ON o.equipo_id = e.id WHERE e.planta = 'Barrancabermeja' GROUP BY e.nombre" } ] }
+```
 
 ## Versiones y segundo banco (5.4.2)
 

@@ -144,14 +144,15 @@
     area.addEventListener('keydown', ev => { if (ev.key === 'Tab') { ev.preventDefault(); const s = area.selectionStart; area.setRangeText('  ', s, area.selectionEnd, 'end'); } });
     const nivel = D.nivel_ayuda || 'completo';
     const aviso = el('div', { class: 'aviso-sintaxis', role: 'status', 'aria-live': 'polite' });
-    const html = it.lenguaje === 'html';
-    const revisar = () => { if (nivel === 'minimo') return; const p = html ? window.revisarHTML(area.value, revisarSintaxis) : revisarSintaxis(area.value); aviso.textContent = p ? '⚠ ' + p : ''; aviso.classList.toggle('oculto', !p); };
+    const html = it.lenguaje === 'html', sql = it.lenguaje === 'sql';
+    const revisar = () => { if (nivel === 'minimo') return; const p = html ? window.revisarHTML(area.value, revisarSintaxis) : sql ? window.revisarSQL(area.value) : revisarSintaxis(area.value); aviso.textContent = p ? '⚠ ' + p : ''; aviso.classList.toggle('oculto', !p); };
     area.addEventListener('input', () => { E.respuestas[id] = area.value; clearTimeout(area._t); area._t = setTimeout(guardar, 400); clearTimeout(area._s); area._s = setTimeout(revisar, 500); });
     const salida = el('div', { class: 'resultado-reto' });
-    const vista = html ? el('div', { class: 'contenedor-vista', 'aria-label': 'Vista previa de su página' }) : null;
+    const vista = html ? el('div', { class: 'contenedor-vista', 'aria-label': 'Vista previa de su página' }) : sql ? el('div', { class: 'contenedor-vista', 'aria-label': 'Tablas de la actividad' }) : null;
     const probar = el('button', { class: 'boton boton-sec', texto: '▶ Probar', onclick: async () => {
       E.sesion.ejecuciones++; salida.innerHTML = '';
       if (html) return probarHTML();
+      if (sql) return probarSQL();
       // 4.4.6: en el nivel mínimo solo se ejecuta el código tal cual; los casos del enunciado quedan para los otros niveles
       const casos = nivel !== 'minimo' && it.casos_visibles.length ? it.casos_visibles : [{ entrada: '', descripcion: 'Ejecutar el código' }];
       for (const c of casos) {
@@ -185,9 +186,41 @@
         for (const c of nivel !== 'minimo' ? it.casos_visibles : []) salida.append(tarjeta(traducir(await window.ejecutarHTML(area.value, c.entrada || '', D.tiempo_ms)), c));
       } finally { probar.disabled = false; guardar(); }
     }
-    if (html) area.rows = 16;
+    /* 4.6 SQL: cada prueba usa una base nueva creada con el esquema del reto; se ven las tablas que devuelve
+       cada instrucción, las filas afectadas y el error traducido. Nunca dice si la consulta es la correcta. */
+    const tablaSQL = (r) => {
+      if (!r.columnas) return el('p', { class: 'peso', texto: /^\s*(insert|update|delete|replace)\b/i.test(r.sql) ? r.afectadas + ' fila(s) afectada(s).' : 'Hecho: ' + r.sql.split('\n')[0].slice(0, 80) });
+      const t = el('table', { class: 'tabla-sql' }, el('thead', {}, el('tr', {}, r.columnas.map(c => el('th', { texto: c })))),
+        el('tbody', {}, r.filas.slice(0, 200).map(f => el('tr', {}, f.map(v => el('td', v === null ? { class: 'nulo', texto: 'NULL' } : { texto: String(v) }))))));
+      return el('div', { class: 'resultado-sql' }, t, el('p', { class: 'peso', texto: r.filas.length + (r.truncado ? '+' : '') + ' fila(s)' + (r.filas.length > 200 ? '; se muestran 200' : '') + '.' }));
+    };
+    const mensajeSQL = (r) => !r.mensaje ? null : r.estado === 'tiempo' || nivel === 'completo' ? r.mensaje + (r.traducido && r.original ? '  (original: ' + r.original + ')' : '') : nivel === 'intermedio' ? (r.original || r.mensaje) : null;
+    async function probarSQL() {
+      probar.disabled = true;
+      try {
+        const casos = nivel !== 'minimo' ? [null].concat(it.casos_visibles) : [null];
+        for (const c of casos) {
+          const r = await window.ejecutarSQL(it.esquema, area.value, c ? c.entrada : '', D.tiempo_ms);
+          if (!c && r.estado === 'no_compila') E.sesion.errores_sintaxis++;
+          const m = mensajeSQL(r);
+          salida.append(el('div', { class: 'tarjeta' },
+            el('div', {}, el('span', { class: 'estado ' + ({ con_salida: 'e-ok', sin_salida: 'e-pend' }[r.estado] || 'e-mal'), texto: ETIQUETAS[r.estado] }),
+              c ? ' ' + (c.descripcion || 'Caso') : ' Su código', c && c.entrada ? el('code', { texto: '  ' + c.entrada }) : null),
+            m ? el('div', { class: 'aviso mal', texto: m }) : null,
+            c ? (r.consulta ? tablaSQL(r.consulta) : null) : r.resultados.map(tablaSQL),
+            c && c.esperada !== undefined && nivel === 'completo' ? el('div', {}, 'Resultado esperado (enunciado): ', el('pre', { class: 'esperado-sql', texto: String(c.esperada) })) : null));
+          if (r.estado === 'no_compila' || r.estado === 'tiempo') break;
+        }
+      } finally { probar.disabled = false; guardar(); }
+    }
+    const verTablas = sql ? el('button', { class: 'boton boton-sec', texto: 'Ver tablas', onclick: async () => {
+      const r = await window.tablasSQL(it.esquema);
+      vista.replaceChildren(r.error ? el('div', { class: 'aviso mal', texto: r.error })
+        : el('div', {}, r.tablas.map(t => el('details', { open: true }, el('summary', { texto: t.tabla + ' (' + t.columnas.join(', ') + ')' }), tablaSQL(t)))));
+    } }) : null;
+    if (html || sql) area.rows = 16;
     revisar();
-    caja.append(area, aviso, el('p', {}, probar, ' ', it.reservadas ? el('span', { class: 'peso', texto: 'Hay ' + it.reservadas + ' verificación(es) adicional(es) que se evaluarán al calificar.' }) : null), vista, salida);
+    caja.append(area, aviso, el('p', {}, probar, ' ', verTablas, verTablas ? ' ' : null, it.reservadas ? el('span', { class: 'peso', texto: 'Hay ' + it.reservadas + ' verificación(es) adicional(es) que se evaluarán al calificar.' }) : null), vista, salida);
   }
 
   /* 4.4.1: verificación al escribir, sin ejecutar. Paréntesis, llaves, corchetes y comillas sin cerrar,
@@ -362,6 +395,16 @@
         if (res.estado !== esperado || (expr && !res.ok)) throw new Error('Reportó «' + (ETIQUETAS[res.estado] || res.estado) + '»' + (expr && !res.ok ? ' y la página no se evaluó bien' : '') + '.');
         return esperado === 'tiempo' ? 'se detiene sin congelar el examen' : 'se muestra y se evalúa';
       });
+    }
+    if (D.items.some(x => x.tipo === 'reto' && x.lenguaje === 'sql')) {
+      for (const [nombre, codigo, esperado] of [['Consulta', 'CREATE TABLE t (a); INSERT INTO t VALUES (1), (2); SELECT SUM(a) FROM t;', 'con_salida'],
+        ['Consulta que no termina', 'WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c) SELECT COUNT(*) FROM c;', 'tiempo']]) {
+        await chequear('Retos de SQL: «' + nombre + '»', async () => {
+          const res = await window.ejecutarSQL('', codigo, '', esperado === 'tiempo' ? 1500 : 8000);
+          if (res.estado !== esperado) throw new Error('Reportó «' + (ETIQUETAS[res.estado] || res.estado) + '»' + (res.mensaje ? ': ' + res.mensaje : '') + '.');
+          return esperado === 'tiempo' ? 'se detiene sin congelar el examen' : 'el motor SQL funciona sin internet';
+        });
+      }
     }
     E.sesion.ensayo = { verificaciones: r, navegador: navigator.userAgent, pantalla: screen.width + '×' + screen.height, fecha: new Date().toISOString() };
     guardar();

@@ -24,8 +24,28 @@ final class ImportadorBanco
     /** Versiones de un ítem (5.4.2): A y B en el primer banco; 2A y 2B en el segundo, para otra jornada. */
     public const VERSIONES = ['A', 'B', '2A', '2B'];
 
-    /** javascript: se ejecuta en un Worker; html: página con HTML, CSS y JavaScript en una vista previa aislada (4.6). */
-    public const LENGUAJES_RETO = ['javascript', 'html'];
+    /**
+     * javascript: se ejecuta en un Worker; html: página con HTML, CSS y JavaScript en una vista previa aislada;
+     * sql: consultas sobre una base SQLite en memoria creada con el «esquema» del reto (4.6).
+     */
+    public const LENGUAJES_RETO = ['javascript', 'html', 'sql'];
+
+    /** Lo que el navegador del docente necesita para evaluar una verificación: prueba, o consulta de SQL con sus datos. */
+    public static function criterio(array $v): array
+    {
+        return array_filter(['nombre' => $v['nombre'] ?? null, 'prueba' => $v['prueba'] ?? null, 'consulta' => $v['consulta'] ?? null,
+            'orden' => (bool) ($v['orden'] ?? false), 'datos' => $v['datos'] ?? null], fn ($x) => $x !== null);
+    }
+
+    /** Lo que el examen necesita saber del lenguaje de un reto; nada para JavaScript, el de siempre. */
+    private static function publicoDeLenguaje(array $x): array
+    {
+        return match ($x['lenguaje'] ?? 'javascript') {
+            'html' => ['lenguaje' => 'html'],
+            'sql' => ['lenguaje' => 'sql', 'esquema' => (string) ($x['esquema'] ?? '')],
+            default => [],
+        };
+    }
 
     public const TIPOS = ['unica', 'vf', 'multiple', 'emparejar', 'ordenar', 'completar', 'abierta', 'reto'];
 
@@ -198,7 +218,7 @@ final class ImportadorBanco
             'ordenar' => ['pasos' => $e['pasos'], 'orden' => $c['orden']],
             'completar' => ['plantilla' => $e['plantilla'], 'huecos' => $c['huecos']],
             'abierta' => ['lineas' => $e['lineas'] ?? 6, 'referencia' => $c['referencia'] ?? null, 'rubrica' => $c['rubrica'] ?? null],
-            'reto' => (($e['lenguaje'] ?? null) === 'html' ? ['lenguaje' => 'html'] : []) + ['plantilla_codigo' => $e['plantilla_codigo'] ?? '', 'casos_visibles' => $e['casos_visibles'] ?? [], 'verificaciones' => $c['verificaciones']],
+            'reto' => self::publicoDeLenguaje($e) + ['plantilla_codigo' => $e['plantilla_codigo'] ?? '', 'casos_visibles' => $e['casos_visibles'] ?? [], 'verificaciones' => $c['verificaciones']],
             default => [],
         } + ['justificacion' => $p->justificacion], fn ($v) => $v !== null);
     }
@@ -225,7 +245,7 @@ final class ImportadorBanco
             'valor' => (string) ($a->configuracion['valor'] ?? '0'), 'items' => array_map(fn ($it) => ['version' => 'A'] + $it, $items)]);
 
         // Un reto de HTML sigue siendo de HTML en la otra versión
-        $firma = fn (iterable $xs) => collect($xs)->map(fn ($x) => ($x['tipo'] ?? '?').(($x['lenguaje'] ?? null) === 'html' ? ' de HTML' : '').':'.(is_numeric($x['peso'] ?? null) ? BigDecimal::of((string) $x['peso'])->strippedOfTrailingZeros() : '?'))->sort()->values()->all();
+        $firma = fn (iterable $xs) => collect($xs)->map(fn ($x) => ($x['tipo'] ?? '?').(in_array($x['lenguaje'] ?? null, ['html', 'sql'], true) ? ' de '.strtoupper($x['lenguaje']) : '').':'.(is_numeric($x['peso'] ?? null) ? BigDecimal::of((string) $x['peso'])->strippedOfTrailingZeros() : '?'))->sort()->values()->all();
         $origen = self::origenDe($a, $version);
         $base = $a->items()->with('pregunta')->where('banco', $origen)->get()->map(fn ($ap) => ['tipo' => $ap->pregunta->tipo, 'lenguaje' => $ap->pregunta->enunciado['lenguaje'] ?? null, 'peso' => (string) $ap->peso]);
         if ($firma($items) !== $firma($base)) {
@@ -295,7 +315,7 @@ final class ImportadorBanco
             'ordenar' => [$publico + ['pasos' => $it['pasos']], ['orden' => array_values($it['orden'])]],
             'completar' => [$publico + ['plantilla' => $it['plantilla'], 'huecos' => count($it['huecos'])], ['huecos' => array_values($it['huecos'])]],
             'abierta' => [$publico + ['lineas' => $it['lineas'] ?? 6], ['referencia' => $it['referencia'] ?? null, 'rubrica' => $it['rubrica'] ?? null]],
-            'reto' => [$publico + (($it['lenguaje'] ?? 'javascript') === 'html' ? ['lenguaje' => 'html'] : []) + [
+            'reto' => [$publico + self::publicoDeLenguaje($it) + [
                 'plantilla_codigo' => $it['plantilla_codigo'] ?? '',
                 'casos_visibles' => array_values($it['casos_visibles'] ?? []),
                 'reservadas' => count(array_filter($it['verificaciones'], fn ($v) => $v['reservada'] ?? false)),
@@ -353,8 +373,12 @@ final class ImportadorBanco
                 }
                 break;
             case 'reto':
-                if (! in_array($it['lenguaje'] ?? 'javascript', self::LENGUAJES_RETO, true)) {
-                    $e[] = '«lenguaje» debe ser «javascript» o «html».';
+                $lenguaje = $it['lenguaje'] ?? 'javascript';
+                if (! in_array($lenguaje, self::LENGUAJES_RETO, true)) {
+                    $e[] = '«lenguaje» debe ser «javascript», «html» o «sql».';
+                }
+                if ($lenguaje === 'sql' && (! is_string($it['esquema'] ?? null) || trim($it['esquema']) === '')) {
+                    $e[] = 'un reto de SQL necesita «esquema»: las instrucciones que crean y llenan sus tablas.';
                 }
                 $v = (array) ($it['verificaciones'] ?? []);
                 if ($v === []) {
@@ -364,8 +388,11 @@ final class ImportadorBanco
                 $suma = BigDecimal::zero();
                 $ids = [];
                 foreach ($v as $ver) {
-                    if (blank($ver['id'] ?? null) || blank($ver['nombre'] ?? null) || blank($ver['prueba'] ?? null)) {
-                        $e[] = 'cada verificación necesita id, nombre legible y prueba.';
+                    // En SQL se compara con una «consulta» de referencia o se evalúa una «prueba» que da 1
+                    $criterio = $lenguaje === 'sql' ? filled($ver['prueba'] ?? null) || filled($ver['consulta'] ?? null) : filled($ver['prueba'] ?? null);
+                    if (blank($ver['id'] ?? null) || blank($ver['nombre'] ?? null) || ! $criterio) {
+                        $e[] = $lenguaje === 'sql' ? 'cada verificación necesita id, nombre legible y una «consulta» de referencia o una «prueba».'
+                            : 'cada verificación necesita id, nombre legible y prueba.';
                         break 2;
                     }
                     $ids[] = $ver['id'];

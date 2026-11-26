@@ -27,6 +27,7 @@
     <h2>Calificación de la entrega @if ($version)<span class="etiqueta-tipo">versión {{ $version }}</span>@endif <span class="suave">· parte del servidor: {{ $num($ensayo->puntaje_servidor) }}</span></h2>
     <script src="{{ asset('js/ejecutor.js') }}"></script>
     <script src="{{ asset('js/ejecutor-dom.js') }}"></script>
+    <script src="{{ asset('js/ejecutor-sql.js') }}" data-motor="{{ asset('vendor/sql.js') }}"></script>
     @foreach ($items as $it)
         <section class="tarjeta">
             <div class="fila" style="justify-content:space-between"><strong>{{ $it['numero'] }}. {{ \Illuminate\Support\Str::limit($it['enunciado'], 140) }}</strong>
@@ -35,11 +36,12 @@
                 <pre class="comparacion comparacion-codigo">{{ $it['codigo'] ?: '(sin código)' }}</pre>
                 @php($html = ($it['lenguaje'] ?? 'javascript') === 'html')
                 @if ($html && $it['codigo'])@include('calificador._vista-html', ['codigo' => $it['codigo']])@endif
-                <ul x-data="{ r: null, async correr(prueba) {
+                <ul x-data="{ r: null, async correr(prueba, v) {
+                        if (@js(($it['lenguaje'] ?? '') === 'sql')) return window.verificarSQL(@js($it['esquema'] ?? ''), @js($it['codigo']), v, 5000);
                         if (! @js($html)) return window.ejecutarJS(@js($it['codigo']), prueba, 3000);
                         const x = await window.ejecutarHTML(@js($it['codigo']), prueba, 3000);
                         return { ok: x.ok, error: x.estado === 'con_salida' ? null : x.mensaje };
-                    }, async init() { const out = []; for (const v of @js($it['verificaciones'])) out.push({ ...v, ...(await this.correr(v.prueba)) }); this.r = out; } }">
+                    }, async init() { const out = []; for (const v of @js($it['verificaciones'])) out.push({ ...v, ...(await this.correr(v.prueba, v)) }); this.r = out; } }">
                     <template x-if="r === null"><li class="suave">Ejecutando las verificaciones en este navegador…</li></template>
                     <template x-for="v in r || []"><li x-text="(v.ok ? '✓ ' : '✗ ') + v.nombre + (v.reservada ? ' (reservada)' : '') + (v.error ? ' — ' + v.error : '')"></li></template>
                 </ul>

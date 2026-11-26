@@ -223,3 +223,7 @@ pre.comparacion mark { background: #fde68a; outline: 1px solid #d97706; }
 .historial-actividades td { vertical-align: top; }
 /* 3.3.3: nada de texto atenuado sobre el fondo oscuro de los encabezados */
 th .suave { color: inherit; opacity: .85; }
+
+/* Estudiantes en dos grupos */
+.opcion-grupo { border: 1px solid var(--borde); border-radius: var(--radio); padding: .75rem 1rem; }
+.opcion-grupo.sugerida { border-color: var(--cian); box-shadow: inset 0 0 0 1px var(--cian); }

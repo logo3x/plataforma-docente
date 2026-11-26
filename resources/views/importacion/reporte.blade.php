@@ -12,5 +12,9 @@
         <ul>@foreach ($revisar as $f)<li>Fila {{ $f->numero }} — {{ $f->apellidos }} {{ $f->nombres }}: {{ implode(' ', $f->advertencias) }}</li>@endforeach</ul>
     @endif
 
+    @if (app(\App\Estudiantes\EnDosGrupos::class)->cuantos($grupo))
+        <div class="aviso aviso-info" role="note">Hay estudiantes de esta lista que también están en otro grupo del periodo.
+            <a href="{{ route('dos-grupos.index', $grupo->dictado) }}">Decidir en cuál queda cada uno</a></div>
+    @endif
     <p><a class="boton" href="{{ route('registro', $grupo) }}">Ir al registro de notas</a></p>
 </x-app>

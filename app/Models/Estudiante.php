@@ -29,7 +29,7 @@ class Estudiante extends Model
 
     public function grupos(): BelongsToMany
     {
-        return $this->belongsToMany(Grupo::class, 'grupo_estudiante')->withPivot('activo');
+        return $this->belongsToMany(Grupo::class, 'grupo_estudiante')->withPivot('activo', 'doble_revisado_en');
     }
 
     public function notas(): HasMany

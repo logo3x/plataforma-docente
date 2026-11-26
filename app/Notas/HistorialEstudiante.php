@@ -30,7 +30,7 @@ final class HistorialEstudiante
         'cierre_docente' => 'Cerrado por el docente'];
 
     private const ORIGENES = ['digitada' => 'digitada', 'archivo' => 'cargada de archivo', 'calificador' => 'desde el calificador', 'grupal' => 'nota grupal',
-        'migracion' => 'migrada', 'reclamo' => 'por reclamo', 'deshacer' => 'deshecha', 'ceros_explicitos' => 'vacía convertida en cero',
+        'migracion' => 'migrada', 'reclamo' => 'por reclamo', 'traslado' => 'trasladada de otro grupo', 'deshacer' => 'deshecha', 'ceros_explicitos' => 'vacía convertida en cero',
         'eliminacion' => 'actividad eliminada', 'supletorio' => 'supletorio', 'recuperacion' => 'recuperación', 'habilitacion' => 'habilitación'];
 
     public function __construct(private readonly CalificadorEntrega $calificador) {}

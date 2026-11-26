@@ -185,7 +185,7 @@ final class RestauradorDictado
                             $nota = $this->registro->asignar($actividad, $estudiantes[(string) $n['documento']], $n['valor'] === null ? null : (string) $n['valor'],
                                 'restauracion', $motivo, comentario: $n['comentario'] ?? null);
                             // La nota conserva su origen (digitada, archivo, calificador…); la bitácora dice que se restauró
-                            $nota->update(['origen' => in_array($n['origen'] ?? null, ['digitada', 'archivo', 'calificador', 'grupal', 'migracion'], true) ? $n['origen'] : 'migracion']);
+                            $nota->update(['origen' => in_array($n['origen'] ?? null, ['digitada', 'archivo', 'calificador', 'grupal', 'migracion', 'traslado'], true) ? $n['origen'] : 'migracion']);
                         }
                     }
                 }

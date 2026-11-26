@@ -19,6 +19,6 @@ class Grupo extends Model
 
     public function estudiantes(): BelongsToMany
     {
-        return $this->belongsToMany(Estudiante::class, 'grupo_estudiante')->withPivot('activo');
+        return $this->belongsToMany(Estudiante::class, 'grupo_estudiante')->withPivot('activo', 'doble_revisado_en');
     }
 }

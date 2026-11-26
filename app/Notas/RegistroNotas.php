@@ -86,7 +86,7 @@ final class RegistroNotas
             $mismoValor = $nota->exists && $this->iguales($anterior, $valor);
 
             // Origen de la nota: el del cambio, salvo los que son solo trazas de bitácora
-            $origenNota = in_array($origen, ['digitada', 'archivo', 'calificador', 'grupal', 'migracion'], true)
+            $origenNota = in_array($origen, ['digitada', 'archivo', 'calificador', 'grupal', 'migracion', 'traslado'], true)
                 ? $origen
                 : ($nota->origen ?? 'digitada');
 

@@ -10,6 +10,11 @@
     @endif
 
     <h2>Grupos</h2>
+    @php($enDos = app(\App\Estudiantes\EnDosGrupos::class)->cuantosEnDictado($dictado))
+    @if ($enDos)
+        <div class="aviso aviso-info" role="note">⚠ {{ $enDos === 1 ? 'Un estudiante aparece' : "{$enDos} estudiantes aparecen" }} en dos grupos de este periodo.
+            <a href="{{ route('dos-grupos.index', $dictado) }}">Decidir en cuál queda cada uno</a></div>
+    @endif
     <div class="rejilla">
         @foreach ($dictado->grupos as $grupo)
             <div class="tarjeta">

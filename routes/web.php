@@ -13,6 +13,7 @@ use App\Http\Controllers\DebateController;
 use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\DictadoController;
 use App\Http\Controllers\EjemploController;
+use App\Http\Controllers\EnDosGruposController;
 use App\Http\Controllers\EnsayoController;
 use App\Http\Controllers\EntregaArchivoController;
 use App\Http\Controllers\EstadisticasController;
@@ -78,6 +79,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/respaldos/restaurar', [RestauracionController::class, 'restaurar'])->name('restauracion.restaurar');
     Route::get('/dictados/{dictado}/bitacora-original', [RestauracionController::class, 'bitacora'])->name('restauracion.bitacora');
     Route::get('/dictados/{dictado}/respaldo.json', [ExportacionController::class, 'respaldo'])->name('respaldo');
+    Route::get('/dictados/{dictado}/en-dos-grupos', [EnDosGruposController::class, 'index'])->name('dos-grupos.index');
+    Route::post('/dictados/{dictado}/en-dos-grupos/{estudiante}', [EnDosGruposController::class, 'resolver'])->name('dos-grupos.resolver');
     Route::get('/grupos/{grupo}/estudiantes/{estudiante}', [EstudianteController::class, 'edit'])->name('estudiantes.edit');
     Route::get('/grupos/{grupo}/estudiantes/{estudiante}/historial', [EstudianteController::class, 'historial'])->name('estudiantes.historial');
     Route::put('/grupos/{grupo}/estudiantes/{estudiante}', [EstudianteController::class, 'update'])->name('estudiantes.update');

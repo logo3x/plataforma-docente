@@ -37,7 +37,7 @@
                 <div class="campo"><label for="umbral_salidas_segundos">… o desde cuántos segundos fuera en total</label><input id="umbral_salidas_segundos" name="umbral_salidas_segundos" type="number" min="5" max="3600" value="{{ old('umbral_salidas_segundos', $c['umbral_salidas_segundos']) }}"></div>
                 <div class="campo"><label for="duracion_minima_minutos">Marcar como anómala una duración menor a (minutos)</label><input id="duracion_minima_minutos" name="duracion_minima_minutos" type="number" min="1" max="600" value="{{ old('duracion_minima_minutos', $c['duracion_minima_minutos']) }}" placeholder="sin mínimo"></div>
             </div>
-            <p class="suave" style="margin:0">Las alertas informan; no bajan la nota por sí solas.</p>
+            <p class="suave" style="margin:0">Las alertas informan; no bajan la nota por sí solas. Cuáles revisa y qué sabe el estudiante: <a href="{{ route('alertas.politica') }}">política de alertas</a>.</p>
         </section>
 
         <section class="tarjeta">

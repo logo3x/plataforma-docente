@@ -31,6 +31,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'perfil_ia' => 'array',
             'catalogo_errores_en' => 'datetime',
+            'politica_alertas' => 'array',
         ];
     }
 

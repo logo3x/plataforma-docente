@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AlertasController;
 use App\Http\Controllers\ApunteController;
 use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\Calificador\ResultadosNavegadorController;
@@ -192,6 +193,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/generaciones/{generacion}/aprobar', [GeneracionBancoController::class, 'aprobar'])->name('generacion.aprobar');
     Route::post('/generaciones/{generacion}/descartar', [GeneracionBancoController::class, 'descartar'])->name('generacion.descartar');
 
+    Route::get('/politica-alertas', [AlertasController::class, 'politica'])->name('alertas.politica');
+    Route::put('/politica-alertas', [AlertasController::class, 'guardarPolitica'])->name('alertas.politica.guardar');
+    Route::get('/calificador/actividades/{actividad}/alertas', [AlertasController::class, 'index'])->name('alertas.actividad');
+    Route::post('/alertas/{alerta}/revisar', [AlertasController::class, 'revisar'])->name('alertas.revisar');
     Route::get('/bitacora', [BitacoraController::class, 'index'])->name('bitacora.index');
     Route::get('/bitacora/anexo-b.md', [BitacoraController::class, 'anexo'])->name('bitacora.anexo');
     Route::post('/bitacora', [BitacoraController::class, 'store'])->name('bitacora.store');

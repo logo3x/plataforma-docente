@@ -53,6 +53,8 @@ final class InformeEstudiante
             'comentarioNota' => $tablero ? $actividad->notas()->where('estudiante_id', $estudiante->id)->value('comentario') : null,
             // Solo sus propios reclamos, y solo los ya atendidos (6.5.6)
             'reclamos' => $actividad->reclamos()->where('estudiante_id', $estudiante->id)->where('estado', '!=', 'abierto')->oldest()->get(),
+            // Decisión 6: solo las alertas que el docente revisó y decidió contar (6.9.4 sigue siendo la regla por defecto)
+            'observaciones' => app(PoliticaAlertas::class)->paraInforme($entrega, $estudiante, $dictado->materia->docente),
             'generado' => now(),
         ];
     }

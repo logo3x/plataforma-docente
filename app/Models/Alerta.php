@@ -14,7 +14,7 @@ class Alerta extends Model
 
     protected function casts(): array
     {
-        return ['datos' => 'array', 'revisada_en' => 'datetime'];
+        return ['datos' => 'array', 'revisada_en' => 'datetime', 'informar' => 'boolean'];
     }
 
     public function actividad(): BelongsTo
@@ -30,5 +30,10 @@ class Alerta extends Model
     public function estudiante(): BelongsTo
     {
         return $this->belongsTo(Estudiante::class);
+    }
+
+    public function revisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'revisada_por');
     }
 }

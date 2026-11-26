@@ -50,6 +50,13 @@ main { max-width: 900px; }
         <div class="aviso aviso-info"><strong>Comentario del docente:</strong> {{ $comentarioNota }}</div>
     @endif
 
+    @if (($observaciones ?? collect())->isNotEmpty())
+        <section class="aviso aviso-info" aria-label="Observaciones de la aplicación">
+            <strong>Observaciones de la aplicación, revisadas por el docente:</strong>
+            <ul style="margin:.3rem 0 0">@foreach ($observaciones as $o)<li>{{ $o['texto'] }}@if ($o['nota']) <em>{{ $o['nota'] }}</em>@endif</li>@endforeach</ul>
+        </section>
+    @endif
+
     @foreach ($reclamos as $rc)
         <div class="aviso {{ $rc->estado === 'aceptado' ? 'aviso-ok' : 'aviso-info' }}">
             <strong>Su reclamo del {{ $rc->created_at->format('d/m/Y') }} fue {{ $rc->estado }}.</strong> {{ $rc->resolucion }}

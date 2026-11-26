@@ -85,7 +85,9 @@
     @if ($filas->isEmpty())
         <div class="tarjeta vacio"><strong>Aún no hay entregas procesadas.</strong>Suba los archivos que generó el examen al finalizar.</div>
     @else
-        <p class="suave">Las alertas informan; ninguna sanciona por sí sola. Esta planilla no se proyecta en el aula.</p>
+        @php($porRevisar = app(\App\Calificacion\PoliticaAlertas::class)->pendientes($actividad, auth()->user()))
+        <p class="suave">Las alertas informan; ninguna sanciona por sí sola. Esta planilla no se proyecta en el aula.
+            <a href="{{ route('alertas.actividad', $actividad) }}">{{ $porRevisar ? "Revisar las alertas ({$porRevisar} pendientes)" : 'Ver las alertas' }}</a></p>
         <div class="tabla-notas"><table>
             <thead><tr><th>Estudiante(s)</th><th class="num">Duración</th><th class="num">Puntaje servidor</th><th>Pendiente</th><th class="num">Nota</th><th>Alertas</th><th></th></tr></thead>
             <tbody>

@@ -154,3 +154,10 @@ dl.vocabulario dd { margin: .2rem 0 0; }
 .repaso-voc li { margin-bottom: .9rem; line-height: 1.6; }
 .linea-respuesta { display: inline-block; width: 11rem; border-bottom: 1px solid var(--texto); margin-right: .5rem; vertical-align: bottom; }
 @media print { .tarjeta-voc .reverso { display: block !important; font-size: .9rem; margin-top: .4rem; } }
+
+/* Texto informativo: lectura cómoda */
+.apunte { max-width: 75ch; margin: 0 auto; font-size: 1.05rem; line-height: 1.65; }
+.apunte h2 { margin-top: 1.6rem; }
+.apunte-proposito { font-size: 1.1rem; border-left: 4px solid var(--cian); padding-left: .8rem; }
+.idea-clave { background: var(--ok-fondo); border-radius: var(--radio); padding: .5rem .8rem; }
+.linea-larga { border-bottom: 1px solid var(--texto); height: 2.2rem; margin-bottom: .4rem; }

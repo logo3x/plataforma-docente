@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApunteController;
 use App\Http\Controllers\Calificador\ResultadosNavegadorController;
 use App\Http\Controllers\CalificadorController;
 use App\Http\Controllers\CargaNotasController;
@@ -116,7 +117,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/generaciones/{generacion}/unidad/aprobar', [UnidadDidacticaController::class, 'aprobar'])->name('unidades.aprobar');
     Route::post('/generaciones/{generacion}/unidad/descartar', [UnidadDidacticaController::class, 'descartar'])->name('unidades.descartar');
     // Generadores de material del catálogo (7.4): mismas pantallas y flujo de borrador para cada tipo
-    foreach (['ejemplos' => EjemploController::class, 'debates' => DebateController::class, 'vocabularios' => VocabularioController::class, 'proyectos' => ProyectoController::class] as $r => $c) {
+    foreach (['ejemplos' => EjemploController::class, 'debates' => DebateController::class, 'vocabularios' => VocabularioController::class, 'proyectos' => ProyectoController::class, 'apuntes' => ApunteController::class] as $r => $c) {
         Route::get("/materias/{materia}/{$r}", [$c, 'index'])->name("{$r}.index");
         Route::get("/materias/{materia}/{$r}/nuevo", [$c, 'create'])->name("{$r}.create");
         Route::post("/materias/{materia}/{$r}", [$c, 'store'])->name("{$r}.store");
@@ -132,6 +133,7 @@ Route::middleware('auth')->group(function () {
         Route::post("/generaciones/{generacion}/{$r}/aprobar", [$c, 'aprobar'])->name("{$r}.aprobar");
         Route::post("/generaciones/{generacion}/{$r}/descartar", [$c, 'descartar'])->name("{$r}.descartar");
     }
+    Route::post('/apuntes/{material}/repositorio', [ApunteController::class, 'repositorio'])->name('apuntes.repositorio');
     Route::post('/vocabularios/{material}/glosario', [VocabularioController::class, 'glosario'])->name('vocabularios.glosario');
     Route::get('/materias/{materia}/reclamos', [ReclamoController::class, 'materia'])->name('reclamos.materia');
     Route::get('/materias/{materia}/temario', [TemarioController::class, 'show'])->name('temario.show');

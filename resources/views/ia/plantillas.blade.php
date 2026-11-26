@@ -19,7 +19,7 @@
             <h2 style="margin-top:0">{{ $titulo }} <span class="suave">· {{ $plantillas[$clave]['version'] ? 'versión '.$plantillas[$clave]['version'] : 'de fábrica' }}</span></h2>
             <form method="POST" action="{{ route('ia.plantillas.guardar') }}">
                 @csrf <input type="hidden" name="clave" value="{{ $clave }}">
-                <textarea name="cuerpo" rows="{{ in_array($clave, ['banco', 'rubrica', 'unidad', 'ejemplos', 'debate', 'vocabulario', 'proyectos']) ? 24 : 11 }}" aria-label="{{ $titulo }}" style="font-family:ui-monospace,Consolas,monospace;font-size:.85rem">{{ $plantillas[$clave]['cuerpo'] }}</textarea>
+                <textarea name="cuerpo" rows="{{ in_array($clave, ['banco', 'rubrica', 'unidad', 'ejemplos', 'debate', 'vocabulario', 'proyectos', 'apuntes']) ? 24 : 11 }}" aria-label="{{ $titulo }}" style="font-family:ui-monospace,Consolas,monospace;font-size:.85rem">{{ $plantillas[$clave]['cuerpo'] }}</textarea>
                 <div class="fila" style="margin-top:.5rem"><button class="boton boton-sec" type="submit">Guardar versión nueva</button></div>
             </form>
             <form method="POST" action="{{ route('ia.plantillas.restaurar') }}" style="margin-top:.5rem">@csrf <input type="hidden" name="clave" value="{{ $clave }}"><button class="enlace">Restaurar la de fábrica</button></form>

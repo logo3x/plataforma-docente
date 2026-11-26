@@ -27,6 +27,7 @@ class PlantillasIaController extends Controller
         'debate' => 'Capa 3 — Tarea: preguntas de debate',
         'vocabulario' => 'Capa 3 — Tarea: lista de vocabulario',
         'proyectos' => 'Capa 3 — Tarea: ideas de proyectos',
+        'apuntes' => 'Capa 3 — Tarea: texto informativo o apunte',
         'temario' => 'Capa 3 — Tarea: extraer el temario del plan', 'sugerencias' => 'Capa 3 — Tarea: sugerir organización de la clase'];
 
     public function edit(Request $request, ConstructorPrompt $prompts): View

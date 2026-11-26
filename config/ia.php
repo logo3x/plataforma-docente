@@ -259,6 +259,31 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
  ]}
 TXT,
 
+        'apuntes' => <<<'TXT'
+Tarea: escriba un texto informativo (apunte de clase) que explique el tema para que el estudiante lo estudie por su cuenta.
+
+Tema:       {{tema}}
+Extensión:  {{extension}}
+Nivel:      {{nivel}}
+Enfoque:    {{enfoque}}
+Grupo:      {{grupo}}
+
+Reglas:
+- Explique, no enumere: cada sección parte de una pregunta o situación y llega al concepto, con al menos un ejemplo concreto.
+- Párrafos cortos. Separe los párrafos con una línea en blanco; para listas, empiece cada línea con «- ».
+- «idea_clave» resume la sección en una frase; «codigo» solo si hace falta mostrar código (sin explicarlo ahí: la explicación va en el texto).
+- «resumen» son las ideas clave de todo el texto; «preguntas» son preguntas de comprensión con su respuesta breve.
+- Base lo que dice en el material de referencia y cite en «fuentes» los títulos del material que usó; no invente referencias.
+- Cíñase al alcance del grupo.
+{{glosario}}
+{{memoria}}
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"formato":"plataforma-apunte","version":1,"titulo":"...","proposito":"qué va a entender el estudiante",
+ "secciones":[{"titulo":"...","texto":"párrafo\n\notro párrafo","idea_clave":"...","codigo":""}],
+ "resumen":["..."],"preguntas":[{"pregunta":"...","respuesta":"..."}],"fuentes":["..."]}
+TXT,
+
         'temario' => <<<'TXT'
 Tarea: lea el plan curricular de la materia y extraiga su temario como estructura.
 

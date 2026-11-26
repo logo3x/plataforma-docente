@@ -311,6 +311,27 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
 Use exactamente los números entre corchetes como «id».
 TXT,
 
+        'variante' => <<<'TXT'
+Tarea: escriba la versión {{version}} de un examen ya aprobado, a partir de su versión {{origen}}: {{proposito}}.
+
+Reglas:
+- Exactamente {{cantidad}} ítems, uno por cada ítem original y en el mismo orden («n» indica a cuál corresponde).
+- Cada ítem nuevo evalúa lo MISMO que su original: mismo tipo, mismo tema, misma dificultad y mismo «peso».
+- Cambie los datos, los números, los nombres y el contexto de la situación, de modo que la respuesta del original
+  no sirva para el nuevo. No basta con reordenar opciones ni con cambiar una palabra.
+- Las respuestas correctas deben ser correctas para los datos NUEVOS: recalcúlelas.
+- En los retos de código, la tarea es la misma con otros datos: ajuste «casos_visibles» y las «prueba» de las
+  verificaciones a los datos nuevos, conserve cuáles son reservadas y que las fracciones sumen 1.
+- Mantenga el formato de cada tipo exactamente como en el original.
+- Indicaciones del docente: {{indicaciones}}
+
+Ítems originales (versión {{origen}}):
+{{items}}
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"items":[ { ...ítem nuevo con los mismos campos que su original... } ]}
+TXT,
+
         'temario' => <<<'TXT'
 Tarea: lea el plan curricular de la materia y extraiga su temario como estructura.
 

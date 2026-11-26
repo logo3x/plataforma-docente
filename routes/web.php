@@ -31,6 +31,7 @@ use App\Http\Controllers\SeguridadController;
 use App\Http\Controllers\SimilitudController;
 use App\Http\Controllers\TemarioController;
 use App\Http\Controllers\UnidadDidacticaController;
+use App\Http\Controllers\VarianteController;
 use App\Http\Controllers\VocabularioController;
 use Illuminate\Support\Facades\Route;
 
@@ -143,6 +144,14 @@ Route::middleware('auth')->group(function () {
     }
     Route::post('/apuntes/{material}/repositorio', [ApunteController::class, 'repositorio'])->name('apuntes.repositorio');
     Route::post('/vocabularios/{material}/glosario', [VocabularioController::class, 'glosario'])->name('vocabularios.glosario');
+    Route::get('/examenes/{artefacto}/versiones', [VarianteController::class, 'create'])->name('variantes.create');
+    Route::post('/examenes/{artefacto}/versiones/prompt', [VarianteController::class, 'preparar'])->name('variantes.preparar');
+    Route::post('/examenes/{artefacto}/versiones/generar', [VarianteController::class, 'generar'])->name('variantes.generar');
+    Route::get('/generaciones/{generacion}/version', [VarianteController::class, 'borrador'])->name('variantes.borrador');
+    Route::put('/generaciones/{generacion}/version', [VarianteController::class, 'editar'])->name('variantes.editar');
+    Route::post('/generaciones/{generacion}/version/corregir', [VarianteController::class, 'corregir'])->name('variantes.corregir');
+    Route::post('/generaciones/{generacion}/version/aprobar', [VarianteController::class, 'aprobar'])->name('variantes.aprobar');
+    Route::post('/generaciones/{generacion}/version/descartar', [VarianteController::class, 'descartar'])->name('variantes.descartar');
     Route::get('/materias/{materia}/historial', [HistorialController::class, 'index'])->name('historial.index');
     Route::post('/materias/{materia}/historial/copiar', [HistorialController::class, 'copiar'])->name('historial.copiar');
     Route::get('/materias/{materia}/reclamos', [ReclamoController::class, 'materia'])->name('reclamos.materia');

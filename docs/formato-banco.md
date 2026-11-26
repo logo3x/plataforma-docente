@@ -61,6 +61,7 @@ Cada ítem puede llevar `"version"`: `A` (si no se indica), `B`, `2A` o `2B`.
 - **2A y 2B** forman un segundo banco, con los mismos temas y pesos pero otros datos, para aplicarlo en otra jornada. Una foto del examen de la mañana no sirve en la noche. Cada banco se descarga como un archivo aparte.
 - Cada versión debe sumar el `valor`. A y B, y 2A y 2B, deben tener los mismos tipos de ítem con los mismos pesos.
 - Si una entrega trae una versión distinta a la que le corresponde por su documento, el calificador lo marca con una alerta.
+- No hace falta escribir las versiones a mano. En **Actividades evaluables → Generar la versión B o un segundo banco con IA**, la IA las escribe a partir de un examen ya importado, y usted las revisa ítem por ítem junto al original antes de agregarlas.
 
 ```json
 { "version": "B", "tipo": "unica", "peso": "1", "enunciado": "En la fila del taller…", "opciones": { "a": "Cola", "b": "Pila" }, "correcta": "a" }

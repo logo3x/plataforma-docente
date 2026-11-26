@@ -168,6 +168,97 @@ final class ImportadorBanco
         });
     }
 
+    /** De qué versión sale otra (5.4.2): B de A; el segundo banco, 2A de A y 2B de B (o de A si no hay B). */
+    public static function origenDe(Artefacto $a, string $version): string
+    {
+        return match ($version) {
+            'B', '2A' => 'A',
+            '2B' => in_array('B', $a->versiones(), true) ? 'B' : 'A',
+            default => throw new InvalidArgumentException("No se genera la versión {$version}."),
+        };
+    }
+
+    /** El ítem guardado de vuelta en formato «plataforma-banco», para mostrarlo o derivar otra versión. */
+    public static function aBanco(ArtefactoPregunta $ap): array
+    {
+        $p = $ap->pregunta;
+        $e = $p->enunciado;
+        $c = $p->clave;
+        $it = ['tipo' => $p->tipo, 'version' => $ap->banco, 'peso' => (string) BigDecimal::of((string) $ap->peso)->strippedOfTrailingZeros(),
+            'tema' => $e['tema'] ?? null, 'dificultad' => $p->dificultad, 'enunciado' => $e['texto'] ?? ''];
+
+        return array_filter($it + match ($p->tipo) {
+            'unica' => ['opciones' => $e['opciones'], 'correcta' => $c['correcta']],
+            'vf' => ['correcta' => (bool) $c['correcta']],
+            'multiple' => ['opciones' => $e['opciones'], 'correctas' => $c['correctas']],
+            'emparejar' => ['izquierda' => $e['izquierda'], 'derecha' => $e['derecha'], 'pares' => $c['pares']],
+            'ordenar' => ['pasos' => $e['pasos'], 'orden' => $c['orden']],
+            'completar' => ['plantilla' => $e['plantilla'], 'huecos' => $c['huecos']],
+            'abierta' => ['lineas' => $e['lineas'] ?? 6, 'referencia' => $c['referencia'] ?? null, 'rubrica' => $c['rubrica'] ?? null],
+            'reto' => ['plantilla_codigo' => $e['plantilla_codigo'] ?? '', 'casos_visibles' => $e['casos_visibles'] ?? [], 'verificaciones' => $c['verificaciones']],
+            default => [],
+        } + ['justificacion' => $p->justificacion], fn ($v) => $v !== null);
+    }
+
+    /**
+     * Revisa una versión nueva para un examen ya importado: cada ítem válido, la suma igual al valor
+     * y los mismos tipos con los mismos pesos que la versión de la que sale.
+     *
+     * @return array<int, string>
+     */
+    public function validarVersion(Artefacto $a, array $items, string $version): array
+    {
+        if (! in_array($version, ['B', '2A', '2B'], true)) {
+            return ["No se genera la versión {$version}."];
+        }
+        if (in_array($version, $a->versiones(), true)) {
+            return ["El examen ya tiene la versión {$version}."];
+        }
+        if ($a->actividades()->whereHas('entregas')->exists()) {
+            return ['El examen ya tiene entregas: una versión nueva cambiaría a qué estudiante le toca cada una. Hágala sobre una copia del examen.'];
+        }
+        $items = array_values(array_filter($items, 'is_array'));
+        $errores = $this->validar(['formato' => self::FORMATO, 'version' => 1, 'sigla' => $a->sigla, 'titulo' => $a->titulo,
+            'valor' => (string) ($a->configuracion['valor'] ?? '0'), 'items' => array_map(fn ($it) => ['version' => 'A'] + $it, $items)]);
+
+        $firma = fn (iterable $xs) => collect($xs)->map(fn ($x) => ($x['tipo'] ?? '?').':'.(is_numeric($x['peso'] ?? null) ? BigDecimal::of((string) $x['peso'])->strippedOfTrailingZeros() : '?'))->sort()->values()->all();
+        $origen = self::origenDe($a, $version);
+        $base = $a->items()->with('pregunta')->where('banco', $origen)->get()->map(fn ($ap) => ['tipo' => $ap->pregunta->tipo, 'peso' => (string) $ap->peso]);
+        if ($firma($items) !== $firma($base)) {
+            $errores[] = "La versión {$version} debe tener los mismos tipos de ítem con los mismos pesos que la {$origen} ("
+                .count($items).' frente a '.$base->count().' ítems).';
+        }
+
+        return $errores;
+    }
+
+    /** Agrega la versión nueva al examen, después de validarla. */
+    public function agregarVersion(Artefacto $a, array $items, string $version): int
+    {
+        if ($e = $this->validarVersion($a, $items, $version)) {
+            throw new InvalidArgumentException(implode("\n", $e));
+        }
+        $temas = $a->materia->temario()->where('tipo', 'tema')->get()->keyBy(fn ($t) => self::normalizarTema($t->titulo));
+        $orden = (int) $a->items()->max('orden');
+
+        return DB::transaction(function () use ($a, $items, $version, $temas, $orden) {
+            foreach (array_values($items) as $i => $it) {
+                [$enunciado, $clave] = $this->separar($it);
+                $pregunta = Pregunta::query()->create([
+                    'materia_id' => $a->materia_id,
+                    'temario_item_id' => filled($it['tema'] ?? null) ? $temas->get(self::normalizarTema($it['tema']))?->id : null,
+                    'tipo' => $it['tipo'],
+                    'dificultad' => in_array($it['dificultad'] ?? null, ['baja', 'media', 'alta'], true) ? $it['dificultad'] : 'media',
+                    'enunciado' => $enunciado, 'clave' => $clave, 'justificacion' => $it['justificacion'] ?? null,
+                ]);
+                ArtefactoPregunta::query()->create(['artefacto_id' => $a->id, 'pregunta_id' => $pregunta->id, 'banco' => $version,
+                    'peso' => (string) $it['peso'], 'orden' => $orden + 1 + $i]);
+            }
+
+            return count($items);
+        });
+    }
+
     /** Versión del ítem; sin indicar, A. Null si no es válida. */
     public static function versionDe(array $it): ?string
     {

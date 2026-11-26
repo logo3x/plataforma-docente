@@ -29,6 +29,8 @@
                     @endforeach
                 </ul>
             @endif
+            <p style="margin:.3rem 0">Versiones: <strong>{{ implode(', ', $a->versiones()) }}</strong>
+                @if (\App\Evaluacion\GeneradorVariante::posibles($a)) · <a href="{{ route('variantes.create', $a) }}">Generar la versión B o un segundo banco con IA</a>@endif</p>
             <details>
                 <summary>Aplicar en un periodo</summary>
                 @foreach ($dictados as $d)

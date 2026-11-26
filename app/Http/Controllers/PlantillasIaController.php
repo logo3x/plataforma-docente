@@ -21,7 +21,8 @@ class PlantillasIaController extends Controller
 
     /** Plantillas editables: las capas 1 y 2 y la capa 3 de cada generador del catálogo (7.4). */
     public const CLAVES = ['contexto' => 'Capa 1 — Contexto general', 'materia' => 'Capa 2 — Estilo por materia',
-        'banco' => 'Capa 3 — Tarea: generar cuestionario o parcial', 'rubrica' => 'Capa 3 — Tarea: generar rúbrica',
+        'banco' => 'Capa 3 — Tarea: generar cuestionario o parcial',
+        'variante' => 'Capa 3 — Tarea: versión B o segundo banco de un examen', 'rubrica' => 'Capa 3 — Tarea: generar rúbrica',
         'unidad' => 'Capa 3 — Tarea: planear una unidad didáctica',
         'ejemplos' => 'Capa 3 — Tarea: ejemplos prácticos resueltos',
         'debate' => 'Capa 3 — Tarea: preguntas de debate',

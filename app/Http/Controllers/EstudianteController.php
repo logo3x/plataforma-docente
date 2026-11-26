@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Estudiante;
 use App\Models\Grupo;
+use App\Notas\HistorialEstudiante;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -44,6 +45,19 @@ class EstudianteController extends Controller
         return redirect()->route('registro', $grupo)->with('estado',
             $datos['activo'] ? "Datos de {$estudiante->nombreCompleto()} actualizados."
                 : "{$estudiante->nombreCompleto()} quedó retirado del grupo. Sus notas se conservan; puede reactivarlo cuando quiera.");
+    }
+
+    /** Historial del estudiante a lo largo del semestre (13.6). */
+    public function historial(Grupo $grupo, Estudiante $estudiante, HistorialEstudiante $historial): View
+    {
+        $this->autorizar($grupo, $estudiante);
+
+        return view('estudiantes.historial', [
+            'grupo' => $grupo->load('dictado.materia'),
+            'estudiante' => $estudiante,
+            'activo' => (bool) $grupo->estudiantes()->whereKey($estudiante->id)->first()?->pivot->activo,
+            'otrosGrupos' => $estudiante->grupos()->whereKeyNot($grupo->id)->get(),
+        ] + $historial->datos($grupo, $estudiante));
     }
 
     private function autorizar(Grupo $grupo, Estudiante $estudiante): void

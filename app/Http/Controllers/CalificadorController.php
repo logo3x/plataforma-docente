@@ -197,7 +197,7 @@ class CalificadorController extends Controller
     public function detalle(Entrega $entrega): View
     {
         $this->autorizar($entrega->actividad);
-        $entrega->load('integrantes', 'alertas', 'respuestas.item.pregunta', 'actividad.componente.division.dictado');
+        $entrega->load('integrantes.grupos', 'alertas', 'respuestas.item.pregunta', 'actividad.componente.division.dictado');
 
         return view('calificador.detalle', [
             'entrega' => $entrega,

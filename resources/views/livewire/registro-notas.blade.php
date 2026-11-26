@@ -112,7 +112,7 @@
                         @php($r = $fila['resultado'])
                         <tr wire:key="fila-{{ $e->id }}">
                             <td class="estudiante" title="Documento {{ $e->documento }}">
-                                <a href="{{ route('estudiantes.edit', [$grupo, $e]) }}" class="nombre-estudiante">{{ $e->nombreCompleto() }}</a>
+                                <a href="{{ route('estudiantes.historial', [$grupo, $e]) }}" class="nombre-estudiante" title="Historial del semestre">{{ $e->nombreCompleto() }}</a>
                                 @if ($e->revisar_nombre)<a href="{{ route('estudiantes.edit', [$grupo, $e]) }}" class="suave" title="El nombre no traía coma en la plantilla: sepárelo">⚠ revisar nombre</a>@endif
                                 <a href="{{ route('segundas.create', [$grupo, $e]) }}" class="enlace-segunda" title="Supletorio, recuperación o habilitación">2ª oportunidad</a>
                             </td>
@@ -173,7 +173,7 @@
                 <tbody>
                     @foreach ($filas as $fila)
                         <tr wire:key="cons-{{ $fila['estudiante']->id }}">
-                            <td class="estudiante" title="Documento {{ $fila['estudiante']->documento }}">{{ $fila['estudiante']->nombreCompleto() }}</td>
+                            <td class="estudiante" title="Documento {{ $fila['estudiante']->documento }}"><a href="{{ route('estudiantes.historial', [$grupo, $fila['estudiante']]) }}" class="nombre-estudiante">{{ $fila['estudiante']->nombreCompleto() }}</a></td>
                             @foreach ($tablero->pestanas() as $p)
                                 @php($rd = $fila['divisiones'][$p->id])
                                 <td class="num">{{ $rd->definitiva === null ? '—' : $escala->mostrar($rd->definitiva) }}

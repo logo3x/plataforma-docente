@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dictados/{dictado}/bitacora-original', [RestauracionController::class, 'bitacora'])->name('restauracion.bitacora');
     Route::get('/dictados/{dictado}/respaldo.json', [ExportacionController::class, 'respaldo'])->name('respaldo');
     Route::get('/grupos/{grupo}/estudiantes/{estudiante}', [EstudianteController::class, 'edit'])->name('estudiantes.edit');
+    Route::get('/grupos/{grupo}/estudiantes/{estudiante}/historial', [EstudianteController::class, 'historial'])->name('estudiantes.historial');
     Route::put('/grupos/{grupo}/estudiantes/{estudiante}', [EstudianteController::class, 'update'])->name('estudiantes.update');
     Route::get('/grupos/{grupo}/estudiantes/{estudiante}/segunda-oportunidad', [SegundaOportunidadController::class, 'create'])->name('segundas.create');
     Route::post('/grupos/{grupo}/estudiantes/{estudiante}/segunda-oportunidad/simular', [SegundaOportunidadController::class, 'simular'])->name('segundas.simular');

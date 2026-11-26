@@ -26,7 +26,7 @@
                 @foreach ($simulacion as $f)
                     @php($s = $f['simulacion'])
                     <tr>
-                        <td class="estudiante">{{ $f['estudiante']->nombreCompleto() }}</td>
+                        <td class="estudiante"><a href="{{ route('estudiantes.historial', [$grupo, $f['estudiante']]) }}">{{ $f['estudiante']->nombreCompleto() }}</a></td>
                         <td class="num">{{ $escala->mostrar($f['acumulado']) }}</td>
                         <td>@if ($f['pendientes']){{ implode(', ', $f['pendientes']) }} ({{ $porcentaje($f['pendiente']) }} %)@else — @endif</td>
                         <td class="num">

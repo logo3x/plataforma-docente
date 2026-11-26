@@ -212,3 +212,14 @@ pre.comparacion mark { background: #fde68a; outline: 1px solid #d97706; }
 .proyectar-vivo { text-align: center; padding: 6vh 2rem; font-size: 1.6rem; }
 .proyectar-vivo .url { font-family: ui-monospace, Consolas, monospace; font-size: 2.6rem; font-weight: 700; color: var(--marino); word-break: break-all; margin: .5rem 0 2rem; }
 .proyectar-vivo .codigo { font-family: ui-monospace, Consolas, monospace; font-size: 6rem; font-weight: 800; letter-spacing: .3em; color: var(--marino); margin: 1rem 0; }
+
+/* Historial del estudiante */
+.linea-tiempo { list-style: none; padding: 0; margin: 0; border-left: 2px solid var(--borde); }
+.linea-tiempo li { position: relative; padding: .35rem 0 .35rem 1.6rem; }
+.linea-tiempo .icono { position: absolute; left: -.7rem; top: .35rem; width: 1.3rem; height: 1.3rem; line-height: 1.3rem; text-align: center; border-radius: 50%; background: var(--blanco); border: 1px solid var(--borde); font-size: .75rem; }
+.linea-tiempo time { color: var(--suave); font-variant-numeric: tabular-nums; margin-right: .5rem; }
+.linea-tiempo .ev-alerta .icono { color: var(--mal); border-color: var(--mal); }
+.linea-tiempo .ev-nota .icono { color: var(--marino); }
+.historial-actividades td { vertical-align: top; }
+/* 3.3.3: nada de texto atenuado sobre el fondo oscuro de los encabezados */
+th .suave { color: inherit; opacity: .85; }

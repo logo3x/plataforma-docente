@@ -5,6 +5,7 @@ use App\Http\Controllers\Calificador\ResultadosNavegadorController;
 use App\Http\Controllers\CalificadorController;
 use App\Http\Controllers\CargaNotasController;
 use App\Http\Controllers\CierreController;
+use App\Http\Controllers\ConfiguracionActividadController;
 use App\Http\Controllers\ContenidoController;
 use App\Http\Controllers\DebateController;
 use App\Http\Controllers\DevolucionController;
@@ -144,6 +145,9 @@ Route::middleware('auth')->group(function () {
     }
     Route::post('/apuntes/{material}/repositorio', [ApunteController::class, 'repositorio'])->name('apuntes.repositorio');
     Route::post('/vocabularios/{material}/glosario', [VocabularioController::class, 'glosario'])->name('vocabularios.glosario');
+    Route::get('/examenes/{artefacto}/configuracion', [ConfiguracionActividadController::class, 'edit'])->name('configuracion.edit');
+    Route::put('/examenes/{artefacto}/configuracion', [ConfiguracionActividadController::class, 'update'])->name('configuracion.update');
+    Route::get('/examenes/{artefacto}/imprimible', [ConfiguracionActividadController::class, 'imprimible'])->name('configuracion.imprimible');
     Route::get('/examenes/{artefacto}/versiones', [VarianteController::class, 'create'])->name('variantes.create');
     Route::post('/examenes/{artefacto}/versiones/prompt', [VarianteController::class, 'preparar'])->name('variantes.preparar');
     Route::post('/examenes/{artefacto}/versiones/generar', [VarianteController::class, 'generar'])->name('variantes.generar');

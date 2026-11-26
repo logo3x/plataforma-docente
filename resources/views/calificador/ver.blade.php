@@ -35,6 +35,7 @@
                     <a @class(['boton', 'boton-sec' => $b === 2]) href="{{ route('calificador.examen', ['actividad' => $actividad, 'banco' => $b]) }}">{{ count($bancos) > 1 ? "Descargar banco {$b} (".implode(' y ', $actividad->artefacto->versionesDelBanco($b)).')' : 'Descargar examen' }}</a>
                 @endforeach
                 <a class="boton boton-sec" href="{{ route('calificador.ensayo', $actividad) }}">Modo de ensayo</a>
+                <a class="boton boton-sec" href="{{ route('configuracion.edit', $actividad->artefacto) }}">Configuración</a>
             </div>
         </section>
         <section class="tarjeta">

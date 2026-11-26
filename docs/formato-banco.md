@@ -20,13 +20,17 @@ Archivo JSON con una actividad evaluable (quiz, parcial o taller). Se importa en
 
 ## `configuracion` (todo opcional)
 
+Todo esto se edita después en **Actividades evaluables → Configuración**, sin volver a importar el banco.
+
 | Campo | Qué controla | Por defecto |
 |---|---|---|
 | `instrucciones` | Texto de la portada | — |
 | `reloj_minutos` | Límite de tiempo con cierre automático; `null` = sin límite | `null` |
 | `umbral_salidas` / `umbral_salidas_segundos` | Cantidad o duración acumulada de salidas que generan la alerta | 3 / 60 |
 | `duracion_minima_minutos` | Por debajo de esta duración se marca «duración anómala» | — |
-| `modo_desconectado` | Bloquea el examen mientras el equipo tenga internet | `false` |
+| `modo_desconectado` | Bloquea el examen mientras el equipo tenga internet | activo en parciales |
+| `contar_salidas` | Registra las salidas de la ventana con su duración | `true` |
+| `nivel_ayuda` | Ayuda en los retos de código: `completo`, `intermedio` o `minimo` (4.4) | `completo` en talleres, `intermedio` en quices y parciales |
 | `sonda`, `intervalo_sonda` | Recurso que se intenta alcanzar y cada cuántos segundos | `https://www.google.com/generate_204`, 20 |
 | `tiempo_ejecucion_ms` | Límite por ejecución de código | 2000 |
 | `anexo` | Modalidad II: recuerda subir el anexo al finalizar | `false` |

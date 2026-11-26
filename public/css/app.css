@@ -176,3 +176,9 @@ pre.comparacion mark { background: #fde68a; outline: 1px solid #d97706; }
 
 /* Borrador de comentario propuesto por la IA (8.5) */
 .borrador-ia { margin-top: .5rem; padding: .5rem .7rem; border: 1px dashed var(--cian); border-radius: var(--radio); background: #f0f9ff; }
+
+/* Respaldo imprimible del examen (5.4.12) */
+.examen-papel { max-width: 48rem; margin: 1.5rem auto; padding: 0 1rem; line-height: 1.5; }
+.examen-papel header { border-bottom: 2px solid var(--texto); margin-bottom: 1rem; }
+.pregunta-papel { margin-bottom: 1.2rem; break-inside: avoid; }
+.opciones-papel { list-style: none; padding-left: .5rem; }

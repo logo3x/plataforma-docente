@@ -28,3 +28,5 @@ table{border-collapse:collapse}td,th{border:1px solid var(--borde);padding:.3rem
 .oculto{display:none!important}
 .aviso.bien{border-color:#15803d;background:#dcfce7;color:#14532d}
 .marca-ensayo{display:inline-block;background:#b45309;color:#fff;font-size:.75em;padding:.1rem .5rem;border-radius:4px;letter-spacing:.05em;vertical-align:middle}
+.aviso-sintaxis{margin:.3rem 0;padding:.35rem .7rem;border-left:4px solid var(--pend);background:var(--pendf);color:var(--pend);border-radius:0 6px 6px 0;font-size:.9rem}
+.aviso-sintaxis:empty{display:none}

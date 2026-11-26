@@ -83,7 +83,7 @@
     $('#portada').classList.add('oculto');
     $('#examen').classList.remove('oculto');
     $('#quien').textContent = E.nombre + ' · ' + E.documento + ((D.versiones || []).length > 1 ? ' · versión ' + E.version : '');
-    renderItems(); guardar(); iniciarReloj(); vigilarFoco(); vigilarConexion();
+    renderItems(); guardar(); iniciarReloj(); if (D.contar_salidas !== false) vigilarFoco(); vigilarConexion();
     if (D.ensayo) autoverificar();
     if (E.cierre) mostrarCierre();
   }
@@ -142,25 +142,56 @@
     const area = el('textarea', { rows: 14, spellcheck: 'false', 'aria-label': 'Código', onpaste: () => { E.sesion.pegados++; guardar(); } });
     area.value = E.respuestas[id] !== undefined ? E.respuestas[id] : (it.plantilla_codigo || '');
     area.addEventListener('keydown', ev => { if (ev.key === 'Tab') { ev.preventDefault(); const s = area.selectionStart; area.setRangeText('  ', s, area.selectionEnd, 'end'); } });
-    area.addEventListener('input', () => { E.respuestas[id] = area.value; clearTimeout(area._t); area._t = setTimeout(guardar, 400); });
+    const nivel = D.nivel_ayuda || 'completo';
+    const aviso = el('div', { class: 'aviso-sintaxis', role: 'status', 'aria-live': 'polite' });
+    const revisar = () => { if (nivel === 'minimo') return; const p = revisarSintaxis(area.value); aviso.textContent = p ? '⚠ ' + p : ''; aviso.classList.toggle('oculto', !p); };
+    area.addEventListener('input', () => { E.respuestas[id] = area.value; clearTimeout(area._t); area._t = setTimeout(guardar, 400); clearTimeout(area._s); area._s = setTimeout(revisar, 500); });
     const salida = el('div', { class: 'resultado-reto' });
     const probar = el('button', { class: 'boton boton-sec', texto: '▶ Probar', onclick: async () => {
       E.sesion.ejecuciones++; salida.innerHTML = '';
-      const casos = it.casos_visibles.length ? it.casos_visibles : [{ entrada: '', descripcion: 'Ejecutar el código' }];
+      // 4.4.6: en el nivel mínimo solo se ejecuta el código tal cual; los casos del enunciado quedan para los otros niveles
+      const casos = nivel !== 'minimo' && it.casos_visibles.length ? it.casos_visibles : [{ entrada: '', descripcion: 'Ejecutar el código' }];
       for (const c of casos) {
         const r = await ejecutar(area.value, c.entrada || '', D.tiempo_ms);
         if (r.estado === 'no_compila') E.sesion.errores_sintaxis++;
         salida.append(el('div', { class: 'tarjeta' },
           el('div', {}, el('span', { class: 'estado ' + ({ con_salida: 'e-ok', sin_salida: 'e-pend' }[r.estado] || 'e-mal'), texto: ETIQUETAS[r.estado] }),
             c.descripcion ? ' ' + c.descripcion : '', c.entrada ? el('code', { texto: '  ' + c.entrada }) : null),
-          r.mensaje ? el('div', { class: 'aviso mal', texto: r.mensaje }) : null,
+          r.mensaje && nivel !== 'minimo' ? el('div', { class: 'aviso mal', texto: r.mensaje }) : null,
           r.retorno !== undefined ? el('div', {}, 'Valor retornado: ', el('code', { texto: r.retorno })) : null,
-          c.esperada !== undefined ? el('div', {}, 'Salida esperada (enunciado): ', el('code', { texto: String(c.esperada) })) : null,
+          c.esperada !== undefined && nivel === 'completo' ? el('div', {}, 'Salida esperada (enunciado): ', el('code', { texto: String(c.esperada) })) : null,
           el('div', { class: 'consola' }, el('div', { class: 'sis', texto: '— consola —' }), r.consola.map(l => el('div', { class: l.nivel, texto: l.texto })))));
       }
       guardar();
     } });
-    caja.append(area, el('p', {}, probar, ' ', it.reservadas ? el('span', { class: 'peso', texto: 'Hay ' + it.reservadas + ' verificación(es) adicional(es) que se evaluarán al calificar.' }) : null), salida);
+    revisar();
+    caja.append(area, aviso, el('p', {}, probar, ' ', it.reservadas ? el('span', { class: 'peso', texto: 'Hay ' + it.reservadas + ' verificación(es) adicional(es) que se evaluarán al calificar.' }) : null), salida);
+  }
+
+  /* 4.4.1: verificación al escribir, sin ejecutar. Paréntesis, llaves, corchetes y comillas sin cerrar,
+     ignorando lo que está dentro de textos y comentarios. Señala; nunca corrige (4.4.7). */
+  function revisarSintaxis(codigo) {
+    const pila = []; const pareja = { ')': '(', ']': '[', '}': '{' }; let linea = 1;
+    for (let i = 0; i < codigo.length; i++) {
+      const c = codigo[i], sig = codigo[i + 1];
+      if (c === '\n') { linea++; continue; }
+      if (c === '/' && sig === '/') { while (i < codigo.length && codigo[i] !== '\n') i++; linea++; continue; }
+      if (c === '/' && sig === '*') { const fin = codigo.indexOf('*/', i + 2); if (fin < 0) return 'Línea ' + linea + ': un comentario /* no se cerró con */.'; linea += (codigo.slice(i, fin).match(/\n/g) || []).length; i = fin + 1; continue; }
+      if (c === '"' || c === "'" || c === '`') {
+        const desde = linea; let j = i + 1;
+        while (j < codigo.length && codigo[j] !== c) { if (codigo[j] === '\\') j++; else if (codigo[j] === '\n') { if (c !== '`') return 'Línea ' + desde + ': unas comillas ' + c + ' no se cerraron.'; linea++; } j++; }
+        if (j >= codigo.length) return 'Línea ' + desde + ': unas comillas ' + c + ' no se cerraron.';
+        i = j; continue;
+      }
+      if ('([{'.includes(c)) pila.push({ c, linea });
+      else if (')]}'.includes(c)) {
+        const abierto = pila.pop();
+        if (!abierto) return 'Línea ' + linea + ': sobra un «' + c + '»: no hay nada abierto que cierre.';
+        if (abierto.c !== pareja[c]) return 'Línea ' + linea + ': se cierra con «' + c + '» lo que se abrió con «' + abierto.c + '» en la línea ' + abierto.linea + '.';
+      }
+    }
+    const sinCerrar = pila.pop();
+    return sinCerrar ? 'Línea ' + sinCerrar.linea + ': se abrió «' + sinCerrar.c + '» y no se cerró.' : null;
   }
 
   const ETIQUETAS = { no_compila: '✗ No compila', error: '✗ Ejecuta con error', sin_salida: '… Ejecuta sin salida', con_salida: '✓ Ejecuta con salida', tiempo: '⏱ Excede el tiempo' };
@@ -212,6 +243,7 @@
     [/Missing initializer in const/i, 'Una constante se declaró sin valor. Las constantes se inicializan al declararse.'],
   ];
   function traducir(r) {
+    if ((D.nivel_ayuda || 'completo') !== 'completo') return r;      // 4.4.6: el catálogo explicado es del nivel completo
     if (r.mensaje) for (const [re, t] of CATALOGO) { const m = r.mensaje.match(re); if (m) { r.mensaje = t.replace('$1', m[1] || '') + '  (original: ' + r.mensaje + ')'; break; } }
     return r;
   }

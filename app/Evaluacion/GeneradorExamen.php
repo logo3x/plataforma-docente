@@ -28,7 +28,8 @@ final class GeneradorExamen
             throw new RuntimeException("El examen no tiene banco {$banco}.");
         }
         $dictado = $actividad->componente->division->dictado()->with('materia')->first();
-        $config = $artefacto->configuracion;
+        $config = ConfiguracionActividad::efectiva($artefacto);
+        $valor = $artefacto->configuracion['valor'] ?? (string) $actividad->valor_max;
 
         $datos = [
             'sigla' => $artefacto->sigla,
@@ -36,16 +37,18 @@ final class GeneradorExamen
             'titulo' => $artefacto->titulo,
             'materia' => $dictado->materia->nombre,
             'periodo' => $dictado->periodo,
-            'valor' => $config['valor'] ?? (string) $actividad->valor_max,
-            'instrucciones' => $config['instrucciones'] ?? null,
-            'reloj_minutos' => $config['reloj_minutos'] ?? null,
-            'modo_desconectado' => (bool) ($config['modo_desconectado'] ?? false),
-            'sonda' => $config['sonda'] ?? 'https://www.google.com/generate_204',
-            'intervalo_sonda' => $config['intervalo_sonda'] ?? 20,
-            'tiempo_ms' => (int) ($config['tiempo_ejecucion_ms'] ?? 2000),
+            'valor' => $valor,
+            'instrucciones' => $config['instrucciones'],
+            'reloj_minutos' => $config['reloj_minutos'],
+            'modo_desconectado' => $config['modo_desconectado'],
+            'sonda' => $config['sonda'],
+            'intervalo_sonda' => $config['intervalo_sonda'],
+            'tiempo_ms' => $config['tiempo_ejecucion_ms'],
+            'contar_salidas' => $config['contar_salidas'],
+            'nivel_ayuda' => $config['nivel_ayuda'],
             'grupal' => (bool) $actividad->es_grupal,
             'ensayo' => $ensayo,
-            'anexo' => (bool) ($config['anexo'] ?? false),
+            'anexo' => $config['anexo'],
             'grupos' => $actividad->grupos()->pluck('nombre')->all() ?: $dictado->grupos()->pluck('nombre')->all(),
             'clave_publica' => $this->claves->publicaSpkiBase64($dictado),
             'banco' => $banco,

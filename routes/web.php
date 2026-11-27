@@ -23,6 +23,7 @@ use App\Http\Controllers\EstadisticasController;
 use App\Http\Controllers\EstudianteController;
 use App\Http\Controllers\ExportacionController;
 use App\Http\Controllers\GeneracionBancoController;
+use App\Http\Controllers\GruposTrabajoController;
 use App\Http\Controllers\HistorialController;
 use App\Http\Controllers\ImportacionController;
 use App\Http\Controllers\InicioController;
@@ -279,6 +280,9 @@ Route::middleware('auth')->group(function () {
         Route::post('items/{item}/anular', [EstadisticasController::class, 'anular'])->name('items.anular');
         Route::post('items/{item}/restaurar', [EstadisticasController::class, 'restaurar'])->name('items.restaurar');
         Route::post('items/{item}/tema', [EstadisticasController::class, 'tema'])->name('items.tema');
+        Route::get('actividades/{actividad}/grupos-de-trabajo', [GruposTrabajoController::class, 'edit'])->name('grupos');
+        Route::put('actividades/{actividad}/grupos-de-trabajo', [GruposTrabajoController::class, 'update'])->name('grupos.guardar');
+        Route::post('actividades/{actividad}/grupos-de-trabajo/repartir', [GruposTrabajoController::class, 'repartir'])->name('grupos.repartir');
         Route::get('actividades/{actividad}/archivos', [EntregaArchivoController::class, 'index'])->name('archivos');
         Route::put('actividades/{actividad}/archivos/configuracion', [EntregaArchivoController::class, 'configurar'])->name('archivos.configurar');
         Route::post('actividades/{actividad}/archivos', [EntregaArchivoController::class, 'subir'])->name('archivos.subir');

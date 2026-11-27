@@ -2,6 +2,7 @@
 
 namespace App\Dictados;
 
+use App\Calificacion\GruposTrabajo;
 use App\Models\Actividad;
 use App\Models\Dictado;
 use App\Models\Division;
@@ -58,6 +59,8 @@ final class RespaldoDictado
             'divisiones' => $dictado->divisiones->map(fn ($d) => [
                 'nombre' => $d->nombre,
                 'peso' => $d->peso,
+                'fecha_inicio' => $d->fecha_inicio?->toDateString(),
+                'fecha_fin' => $d->fecha_fin?->toDateString(),
                 'componentes' => $d->componentes->map(fn ($c) => [
                     'nombre' => $c->nombre,
                     'peso' => $c->peso,
@@ -69,6 +72,10 @@ final class RespaldoDictado
                         'es_grupal' => (bool) $a->es_grupal,
                         'tamano_grupo' => $a->tamano_grupo,
                         'tope_exceso' => $a->tope_exceso,
+                        'grupos_por' => $a->grupos_por,
+                        // 6.8: grupos que armó el docente, por documento → número de grupo
+                        'grupos_trabajo' => (object) collect(app(GruposTrabajo::class)->asignacion($a))
+                            ->mapWithKeys(fn ($n, $id) => [(string) $dictado->estudiantes->firstWhere('id', $id)?->documento => $n])->all(),
                         'examen' => $a->artefacto?->sigla,
                         'grupos' => $a->grupos->pluck('nombre')->values(),
                         'notas' => $a->notas->map(fn ($n) => [

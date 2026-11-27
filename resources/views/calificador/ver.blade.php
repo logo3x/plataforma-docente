@@ -1,14 +1,14 @@
 @php($dictado = $actividad->componente->division->dictado)
 @php($tiposAlerta = ['manipulado' => '⚠ Identidad no coincide', 'grupo_no_cuadra' => 'Otro grupo', 'sin_cifrar' => 'Sin cifrar', 'texto_identico' => 'Texto idéntico',
     'salidas' => 'Salidas', 'pegados' => 'Pegados', 'duracion_anomala' => 'Duración corta', 'cierre_automatico' => 'Cierre por tiempo', 'reconexion' => 'Reconexión',
-    'integrante_desconocido' => 'Integrante no está en la lista', 'estudiante_en_dos_entregas' => 'En dos entregas',
+    'integrante_desconocido' => 'Integrante no está en la lista', 'sin_grupo_trabajo' => 'Sin grupo de trabajo', 'estudiante_en_dos_entregas' => 'En dos entregas',
     'version_no_coincide' => 'Versión distinta a la de su documento', 'cierre_docente' => 'Cerrado por el docente', 'autor_distinto' => 'La subió otra persona', 'entrega_tardia' => 'Tarde'])
 <x-app :titulo="'Calificador — '.$actividad->nombre">
     <div class="migas"><a href="{{ route('inicio') }}">Mis materias</a> ›
         <a href="{{ route('artefactos.index', $dictado->materia) }}">Actividades evaluables</a> › {{ $actividad->nombre }}</div>
     <h1>Calificador — {{ $actividad->nombre }}</h1>
     <p class="suave">{{ $actividad->artefacto?->sigla }} · {{ $dictado->periodo }} › {{ $actividad->componente->division->nombre }} › {{ $actividad->componente->nombre }}
-        · {{ $actividad->grupos->pluck('nombre')->join(', ') ?: 'todos los grupos' }} @if ($actividad->es_grupal)· entrega grupal @endif</p>
+        · {{ $actividad->grupos->pluck('nombre')->join(', ') ?: 'todos los grupos' }} @if ($actividad->es_grupal)· entrega grupal: <a href="{{ route('calificador.grupos', $actividad) }}">{{ app(\App\Calificacion\GruposTrabajo::class)->modo($actividad) === 'docente' ? 'grupos definidos por usted' : 'cada estudiante escoge a sus compañeros' }}</a> @endif</p>
 
     @if (session('resultados'))
         <div class="tarjeta" role="status">

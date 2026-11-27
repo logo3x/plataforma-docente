@@ -160,7 +160,8 @@ final class RestauradorDictado
             $porClave = [];
             $porNombre = ['actividad' => [], 'corte' => []];
             foreach (array_values($r['divisiones']) as $i => $d) {
-                $division = $dictado->divisiones()->create(['nombre' => $d['nombre'], 'peso' => $d['peso'], 'orden' => $i]);
+                $division = $dictado->divisiones()->create(['nombre' => $d['nombre'], 'peso' => $d['peso'], 'orden' => $i,
+                    'fecha_inicio' => $d['fecha_inicio'] ?? null, 'fecha_fin' => $d['fecha_fin'] ?? null]);
                 $porNombre['corte'][$d['nombre']] = $division;
                 foreach (array_values($d['componentes'] ?? []) as $j => $c) {
                     $componente = $division->componentes()->create(['nombre' => $c['nombre'], 'peso' => $c['peso'], 'orden' => $j]);
@@ -169,10 +170,16 @@ final class RestauradorDictado
                             'nombre' => $a['nombre'], 'fecha' => $a['fecha'] ?? null, 'orden' => $k,
                             'valor_max' => $a['valor_max'] ?? $dc['escala_max'],
                             'es_grupal' => (bool) ($a['es_grupal'] ?? false), 'tamano_grupo' => $a['tamano_grupo'] ?? null, 'tope_exceso' => $a['tope_exceso'] ?? null,
+                            'grupos_por' => in_array($a['grupos_por'] ?? null, ['docente', 'estudiante'], true) ? $a['grupos_por'] : null,
                             // El examen se vuelve a enlazar solo si existe en la materia con la misma sigla
                             'artefacto_id' => filled($a['examen'] ?? null) ? Artefacto::query()->where('materia_id', $materia->id)->where('sigla', $a['examen'])->value('id') : null,
                         ]);
                         $actividad->grupos()->attach(collect($a['grupos'] ?? [])->map(fn ($n) => $grupos[$n]->id ?? null)->filter()->all());
+                        foreach ((array) ($a['grupos_trabajo'] ?? []) as $doc => $numero) {
+                            if (isset($estudiantes[(string) $doc]) && (int) $numero > 0) {
+                                DB::table('integrantes_trabajo')->insert(['actividad_id' => $actividad->id, 'estudiante_id' => $estudiantes[(string) $doc]->id, 'numero' => (int) $numero]);
+                            }
+                        }
                         if (isset($a['clave'])) {
                             $porClave[$a['clave']] = $actividad->id;
                         }

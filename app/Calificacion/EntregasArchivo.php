@@ -60,6 +60,11 @@ final class EntregasArchivo
         }
 
         $integrantes ??= $this->reconocer($actividad, $nombre);
+        // 6.8: con grupos del docente, el archivo de uno queda a nombre de todo su grupo
+        if ($actividad->es_grupal && $integrantes->isNotEmpty() && app(GruposTrabajo::class)->usaGruposDelDocente($actividad)) {
+            $grupos = app(GruposTrabajo::class);
+            $integrantes = $integrantes->merge($integrantes->flatMap(fn ($e) => $grupos->delGrupoDe($actividad, $e)))->unique('id')->values();
+        }
         $ext = strtolower(pathinfo($nombre, PATHINFO_EXTENSION)) ?: ($esPdf ? 'pdf' : 'bin');
         $ruta = "entregas/{$actividad->id}/{$sha}.".(preg_replace('/[^a-z0-9]/', '', $ext) ?: 'bin');
         Storage::disk('local')->put($ruta, $contenido);

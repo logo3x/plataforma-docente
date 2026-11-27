@@ -5,7 +5,7 @@
         <a href="{{ route('dictados.show', $dictado) }}">{{ $dictado->materia->nombre }} {{ $dictado->periodo }}</a> › {{ $actividad->nombre }}</div>
     <h1>Entregas — {{ $actividad->nombre }}</h1>
     <p class="suave">{{ $actividad->componente->division->nombre }} › {{ $actividad->componente->nombre }} · sobre {{ $maximo }}
-        · {{ $actividad->grupos->pluck('nombre')->join(', ') ?: 'todos los grupos' }} @if ($actividad->es_grupal)· entrega grupal @endif</p>
+        · {{ $actividad->grupos->pluck('nombre')->join(', ') ?: 'todos los grupos' }} @if ($actividad->es_grupal)· entrega grupal: <a href="{{ route('calificador.grupos', $actividad) }}">grupos de trabajo</a> @endif</p>
 
     @if (session('resultados'))
         <div class="tarjeta" role="status">

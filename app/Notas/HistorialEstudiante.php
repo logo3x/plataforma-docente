@@ -26,7 +26,7 @@ final class HistorialEstudiante
 {
     public const ALERTAS = ['manipulado' => 'Identidad no coincide', 'grupo_no_cuadra' => 'Otro grupo', 'sin_cifrar' => 'Sin cifrar', 'texto_identico' => 'Texto idéntico',
         'salidas' => 'Salidas', 'pegados' => 'Pegados', 'duracion_anomala' => 'Duración corta', 'cierre_automatico' => 'Cierre por tiempo', 'reconexion' => 'Reconexión',
-        'integrante_desconocido' => 'Integrante no está en la lista', 'estudiante_en_dos_entregas' => 'En dos entregas', 'version_no_coincide' => 'Versión distinta',
+        'integrante_desconocido' => 'Integrante no está en la lista', 'sin_grupo_trabajo' => 'Sin grupo de trabajo', 'estudiante_en_dos_entregas' => 'En dos entregas', 'version_no_coincide' => 'Versión distinta',
         'cierre_docente' => 'Cerrado por el docente', 'autor_distinto' => 'La subió otra persona', 'entrega_tardia' => 'Entregada tarde'];
 
     private const ORIGENES = ['digitada' => 'digitada', 'archivo' => 'cargada de archivo', 'calificador' => 'desde el calificador', 'grupal' => 'nota grupal',

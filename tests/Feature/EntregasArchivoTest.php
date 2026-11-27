@@ -67,6 +67,21 @@ class EntregasArchivoTest extends TestCase
     }
 
     #[Test]
+    public function con_grupos_del_docente_el_archivo_de_uno_queda_a_nombre_de_su_grupo(): void
+    {
+        // 6.8: el taller va por defecto con el estudiante escogiendo; el docente fuerza sus grupos
+        $this->actividad->update(['es_grupal' => true]);
+        $this->put(route('calificador.grupos.guardar', $this->actividad), ['grupos_por' => 'docente',
+            'numero' => [$this->ana->id => 1, $this->carla->id => 1, $this->beto->id => 2]])->assertSessionHasNoErrors();
+
+        $this->post(route('calificador.archivos.subir', $this->actividad), ['archivos' => [$this->pdf('1098765432_taller.pdf')]]);
+
+        $e = Entrega::query()->sole();
+        $this->assertSame($this->ana->id, $e->subida_por_id);
+        $this->assertEqualsCanonicalizing([$this->ana->id, $this->carla->id], $e->integrantes()->pluck('estudiantes.id')->all());
+    }
+
+    #[Test]
     public function avisa_si_el_mismo_archivo_ya_esta_en_otra_actividad_del_periodo(): void
     {
         // 6.1.4: el consolidado del laboratorio subido a la jornada equivocada

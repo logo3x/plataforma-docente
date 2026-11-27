@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Calificacion\GruposTrabajo;
 use App\Evaluacion\ClavesDictado;
 use App\Evaluacion\ImportadorBanco;
 use App\Livewire\CalificarAbiertas;
@@ -331,6 +332,100 @@ class CalificadorEntregasTest extends TestCase
 
         $this->assertSame(['5.0000', '5.0000'], Nota::query()->orderBy('estudiante_id')->pluck('valor')->all());
         $this->assertTrue(Alerta::query()->where('tipo', 'integrante_desconocido')->exists());
+    }
+
+    #[Test]
+    public function con_grupos_del_docente_la_entrega_queda_a_nombre_de_todo_el_grupo(): void
+    {
+        $caro = $this->crearEstudiante('10003', 'CASTRO', 'CARO');
+        $a = $this->aplicar(['es_grupal' => '1']);
+        $this->assertSame('estudiante', app(GruposTrabajo::class)->modo($a), 'con conexión: los escoge el estudiante');
+        $a->artefacto->update(['configuracion' => ['modo_desconectado' => true] + $a->artefacto->configuracion]);
+        $a = $a->fresh();
+        $this->assertSame('docente', app(GruposTrabajo::class)->modo($a), 'sin conexión, en sala: los arma el docente');
+
+        // Sin grupos armados, el estudiante escoge de la lista (sin documentos en el archivo)
+        $html = $this->get(route('calificador.examen', $a))->assertOk()->getContent();
+        $this->assertStringContainsString('"grupos_por":"estudiante"', $html);
+        $this->assertStringContainsString('"n":"BELTRAN, BETO"', $html);
+        $this->assertStringNotContainsString('10002', $html);
+
+        $this->get(route('calificador.grupos', $a))->assertOk()->assertSee('Aún no ha armado los grupos');
+        $this->put(route('calificador.grupos.guardar', $a), ['grupos_por' => 'auto', 'numero' => [$this->ana->id => 1, $caro->id => 1, $this->beto->id => 2]])
+            ->assertSessionHasNoErrors()->assertSessionHas('estado', fn ($m) => str_contains($m, '2 grupos guardados con 3 estudiantes'));
+
+        $html = $this->get(route('calificador.examen', $a))->getContent();
+        $this->assertStringContainsString('"grupos_por":"docente"', $html);
+        $this->assertStringContainsString('"lista":[]', $html);
+
+        // Ana declara a Beto (por error): manda el grupo del docente, Ana y Caro
+        $this->post(route('calificador.subir', $a), ['entregas' => [
+            $this->entrega($a, $this->ana, $this->perfectas($a), ['carga' => ['integrantes' => ['e'.$this->beto->id]]]),
+        ]]);
+        $this->assertEqualsCanonicalizing([$this->ana->id, $caro->id], Entrega::query()->sole()->integrantes()->pluck('estudiantes.id')->all());
+        $this->assertFalse(Alerta::query()->exists());
+
+        $this->get(route('calificador.grupos', $a))->assertSee('Grupo 1')->assertSee('ARIAS, ANA · CASTRO, CARO');
+    }
+
+    #[Test]
+    public function quien_no_esta_en_ningun_grupo_del_docente_entrega_solo_y_se_marca(): void
+    {
+        $a = $this->aplicar(['es_grupal' => '1']);
+        $a->update(['grupos_por' => 'docente']);
+        app(GruposTrabajo::class)->guardar($a, [$this->ana->id => 1]);
+
+        $this->post(route('calificador.subir', $a), ['entregas' => [$this->entrega($a, $this->beto, $this->perfectas($a))]]);
+
+        $this->assertSame([$this->beto->id], Entrega::query()->sole()->integrantes()->pluck('estudiantes.id')->all());
+        $this->assertSame('sin_grupo_trabajo', Alerta::query()->sole()->tipo);
+    }
+
+    #[Test]
+    public function el_docente_puede_forzar_que_el_estudiante_escoja_y_la_lista_usa_referencias(): void
+    {
+        $a = $this->aplicar(['es_grupal' => '1']);
+        app(GruposTrabajo::class)->guardar($a, [$this->ana->id => 1]);
+        $this->put(route('calificador.grupos.guardar', $a), ['grupos_por' => 'estudiante'])->assertSessionHasNoErrors();
+        $this->assertSame('estudiante', $a->fresh()->grupos_por);
+
+        $this->post(route('calificador.subir', $a), ['entregas' => [
+            $this->entrega($a, $this->ana, $this->perfectas($a), ['carga' => ['integrantes' => ['e'.$this->beto->id, 'e999999']]]),
+        ]]);
+
+        $this->assertEqualsCanonicalizing([$this->ana->id, $this->beto->id], Entrega::query()->sole()->integrantes()->pluck('estudiantes.id')->all());
+        $this->assertSame('e999999', Alerta::query()->where('tipo', 'integrante_desconocido')->sole()->datos['documento']);
+    }
+
+    #[Test]
+    public function proponer_grupos_al_azar_no_guarda_hasta_confirmar(): void
+    {
+        foreach (range(3, 7) as $i) {
+            $this->crearEstudiante((string) (10000 + $i), "APELLIDO{$i}", "N{$i}");
+        }
+        $a = $this->aplicar(['es_grupal' => '1']);
+        app(GruposTrabajo::class)->guardar($a, [$this->ana->id => 1]);
+
+        $this->post(route('calificador.grupos.repartir', $a), ['tamano' => 3])->assertRedirect(route('calificador.grupos', $a));
+        $this->assertSame([$this->ana->id => 1], app(GruposTrabajo::class)->asignacion($a), 'la propuesta no se guarda sola');
+        $this->assertSame('docente', $a->fresh()->grupos_por, 'proponer deja elegida la vía del docente');
+
+        $propuesta = session('propuesta');
+        $this->assertSame(1, $propuesta[$this->ana->id], 'no mueve a quien ya tenía grupo');
+        $this->assertCount(7, $propuesta);
+        $this->assertSame([2 => 3, 3 => 3], array_count_values(array_diff_key($propuesta, [$this->ana->id => 1])));
+        $this->get(route('calificador.grupos', $a))->assertSee('Esta es una propuesta');
+    }
+
+    #[Test]
+    public function solo_estudiantes_de_la_actividad_entran_en_un_grupo(): void
+    {
+        $a = $this->aplicar(['es_grupal' => '1']);
+        $otro = Estudiante::query()->create(['dictado_id' => $this->dictado->id, 'documento' => '20001', 'apellidos' => 'OTRO', 'nombres' => 'GRUPO']);
+
+        $this->put(route('calificador.grupos.guardar', $a), ['grupos_por' => 'docente', 'numero' => [$otro->id => 1]])
+            ->assertSessionHasErrors('numero');
+        $this->actingAs(User::factory()->create())->get(route('calificador.grupos', $a))->assertForbidden();
     }
 
     #[Test]

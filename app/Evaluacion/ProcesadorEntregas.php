@@ -3,6 +3,7 @@
 namespace App\Evaluacion;
 
 use App\Calificacion\CalificadorEntrega;
+use App\Calificacion\GruposTrabajo;
 use App\Calificacion\RevisionEstatica;
 use App\Models\Actividad;
 use App\Models\Alerta;
@@ -101,7 +102,7 @@ final class ProcesadorEntregas
             $alertas[] = ['grupo_no_cuadra', ['grupos' => $estudiante->grupos()->pluck('nombre')->all()]];
         }
 
-        $entrega = DB::transaction(function () use ($actividad, $estudiante, $carga, $contenido, $sha, $sobre, $alertas, $artefacto, $version) {
+        $entrega = DB::transaction(function () use ($actividad, $estudiante, $carga, $contenido, $sha, $sobre, &$alertas, $artefacto, $version) {
             $ruta = "entregas/{$actividad->id}/{$sha}.json";
             Storage::disk('local')->put($ruta, $contenido);
 
@@ -121,14 +122,7 @@ final class ProcesadorEntregas
                 'version' => $version,
             ]);
 
-            // Integrantes: quien entrega más los declarados que existan en el dictado (6.8.9)
-            $documentos = collect($carga['integrantes'] ?? [])->map(fn ($d) => (string) $d)->unique();
-            $integrantes = Estudiante::query()->where('dictado_id', $actividad->componente->division->dictado_id)
-                ->whereIn('documento', $documentos)->pluck('id', 'documento');
-            $entrega->integrantes()->attach($integrantes->values()->push($estudiante->id)->unique()->all());
-            foreach ($documentos->diff($integrantes->keys()) as $desconocido) {
-                $alertas[] = ['integrante_desconocido', ['documento' => $desconocido]];
-            }
+            $entrega->integrantes()->attach($this->integrantes($actividad, $estudiante, $carga, $alertas));
 
             foreach ([...$alertas, ...$this->alertasDeSesion($entrega, $artefacto->configuracion)] as [$tipo, $datos]) {
                 Alerta::query()->create(['actividad_id' => $actividad->id, 'entrega_id' => $entrega->id,
@@ -143,6 +137,42 @@ final class ProcesadorEntregas
         $this->detectarTextoIdentico($actividad);
 
         return ['estado' => 'procesada', 'mensaje' => "{$nombreArchivo}: {$estudiante->nombreCompleto()}.", 'entrega' => $entrega];
+    }
+
+    /**
+     * Integrantes de la entrega (6.8). Si el docente armó los grupos, es el grupo de quien la sube, diga lo que
+     * diga la entrega; si no, quien la sube más los compañeros que escogió de la lista (referencia «e<id>»)
+     * o, en archivos de versiones anteriores, que tecleó por documento. Solo cuentan estudiantes del periodo (6.8.9).
+     *
+     * @return array<int, int> ids de estudiante
+     */
+    private function integrantes(Actividad $actividad, Estudiante $estudiante, array $carga, array &$alertas): array
+    {
+        if (! $actividad->es_grupal) {
+            return [$estudiante->id];
+        }
+        $grupos = app(GruposTrabajo::class);
+        if ($grupos->usaGruposDelDocente($actividad)) {
+            $suyo = $grupos->delGrupoDe($actividad, $estudiante);
+            if ($suyo->isEmpty()) {
+                $alertas[] = ['sin_grupo_trabajo', []];
+            }
+
+            return $suyo->pluck('id')->push($estudiante->id)->unique()->values()->all();
+        }
+
+        $declarados = collect($carga['integrantes'] ?? [])->map(fn ($d) => (string) $d)->unique();
+        $dictado = $actividad->componente->division->dictado_id;
+        $porRef = Estudiante::query()->where('dictado_id', $dictado)
+            ->whereIn('id', $declarados->filter(fn ($d) => preg_match('/^e\d+$/', $d))->map(fn ($d) => (int) substr($d, 1)))->pluck('id', 'id')
+            ->mapWithKeys(fn ($id) => ['e'.$id => $id]);
+        $porDocumento = Estudiante::query()->where('dictado_id', $dictado)->whereIn('documento', $declarados)->pluck('id', 'documento');
+        $encontrados = $porRef->union($porDocumento);
+        foreach ($declarados->diff($encontrados->keys()) as $desconocido) {
+            $alertas[] = ['integrante_desconocido', ['documento' => $desconocido]];
+        }
+
+        return $encontrados->values()->push($estudiante->id)->unique()->values()->all();
     }
 
     /** @return array{formato:string, sigla:string, artefacto:string, documento:string, cifrado:?array, datos_planos?:array} */

@@ -2,6 +2,7 @@
 
 namespace App\Evaluacion;
 
+use App\Calificacion\GruposTrabajo;
 use App\Models\Actividad;
 use App\Models\SesionVivo;
 use Brick\Math\BigDecimal;
@@ -51,6 +52,10 @@ final class GeneradorExamen
             'contar_salidas' => $config['contar_salidas'],
             'nivel_ayuda' => $config['nivel_ayuda'],
             'grupal' => (bool) $actividad->es_grupal,
+            // 6.8: con grupos del docente el examen no pregunta nada; si no, se escoge de la lista (sin documentos)
+            'grupos_por' => $actividad->es_grupal ? (app(GruposTrabajo::class)->usaGruposDelDocente($actividad) ? 'docente' : 'estudiante') : null,
+            'lista' => $actividad->es_grupal && ! app(GruposTrabajo::class)->usaGruposDelDocente($actividad) ? app(GruposTrabajo::class)->listaParaExamen($actividad) : [],
+            'tamano_grupo' => $actividad->tamano_grupo,
             'ensayo' => $ensayo,
             'anexo' => $config['anexo'],
             'grupos' => $actividad->grupos()->pluck('nombre')->all() ?: $dictado->grupos()->pluck('nombre')->all(),

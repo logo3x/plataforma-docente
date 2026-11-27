@@ -11,9 +11,11 @@
     for (const [k, v] of Object.entries(attrs || {})) {
       if (k === 'texto') n.textContent = v; else if (k.startsWith('on')) n.addEventListener(k.slice(2), v); else if (v !== null && v !== undefined && v !== false) n.setAttribute(k, v === true ? '' : v);
     }
-    hijos.flat().forEach(h => h !== null && h !== undefined && n.append(h));
+    poner(n, hijos);
     return n;
   };
+  // El append nativo escribe «null» como texto: todo lo opcional pasa por aquí
+  function poner(n, ...hijos) { hijos.flat(Infinity).forEach(h => h !== null && h !== undefined && n.append(h)); return n; }
 
   let E = null;                 // estado de la sesión
   let clave = null;             // clave de localStorage
@@ -45,16 +47,39 @@
     actualizarAvance();
   }
 
+  // ---------- Compañeros de grupo (6.8.1): se escogen de la lista del curso, nunca tecleando documentos ----------
+  function selectorCompaneros() {
+    const lista = D.lista || [];
+    const maximo = D.tamano_grupo ? D.tamano_grupo - 1 : null;
+    const cuenta = el('p', { class: 'peso', id: 'cuenta-companeros', 'aria-live': 'polite' });
+    const opciones = el('div', { id: 'companeros', class: 'companeros', role: 'group', 'aria-label': 'Compañeros de grupo' },
+      lista.map(x => el('label', { 'data-grupo': x.g || '', 'data-nombre': x.n.toLowerCase() },
+        el('input', { type: 'checkbox', value: x.r, onchange: contar }), ' ' + x.n + (x.g && D.grupos.length > 1 ? ' · ' + x.g : ''))));
+    function contar() {
+      const n = opciones.querySelectorAll('input:checked').length;
+      cuenta.textContent = (n ? n + (n === 1 ? ' compañero escogido' : ' compañeros escogidos') : 'Ningún compañero escogido: si trabajó solo, déjelo así.')
+        + (maximo && n > maximo ? ' La actividad es para grupos de ' + D.tamano_grupo + ': su docente verá que son más.' : '');
+    }
+    const buscar = el('input', { type: 'text', id: 'buscar-companero', autocomplete: 'off', oninput: () => {
+      const q = buscar.value.trim().toLowerCase();
+      opciones.querySelectorAll('label').forEach(l => l.classList.toggle('oculto', !!q && !l.dataset.nombre.includes(q) && !l.querySelector('input').checked));
+    } });
+    contar();
+    return el('div', {}, el('label', { for: 'buscar-companero', texto: 'Compañeros de grupo' + (maximo ? ' (hasta ' + maximo + ')' : '') + ': escriba parte del nombre y márquelos' }),
+      buscar, opciones, cuenta);
+  }
+
   // ---------- Portada ----------
   function portada() {
     const p = $('#portada');
     const grupos = D.grupos.length > 1 ? el('div', {}, el('label', { for: 'grupo', texto: 'Grupo' }),
       el('select', { id: 'grupo' }, D.grupos.map(g => el('option', { value: g, texto: g })))) : null;
-    const integrantes = D.grupal ? el('div', {}, el('label', { for: 'integrantes', texto: 'Documentos de los demás integrantes (separados por coma)' }),
-      el('input', { type: 'text', id: 'integrantes', inputmode: 'numeric' })) : null;
+    const integrantes = !D.grupal ? null : D.grupos_por === 'docente'
+      ? el('div', { class: 'aviso' }, el('strong', { texto: 'Trabajo en grupo. ' }), 'Su docente definió los grupos: la entrega queda a nombre de todo su grupo. No tiene que escribir a sus compañeros.')
+      : selectorCompaneros();
     if (D.ensayo) p.append(el('div', { class: 'aviso mal', role: 'note' }, el('strong', { texto: 'EXAMEN DE ENSAYO. ' }),
       'Para el docente: verifica este equipo antes de aplicar el examen. Su entrega solo sirve en la página de ensayo de la plataforma; no la reparta a los estudiantes.'));
-    p.append(
+    poner(p,
       el('h2', { texto: D.titulo }),
       el('p', { texto: D.materia + ' · ' + D.periodo + ' · Valor ' + D.valor }),
       D.instrucciones ? el('p', { texto: D.instrucciones }) : null,
@@ -92,7 +117,7 @@
     if (previo) { E = JSON.parse(previo); E.sesion.restauraciones = (E.sesion.restauraciones || 0) + 1; }
     else {
       E = { documento: doc, nombre, grupo: $('#grupo') ? $('#grupo').value : (D.grupos[0] || null),
-        integrantes: D.grupal ? ($('#integrantes').value.split(/[^0-9]+/).filter(x => x.length >= 5 && x !== doc)) : [],
+        integrantes: D.grupal && D.grupos_por !== 'docente' ? [...document.querySelectorAll('#companeros input:checked')].map(x => x.value) : [],
         inicio: new Date().toISOString(), respuestas: {}, cierre: null,
         sesion: { salidas: [], pegados: 0, ejecuciones: 0, errores_sintaxis: 0, reconexiones: [], restauraciones: 0, navegador: navigator.userAgent } };
     }
@@ -252,7 +277,7 @@
     } }) : null;
     if (html || sql) area.rows = 16;
     revisar();
-    caja.append(area, aviso, guiaErrores(lenguajesReto), el('p', {}, probar, ' ', verTablas, verTablas ? ' ' : null, it.reservadas ? el('span', { class: 'peso', texto: 'Hay ' + it.reservadas + ' verificación(es) adicional(es) que se evaluarán al calificar.' }) : null), vista, salida);
+    poner(caja, area, aviso, guiaErrores(lenguajesReto), el('p', {}, probar, ' ', verTablas, verTablas ? ' ' : null, it.reservadas ? el('span', { class: 'peso', texto: 'Hay ' + it.reservadas + ' verificación(es) adicional(es) que se evaluarán al calificar.' }) : null), vista, salida);
   }
 
   /* 4.6 PHP y Laravel: no hay ejecución en el navegador. El estudiante escribe cada archivo, ve en lenguaje
@@ -744,7 +769,7 @@
     $('#examen').querySelectorAll('input, textarea, select').forEach(x => x.disabled = true);
     const c = $('#cierre'); c.classList.remove('oculto'); c.innerHTML = '';
     const enLinea = D.vivo && E.vivo && E.vivo.entregada;
-    c.append(el('h2', { texto: 'Examen finalizado' + (E.cierre.tipo === 'automatico' ? ' por tiempo' : E.cierre.tipo === 'docente' ? ' por el docente' : '') }),
+    poner(c, el('h2', { texto: 'Examen finalizado' + (E.cierre.tipo === 'automatico' ? ' por tiempo' : E.cierre.tipo === 'docente' ? ' por el docente' : '') }),
       enLinea ? el('p', { class: 'aviso bien', texto: '✓ Su entrega llegó a la plataforma. No tiene que descargar ni subir nada.' }) : null,
       D.vivo && E.vivo && E.vivo.error ? el('p', { class: 'aviso mal', texto: 'No se pudo enviar a la plataforma (' + E.vivo.error + '). Entregue el archivo descargado.' }) : null,
       enLinea ? null : el('p', {}, 'Se descargó el archivo ', el('strong', { texto: (D.ensayo ? 'ENSAYO_' : '') + D.sigla + '_' + E.documento + '.json' }),

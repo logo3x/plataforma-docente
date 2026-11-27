@@ -35,3 +35,5 @@ table{border-collapse:collapse}td,th{border:1px solid var(--borde);padding:.3rem
 .aviso-estatico{margin:.3rem 0 .6rem;padding:.6rem .8rem;border-left:4px solid var(--cian);background:#ecfeff;border-radius:0 6px 6px 0}.aviso-estatico ul{margin:.3rem 0 .3rem 1.2rem;padding:0}.aviso-estatico p{margin:.2rem 0 0}
 .archivo-php{display:block;font-family:ui-monospace,Consolas,monospace;font-size:.85rem;font-weight:600;margin:.6rem 0 .2rem;color:var(--marino)}
 .guia-errores{margin:.4rem 0;font-size:.9rem}.guia-errores summary{cursor:pointer;color:var(--cian);font-weight:600}.guia-errores dl{margin:.4rem 0 0}.guia-errores dt{margin-top:.4rem}.guia-errores dd{margin:.1rem 0 0 1rem;color:var(--suave)}
+
+.companeros{max-height:14rem;overflow:auto;border:1px solid #6b7280;border-radius:6px;padding:.25rem .5rem;margin-top:.35rem;background:#fff}.companeros label{margin:.15rem 0}

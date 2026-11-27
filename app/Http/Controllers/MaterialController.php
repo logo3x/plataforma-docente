@@ -250,7 +250,7 @@ abstract class MaterialController extends Controller
         return json_decode($request->validate(['contenido' => ['required', 'json', 'max:400000']])['contenido'], true) ?: [];
     }
 
-    private function autorizarMaterial(Material $m): void
+    protected function autorizarMaterial(Material $m): void
     {
         abort_unless($m->tipo === $this->tipo()->tipo(), 404);
         Gate::authorize('gestionar', $m->materia);

@@ -26,6 +26,7 @@ class PlantillasIaController extends Controller
         'unidad' => 'Capa 3 — Tarea: planear una unidad didáctica',
         'ejemplos' => 'Capa 3 — Tarea: ejemplos prácticos resueltos',
         'debate' => 'Capa 3 — Tarea: preguntas de debate',
+        'presentacion' => 'Capa 3 — Tarea: presentación de clase',
         'vocabulario' => 'Capa 3 — Tarea: lista de vocabulario',
         'proyectos' => 'Capa 3 — Tarea: ideas de proyectos',
         'apuntes' => 'Capa 3 — Tarea: texto informativo o apunte',

@@ -28,6 +28,7 @@ use App\Http\Controllers\InicioController;
 use App\Http\Controllers\MateriaController;
 use App\Http\Controllers\MotorIaController;
 use App\Http\Controllers\PlantillasIaController;
+use App\Http\Controllers\PresentacionController;
 use App\Http\Controllers\ProyectoController;
 use App\Http\Controllers\PublicacionController;
 use App\Http\Controllers\ReclamoController;
@@ -146,7 +147,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/generaciones/{generacion}/unidad/aprobar', [UnidadDidacticaController::class, 'aprobar'])->name('unidades.aprobar');
     Route::post('/generaciones/{generacion}/unidad/descartar', [UnidadDidacticaController::class, 'descartar'])->name('unidades.descartar');
     // Generadores de material del catálogo (7.4): mismas pantallas y flujo de borrador para cada tipo
-    foreach (['ejemplos' => EjemploController::class, 'debates' => DebateController::class, 'vocabularios' => VocabularioController::class, 'proyectos' => ProyectoController::class, 'apuntes' => ApunteController::class] as $r => $c) {
+    foreach (['ejemplos' => EjemploController::class, 'debates' => DebateController::class, 'vocabularios' => VocabularioController::class, 'proyectos' => ProyectoController::class, 'apuntes' => ApunteController::class, 'presentaciones' => PresentacionController::class] as $r => $c) {
         Route::get("/materias/{materia}/{$r}", [$c, 'index'])->name("{$r}.index");
         Route::get("/materias/{materia}/{$r}/nuevo", [$c, 'create'])->name("{$r}.create");
         Route::post("/materias/{materia}/{$r}", [$c, 'store'])->name("{$r}.store");
@@ -164,6 +165,7 @@ Route::middleware('auth')->group(function () {
     }
     Route::get('/materiales/{material}/publicar', [PublicacionController::class, 'edit'])->name('publicacion.edit');
     Route::post('/materiales/{material}/publicar', [PublicacionController::class, 'store'])->name('publicacion.store');
+    Route::get('/presentaciones/{material}/pptx', [PresentacionController::class, 'pptx'])->name('presentaciones.pptx');
     Route::post('/apuntes/{material}/repositorio', [ApunteController::class, 'repositorio'])->name('apuntes.repositorio');
     Route::post('/vocabularios/{material}/glosario', [VocabularioController::class, 'glosario'])->name('vocabularios.glosario');
     Route::get('/examenes/{artefacto}/configuracion', [ConfiguracionActividadController::class, 'edit'])->name('configuracion.edit');

@@ -5,6 +5,7 @@ namespace App\Material;
 use App\Http\Controllers\ApunteController;
 use App\Http\Controllers\DebateController;
 use App\Http\Controllers\EjemploController;
+use App\Http\Controllers\PresentacionController;
 use App\Http\Controllers\ProyectoController;
 use App\Http\Controllers\VocabularioController;
 use App\Models\Material;
@@ -33,7 +34,7 @@ final class Publicador
 
     /** tipo del material => controlador que dibuja su versión para estudiantes */
     private const CONTROLADORES = ['apuntes' => ApunteController::class, 'ejemplos' => EjemploController::class, 'debate' => DebateController::class,
-        'vocabulario' => VocabularioController::class, 'proyectos' => ProyectoController::class];
+        'vocabulario' => VocabularioController::class, 'proyectos' => ProyectoController::class, 'presentacion' => PresentacionController::class];
 
     /** La ficha propuesta: la de la última publicación del material, o lo que se sabe de él y del docente. */
     public function fichaInicial(Material $m): array

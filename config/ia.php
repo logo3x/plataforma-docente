@@ -185,6 +185,40 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
  ]}
 TXT,
 
+        'presentacion' => <<<'TXT'
+Tarea: prepare las diapositivas de una clase sobre el tema, para proyectar, con las notas de lo que el docente dice en cada una.
+
+Tema:          {{tema}}
+Diapositivas:  unas {{cantidad}}, sin contar la portada
+Duración:      {{minutos}} minutos de clase
+Enfoque:       {{enfoque}}
+Código:        {{codigo}}
+Contexto:      {{contexto}}
+Grupo:         {{grupo}}
+
+Reglas:
+- La diapositiva lleva la idea; la explicación va en «notas» (lo que el docente dice, en dos a cinco frases).
+- Máximo {{max_vinetas}} viñetas por diapositiva y máximo {{max_palabras}} palabras por viñeta. Nada de párrafos en la diapositiva.
+- «tipo» es seccion (separa partes de la clase), contenido (viñetas), codigo (un ejemplo corto, de 15 líneas como máximo,
+  en «codigo»), pregunta (una pregunta para el grupo en «titulo», con pistas opcionales en «puntos») o cierre (lo que
+  debe quedar, al final).
+- Empiece con una diapositiva de sección que diga qué se va a ver y termine con una de cierre.
+- Use ejemplos del contexto indicado; incluya al menos una pregunta al grupo si el enfoque lo pide.
+- En «tema» escriba el nombre del tema tal como aparece arriba.
+- Cíñase al material de referencia y al alcance del grupo.
+{{memoria}}
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"formato":"plataforma-presentacion","version":1,"titulo":"...","subtitulo":"...","proposito":"qué debe lograr la clase",
+ "diapositivas":[
+  {"tipo":"seccion","titulo":"...","puntos":["..."],"notas":"...","tema":"..."},
+  {"tipo":"contenido","titulo":"...","puntos":["...","..."],"notas":"...","tema":"..."},
+  {"tipo":"codigo","titulo":"...","codigo":"...","puntos":["idea clave del ejemplo"],"notas":"...","tema":"..."},
+  {"tipo":"pregunta","titulo":"¿...?","puntos":["pista"],"notas":"...","tema":"..."},
+  {"tipo":"cierre","titulo":"...","puntos":["..."],"notas":"..."}
+ ]}
+TXT,
+
         'debate' => <<<'TXT'
 Tarea: proponga preguntas para debatir en clase: abiertas, que admitan posturas razonadas y obliguen a usar los conceptos del tema.
 

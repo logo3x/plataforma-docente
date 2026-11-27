@@ -55,6 +55,7 @@ Estado: ✅ corregido · 🔧 pendiente, sin decisiones abiertas · ❓ necesita
 | 5.4.13, 5.4.14 | Historial por pregunta y equilibrio (valor seguro: avisar, no excluir solo) | ✅ Marca de «ya la respondieron», orden y filtro al traer preguntas, aviso al aplicar y tabla por tema y dificultad |
 | 7.9 | Copiar a otra materia (valor seguro: copia independiente) | ✅ Rúbricas, unidades y material desde el historial; contenido del repositorio desde su página; el tema se busca por título; las plantillas ya valen para todas las materias |
 | 9.2 | Pruebas 8 y 9 automáticas y exigir el ensayo (valor seguro: exigirlo es opcional) | ✅ Prueba 8 con la solución modelo opcional del reto; la 9 ya corría sola en el examen de ensayo; opción por examen para exigir el ensayo, y editar las preguntas lo deja pendiente |
+| 5.2 | Enunciado de la práctica en texto plano | ✅ Botón en el examen con los datos del estudiante, los puntos y los casos para autoverificar; sin lo reservado |
 | 4.4.3, 4.4.5 | Incluir el editor de código en el examen | ✅ CodeMirror dentro del examen: 440 KB con JavaScript y 630 KB con los demás lenguajes (más de los 300 KB estimados); solo en exámenes con retos |
 
 ## Necesita una decisión del docente
@@ -65,7 +66,6 @@ Estado: ✅ corregido · 🔧 pendiente, sin decisiones abiertas · ❓ necesita
 | 2.6.2 | Fechas y calendario del dictado: ¿solo inicio y fin de cada corte, o también las fechas de clase? |
 | 6.2.3, 6.4 | Modalidad II: nota de la práctica digitada con su comentario y requerimientos con su fracción. ¿Cómo llega hoy esa nota (anexo calificado aparte)? |
 | 4.4.1 | Avisar del punto y coma faltante: JavaScript no lo exige y avisarlo puede confundir. ¿Se pide como estilo? |
-| 5.2 | Enunciado de la práctica descargable en texto plano, con fracciones y números de autoverificación |
 | 5.7 | Panel: interruptores de versiones, segundo banco, cantidad de casos reservados; formato de entrega «artefacto autocontenido» |
 | 7.4.3 | Catálogo extensible: hoy cada generador nuevo requiere código. ¿Un generador genérico a partir de una plantilla de prompt? |
 | 7.5, 7.10 | Manuales interactivos con el entorno de prueba, guías y boletines |

@@ -131,7 +131,7 @@
     $('#portada').classList.add('oculto');
     $('#examen').classList.remove('oculto');
     $('#quien').textContent = E.nombre + ' · ' + E.documento + ((D.versiones || []).length > 1 ? ' · versión ' + E.version : '');
-    renderItems(); guardar(); iniciarReloj(); if (D.contar_salidas !== false) vigilarFoco(); vigilarConexion(); latirVivo(); medirItems();
+    renderItems(); botonEnunciado(); guardar(); iniciarReloj(); if (D.contar_salidas !== false) vigilarFoco(); vigilarConexion(); latirVivo(); medirItems();
     if (D.ensayo) autoverificar();
     if (E.cierre) mostrarCierre();
   }
@@ -183,6 +183,39 @@
       cont.append(caja);
       nav.append(el('a', { href: '#item-' + id, id: 'nav-' + id, texto: String(i + 1) }));
     });
+  }
+
+  // ---------- Enunciado de la práctica en texto plano (5.2) ----------
+  /* Con los datos del estudiante, los puntos de cada reto y sus números de autoverificación (los casos
+     visibles), para leerlo aparte o imprimirlo. Solo lo que el examen ya muestra: nada de lo reservado. */
+  function botonEnunciado() {
+    const retos = D.items.filter(it => it.tipo === 'reto');
+    if (!retos.length || $('#bajar-enunciado')) return;
+    const b = el('button', { class: 'boton boton-sec boton-chico', id: 'bajar-enunciado', type: 'button', texto: 'Descargar el enunciado de la práctica (.txt)', onclick: () => {
+      const nivel = D.nivel_ayuda || 'completo';
+      const L = ['ENUNCIADO DE LA PRÁCTICA', D.titulo + ' · ' + D.sigla, D.materia + ' · ' + D.periodo,
+        'Estudiante: ' + E.nombre + ' · documento ' + E.documento + ((D.versiones || []).length > 1 ? ' · versión ' + E.version : ''),
+        'Descargado: ' + new Date().toLocaleString('es-CO'), ''];
+      retos.forEach((it, k) => {
+        const n = D.items.indexOf(it) + 1;
+        L.push('='.repeat(60), 'Reto ' + (k + 1) + ' (pregunta ' + n + ') · vale ' + it.peso + ' · ' + ({ html: 'HTML', sql: 'SQL', php: 'PHP' }[it.lenguaje] || 'JavaScript'), '', it.texto, '');
+        if (it.lenguaje === 'sql' && it.esquema) L.push('Tablas de la actividad:', it.esquema, '');
+        if (it.lenguaje === 'php') {
+          (it.archivos || []).forEach(f => L.push('Archivo ' + f.nombre + (f.plantilla ? ':' : ' (vacío)'), f.plantilla || '', ''));
+          if ((it.criterios_visibles || []).length) L.push('Criterios que se revisan:', ...it.criterios_visibles.map(c => '  - ' + c), '');
+          if (it.alcance) L.push(it.alcance, '');
+        } else if (it.plantilla_codigo) L.push('Código inicial:', it.plantilla_codigo, '');
+        if (nivel !== 'minimo' && (it.casos_visibles || []).length) {
+          L.push('Casos para autoverificar:');
+          it.casos_visibles.forEach(c => L.push('  - ' + (c.descripcion || 'Caso') + (c.entrada ? ': ' + c.entrada : '') + (nivel === 'completo' && c.esperada !== undefined ? ' → debe dar ' + c.esperada : '')));
+          L.push('');
+        }
+        if (it.reservadas) L.push('Además, ' + it.reservadas + ' verificación(es) que se revisan al calificar.', '');
+      });
+      const a = el('a', { href: URL.createObjectURL(new Blob([L.join('\r\n')], { type: 'text/plain;charset=utf-8' })), download: 'enunciado_' + D.sigla + '_' + E.documento + '.txt' });
+      document.body.append(a); a.click(); a.remove();
+    } });
+    $('#items').before(el('p', {}, b));
   }
 
   // ---------- Editor de código (4.4.3 y 4.4.5) ----------

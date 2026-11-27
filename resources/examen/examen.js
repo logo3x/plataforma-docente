@@ -351,13 +351,14 @@
   const ETIQUETAS = { no_compila: '✗ No compila', error: '✗ Ejecuta con error', sin_salida: '… Ejecuta sin salida', con_salida: '✓ Ejecuta con salida', tiempo: '⏱ Excede el tiempo' };
 
   /* Código del worker: sin acceso al examen ni a la red. */
-  const CODIGO_WORKER = `
+  const SIN_RED = `
     /* 4.5.3: sin red. Se borran de toda la cadena de prototipos (no basta con tapar «self.fetch»: el prototipo
        la conserva) y se fijan como indefinidas y no configurables. Sin Worker, tampoco hay un worker anidado con red. */
     for (const n of ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'importScripts', 'Worker', 'SharedWorker', 'WebTransport', 'Request', 'BroadcastChannel']) {
       for (let o = self; o; o = Object.getPrototypeOf(o)) { try { delete o[n]; } catch (e) {} }
       try { Object.defineProperty(self, n, { value: undefined, writable: false, configurable: false }); } catch (e) {}
-    }
+    }`;
+  const CODIGO_WORKER = SIN_RED + `
     const lineas = []; const MAX = 500;
     const ser = (v, vistos = new WeakSet()) => {
       if (v === undefined) return 'undefined'; if (v === null) return 'null';
@@ -370,22 +371,55 @@
     const registrar = (nivel) => (...a) => { if (lineas.length < MAX) lineas.push({ nivel, texto: a.map(x => ser(x)).join(' ') }); else if (lineas.length === MAX) lineas.push({ nivel: 'warn', texto: '… salida truncada' }); };
     console.log = registrar('info'); console.info = registrar('info'); console.warn = registrar('warn'); console.error = registrar('error');
     console.table = (d) => registrar('info')(d); console.clear = () => { lineas.length = 0; };
+    /* 4.2.3: línea del error en el código del estudiante (new Function agrega dos líneas de encabezado). */
+    const lineaDe = (e) => { const m = /<anonymous>:(\\d+):(\\d+)/.exec(e && e.stack || ''); return m && Number(m[1]) > 2 ? { linea: Number(m[1]) - 2, columna: Number(m[2]) } : {}; };
+    const texto = (e) => (e && e.name ? e.name + ': ' : '') + (e && e.message || e);
+    /* Errores de lo que corre después (promesas rechazadas, setTimeout): antes se perdían al cerrar el worker. */
+    let tardio = null;
+    self.addEventListener('unhandledrejection', (ev) => { ev.preventDefault(); const e = ev.reason; tardio = tardio || Object.assign({ mensaje: 'Promesa rechazada sin capturar: ' + texto(e) }, lineaDe(e)); lineas.push({ nivel: 'error', texto: 'Promesa rechazada: ' + texto(e) }); });
+    self.addEventListener('error', (ev) => { ev.preventDefault(); const e = ev.error || ev.message; tardio = tardio || Object.assign({ mensaje: texto(e) }, lineaDe(e)); lineas.push({ nivel: 'error', texto: texto(e) }); });
     self.onmessage = (ev) => {
       const { codigo, entrada } = ev.data;
       try { new Function(codigo); } catch (e) { self.postMessage({ estado: 'no_compila', mensaje: e.message, consola: lineas }); return; }
+      let res;
       try {
         const fn = new Function(codigo + '\\n;return (' + (entrada || 'undefined') + ');');
         const r = fn();
-        self.postMessage({ estado: lineas.length || r !== undefined ? 'con_salida' : 'sin_salida', retorno: r === undefined ? undefined : ser(r), consola: lineas });
-      } catch (e) { self.postMessage({ estado: 'error', mensaje: (e && e.name ? e.name + ': ' : '') + (e && e.message || e), consola: lineas }); }
+        res = { estado: lineas.length || r !== undefined ? 'con_salida' : 'sin_salida', retorno: r === undefined ? undefined : ser(r) };
+      } catch (e) { res = Object.assign({ estado: 'error', mensaje: texto(e) }, lineaDe(e)); }
+      setTimeout(() => {
+        if (tardio && res.estado !== 'error') res = Object.assign(res, { estado: 'error' }, tardio);
+        self.postMessage(Object.assign(res, { consola: lineas }));
+      }, 50);
     };`;
   const URL_WORKER = URL.createObjectURL(new Blob([CODIGO_WORKER], { type: 'text/javascript' }));
 
+  const ANTES = (SIN_RED.match(/\n/g) || []).length + 2;
+  function lineaSintaxis(codigo) {
+    return new Promise(ok => {
+      const w = new Worker(URL.createObjectURL(new Blob([SIN_RED + '\n(function () {\n' + codigo + '\n})'], { type: 'text/javascript' })));
+      const fin = (v) => { clearTimeout(t); w.terminate(); ok(v); };
+      const t = setTimeout(() => fin({}), 600);
+      w.onerror = (ev) => { ev.preventDefault(); fin(ev.lineno > ANTES ? { linea: ev.lineno - ANTES, columna: ev.colno } : {}); };
+    });
+  }
+  /* «Línea 3: …» y la línea citada, para que el estudiante vea dónde está el error. */
+  function conLinea(r, codigo) {
+    if (!r.linea || !['error', 'no_compila'].includes(r.estado)) return r;
+    const fragmento = (codigo.split('\n')[r.linea - 1] || '').trim();
+    r.mensaje = 'Línea ' + r.linea + ': ' + r.mensaje + (fragmento ? ' → «' + fragmento.slice(0, 80) + '»' : '');
+    return r;
+  }
   function ejecutar(codigo, entrada, limite) {
     return new Promise(res => {
       const w = new Worker(URL_WORKER);
       const t = setTimeout(() => { w.terminate(); res({ estado: 'tiempo', mensaje: 'Se detuvo a los ' + (limite / 1000) + ' s: ¿un ciclo que no termina?', consola: [] }); }, limite);
-      w.onmessage = (ev) => { clearTimeout(t); w.terminate(); res(traducir(ev.data, ['javascript'])); };
+      w.onmessage = async (ev) => {
+        clearTimeout(t); w.terminate();
+        const r = ev.data;
+        if (r.estado === 'no_compila') Object.assign(r, await lineaSintaxis(codigo));
+        res(traducir(conLinea(r, codigo), ['javascript']));
+      };
       w.onerror = (ev) => { clearTimeout(t); w.terminate(); res(traducir({ estado: 'error', mensaje: ev.message, consola: [] }, ['javascript'])); ev.preventDefault(); };
       w.postMessage({ codigo, entrada });
     });

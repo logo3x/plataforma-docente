@@ -62,7 +62,8 @@
                     <tr>
                         <td>{{ $c['estudiante']->nombreCompleto() }}</td>
                         <td>{{ $c['division'] }} › {{ $c['componente'] }} › {{ $c['actividad'] }}</td>
-                        <td>@if ($c['tipo'] === 'cero')<span class="estado estado-reprobado">0 Cero</span>@else<span class="estado estado-sin_actividades">∅ Vacía</span>@endif</td>
+                        <td>@if ($c['tipo'] === 'cero')<span class="estado estado-reprobado">0 Cero</span>@else<span class="estado estado-sin_actividades">∅ Vacía</span>@endif
+                            @if ($c['companeros_con_nota']->isNotEmpty())<div class="aviso aviso-info" style="margin:.3rem 0 0;padding:.3rem .5rem">Revisar: {{ $c['companeros_con_nota']->map->nombreCompleto()->join(', ') }}, con quien ha entregado en grupo, sí tiene nota. ¿Un trabajo conjunto que subió uno solo?</div>@endif</td>
                         <td class="num">{{ $c['definitiva'] === null ? '—' : $escala->mostrar($c['definitiva']) }}</td>
                         <td><a href="{{ route('registro', [$grupo, 'vista' => $c['division_id']]) }}">Ir al registro</a></td>
                     </tr>

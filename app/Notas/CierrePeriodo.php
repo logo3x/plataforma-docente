@@ -2,6 +2,7 @@
 
 namespace App\Notas;
 
+use App\Models\Entrega;
 use App\Models\Estudiante;
 use App\Models\Grupo;
 use Brick\Math\BigDecimal;
@@ -16,7 +17,7 @@ final class CierrePeriodo
 
     private CalculadoraNotas $calc;
 
-    public function __construct(Grupo $grupo, private readonly string $margen = '0.1')
+    public function __construct(private readonly Grupo $grupo, private readonly string $margen = '0.1')
     {
         $this->tablero = new TableroNotas($grupo);
         $this->calc = new CalculadoraNotas($this->tablero->escala());
@@ -81,6 +82,7 @@ final class CierrePeriodo
         $escala = $this->tablero->escala();
         $estudiantes = $this->tablero->estudiantes();
         $items = [];
+        $companeros = $this->companeros();
 
         foreach ($this->tablero->pestanas() as $d) {
             foreach ($d->componentes as $c) {
@@ -100,7 +102,14 @@ final class CierrePeriodo
                         }
 
                         $def = $this->tablero->resultado($d, $e)->definitiva;
+                        // 3.7.9: un compañero de entregas grupales del periodo sí tiene nota aquí: ¿trabajo conjunto subido por uno solo?
+                        $conNota = collect($companeros[$e->id] ?? [])->filter(function ($otro) use ($a, $escala) {
+                            $n = $this->tablero->notaEfectiva($a->id, $otro->id);
+
+                            return $n !== null && BigDecimal::of($n)->isGreaterThan($escala->minimo);
+                        })->values();
                         $items[] = [
+                            'companeros_con_nota' => $conNota,
                             'estudiante' => $e,
                             'division' => $d->nombre,
                             'division_id' => $d->id,
@@ -120,6 +129,30 @@ final class CierrePeriodo
         usort($items, fn ($a, $b) => BigDecimal::of($a['distancia'])->compareTo($b['distancia']) ?: strcmp($a['estudiante']->apellidos, $b['estudiante']->apellidos));
 
         return $items;
+    }
+
+    /**
+     * Con quién ha entregado trabajos grupales cada estudiante en este periodo.
+     *
+     * @return array<int, array<int, Estudiante>>
+     */
+    private function companeros(): array
+    {
+        $ids = $this->tablero->estudiantes()->pluck('id')->all();
+        $mapa = [];
+        Entrega::query()->whereHas('actividad.componente.division', fn ($q) => $q->where('dictado_id', $this->grupo->dictado_id))
+            ->has('integrantes', '>', 1)->with('integrantes')->get()
+            ->each(function (Entrega $en) use (&$mapa, $ids) {
+                foreach ($en->integrantes as $x) {
+                    foreach ($en->integrantes as $y) {
+                        if ($x->id !== $y->id && in_array($x->id, $ids, true)) {
+                            $mapa[$x->id][$y->id] = $y;
+                        }
+                    }
+                }
+            });
+
+        return $mapa;
     }
 
     /**

@@ -65,6 +65,15 @@ class AsignacionGrupalTest extends TestCase
         $this->assertSame('4.0000', Nota::query()->where('estudiante_id', $trio[0]->id)->value('valor'));
         $this->assertStringContainsString('Tope de 4.0: grupo de 3 integrantes', Nota::query()->where('estudiante_id', $trio[0]->id)->sole()->cambios->last()->motivo);
         $this->assertSame('4.8000', Nota::query()->where('estudiante_id', $pareja[0]->id)->value('valor'));
+
+        // 6.8.6 y 6.8.7.1: el informe dice quién subió la entrega y explica el tope
+        $this->actingAs($this->docente);
+        $html = preg_replace('/\s+/', ' ', strip_tags($this->get(route('calificador.devolucion.ver', [$actividad, $trio[1]]))->assertOk()->getContent()));
+        $this->assertStringContainsString('la subió '.$trio[0]->nombreCompleto(), $html);
+        $this->assertStringContainsString('La nota tiene un tope de 4.0: el grupo tuvo 3 integrantes y la actividad era para 2.', $html);
+        $html = preg_replace('/\s+/', ' ', strip_tags($this->get(route('calificador.devolucion.ver', [$actividad, $trio[0]]))->getContent()));
+        $this->assertStringContainsString('la subió usted', $html);
+        $this->assertStringNotContainsString('tope', preg_replace('/\s+/', ' ', strip_tags($this->get(route('calificador.devolucion.ver', [$actividad, $pareja[0]]))->getContent())));
     }
 
     #[Test]

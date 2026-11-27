@@ -24,15 +24,16 @@
         @else
         @switch($p->tipo)
             @case('unica')
-                <p>Respondió: <strong>{{ isset($d['respuesta']) ? $d['respuesta'].') '.($p->enunciado['opciones'][$d['respuesta']] ?? '') : 'sin responder' }}</strong><br>
-                    Correcta: <strong>{{ $d['correcta'] }}) {{ $p->enunciado['opciones'][$d['correcta']] ?? '' }}</strong></p>
+                {{-- 5.4.3: cada estudiante vio las opciones en otro orden: se cita el texto, no la letra --}}
+                <p>Respondió: <strong>{{ isset($d['respuesta']) ? ($p->enunciado['opciones'][$d['respuesta']] ?? $d['respuesta']) : 'sin responder' }}</strong><br>
+                    Correcta: <strong>{{ $p->enunciado['opciones'][$d['correcta']] ?? $d['correcta'] }}</strong></p>
                 @break
             @case('vf')
                 <p>Respondió: <strong>{{ is_bool($d['respuesta'] ?? null) ? ($d['respuesta'] ? 'Verdadero' : 'Falso') : 'sin responder' }}</strong> · Correcta: <strong>{{ $d['correcta'] ? 'Verdadero' : 'Falso' }}</strong></p>
                 @break
             @case('multiple')
                 <table><thead><tr><th>Opción</th><th>Marcó</th><th>Debía marcarse</th><th></th></tr></thead><tbody>
-                    @foreach ($d['decisiones'] ?? [] as $x)<tr><td>{{ $x['opcion'] }}) {{ $p->enunciado['opciones'][$x['opcion']] ?? '' }}</td><td>{{ $x['marcada'] ? 'Sí' : 'No' }}</td><td>{{ $x['debia_marcarse'] ? 'Sí' : 'No' }}</td><td>{{ $x['acierto'] ? '✓' : '✗' }}</td></tr>@endforeach
+                    @foreach ($d['decisiones'] ?? [] as $x)<tr><td>{{ $p->enunciado['opciones'][$x['opcion']] ?? $x['opcion'] }}</td><td>{{ $x['marcada'] ? 'Sí' : 'No' }}</td><td>{{ $x['debia_marcarse'] ? 'Sí' : 'No' }}</td><td>{{ $x['acierto'] ? '✓' : '✗' }}</td></tr>@endforeach
                 </tbody></table>
                 @if ($d['sin_responder'] ?? false)<p class="suave">No marcó ninguna opción: cuenta como no respondida.</p>@endif
                 @break

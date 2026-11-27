@@ -24,6 +24,13 @@
   // Bits altos del hash: los bajos de FNV-1a casi no mezclan (el último solo depende de la paridad de los caracteres)
   function versionPara(doc) { const v = D.versiones && D.versiones.length ? D.versiones : ['A']; return v[(semilla(doc + '|' + D.sigla) >>> 16) % v.length]; }
   function semilla(txt) { let h = 2166136261; for (const c of txt) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+  /* 5.4.3: cada estudiante ve las opciones en otro orden (siempre el mismo para él). No se barajan las que dependen
+     del orden («todas las anteriores», «ninguna de las anteriores»). Las letras son de posición; se responde con la clave. */
+  function opcionesDe(it, id) {
+    const e = Object.entries(it.opciones || it.derecha || {});
+    return e.some(([, t]) => /anteriores|todas las opciones|ninguna de las/i.test(String(t))) ? e : barajar(e, E.documento + '|' + id + '|op');
+  }
+  const LETRA = (i) => 'abcdefghijklmnopqrstuvwxyz'[i] || String(i + 1);
   function barajar(lista, txt) {
     let s = semilla(txt); const a = lista.slice();
     for (let i = a.length - 1; i > 0; i--) { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; const j = s % (i + 1); [a[i], a[j]] = [a[j], a[i]]; }
@@ -102,18 +109,18 @@
       const fijar = (v) => { r[id] = v; guardar(); };
 
       if (it.tipo === 'unica') {
-        Object.entries(it.opciones).forEach(([k, t]) => caja.append(el('label', {}, el('input', { type: 'radio', name: 'i' + id, value: k, checked: r[id] === k, onchange: () => fijar(k) }), ' ' + k + ') ' + t)));
+        opcionesDe(it, id).forEach(([k, t], i) => caja.append(el('label', {}, el('input', { type: 'radio', name: 'i' + id, value: k, checked: r[id] === k, onchange: () => fijar(k) }), ' ' + LETRA(i) + ') ' + t)));
       } else if (it.tipo === 'vf') {
         [['true', 'Verdadero'], ['false', 'Falso']].forEach(([v, t]) => caja.append(el('label', {}, el('input', { type: 'radio', name: 'i' + id, checked: r[id] === (v === 'true'), onchange: () => fijar(v === 'true') }), ' ' + t)));
       } else if (it.tipo === 'multiple') {
         caja.append(el('p', { class: 'peso', texto: 'Marque todas las correctas.' }));
-        Object.entries(it.opciones).forEach(([k, t]) => caja.append(el('label', {}, el('input', { type: 'checkbox', value: k, checked: (r[id] || []).includes(k),
-          onchange: () => fijar([...caja.querySelectorAll('input:checked')].map(x => x.value)) }), ' ' + k + ') ' + t)));
+        opcionesDe(it, id).forEach(([k, t], i) => caja.append(el('label', {}, el('input', { type: 'checkbox', value: k, checked: (r[id] || []).includes(k),
+          onchange: () => fijar([...caja.querySelectorAll('input:checked')].map(x => x.value)) }), ' ' + LETRA(i) + ') ' + t)));
       } else if (it.tipo === 'emparejar') {
-        const der = Object.entries(it.derecha);
+        const der = opcionesDe(it, id);
         const tabla = el('table', {}, Object.entries(it.izquierda).map(([k, t]) => el('tr', {}, el('td', { texto: k + '. ' + t }), el('td', {},
           el('select', { 'aria-label': 'Pareja de ' + t, onchange: (ev) => { const v = Object.assign({}, r[id] || {}); v[k] = ev.target.value || null; fijar(v); } },
-            el('option', { value: '', texto: '—' }), der.map(([dk, dt]) => el('option', { value: dk, selected: (r[id] || {})[k] === dk, texto: dk + ') ' + dt })))))));
+            el('option', { value: '', texto: '—' }), der.map(([dk, dt], i) => el('option', { value: dk, selected: (r[id] || {})[k] === dk, texto: LETRA(i) + ') ' + dt })))))));
         caja.append(tabla);
       } else if (it.tipo === 'ordenar') {
         const pasos = barajar(Object.entries(it.pasos), E.documento + id);

@@ -140,6 +140,24 @@ class CierreYExportacionTest extends TestCase
     }
 
     #[Test]
+    public function marca_el_cero_de_quien_entrego_en_pareja_con_alguien_que_si_tiene_nota(): void
+    {
+        // 3.7.9: Ana y Beto entregaron juntos el taller 1; en el taller 2 Beto tiene nota y Ana cero
+        $r = app(RegistroNotas::class);
+        $t1 = $this->crearActividad($this->trabajos, ['es_grupal' => true]);
+        $t2 = $this->crearActividad($this->trabajos, ['es_grupal' => true]);
+        $this->crearEntrega($t1, $this->e[0], $this->e[1]);
+        $r->asignar($t2, $this->e[0], '0', 'digitada');
+        $r->asignar($t2, $this->e[1], '4', 'digitada');
+        $r->asignar($t2, $this->e[2], '0', 'digitada');
+
+        $ceros = collect((new CierrePeriodo($this->grupo))->ceros())->keyBy(fn ($c) => $c['estudiante']->documento);
+        $this->assertSame([$this->e[1]->id], $ceros['1']['companeros_con_nota']->pluck('id')->all());
+        $this->assertTrue($ceros['3']['companeros_con_nota']->isEmpty());
+        $this->get(route('cierre', $this->grupo))->assertOk()->assertSee('con quien ha entregado en grupo, sí tiene nota');
+    }
+
+    #[Test]
     public function editar_estudiante_corrige_el_nombre_y_retirar_conserva_notas(): void
     {
         $sinComa = $this->crearEstudiante('9', 'PEREZ LUIS', '');

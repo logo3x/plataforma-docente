@@ -26,7 +26,8 @@ main { max-width: 900px; }
         <div class="suave">{{ $materia->nombre }} · {{ $dictado->periodo }}@if (filled(config('plataforma.institucion'))) · {{ config('plataforma.institucion') }}@endif</div>
         <h1 style="margin:.25rem 0">{{ $actividad->nombre }}</h1>
         <div><strong>{{ $estudiante->nombreCompleto() }}</strong> · documento {{ $estudiante->documento }}
-            @if ($companeros->isNotEmpty())<br><span class="suave">Entrega grupal con {{ $companeros->map->nombreCompleto()->join(', ') }}</span>@endif</div>
+            @if ($companeros->isNotEmpty())<br><span class="suave">Entrega grupal con {{ $companeros->map->nombreCompleto()->join(', ') }}@if ($subidaPor ?? null) · la subió {{ $subidaPor->id === $estudiante->id ? 'usted' : $subidaPor->nombreCompleto() }}@endif</span>@endif
+            @if ($tope ?? null)<div class="aviso aviso-info" style="margin-top:.5rem">La nota tiene un tope de {{ $tope['tope'] }}: el grupo tuvo {{ $tope['integrantes'] }} integrantes y la actividad era para {{ $tope['para'] }}.</div>@endif</div>
     </div>
 
     <section class="tarjeta fila" style="justify-content:space-between;align-items:center">

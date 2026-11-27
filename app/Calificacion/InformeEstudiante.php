@@ -45,6 +45,10 @@ final class InformeEstudiante
             'escala' => $escala,
             'entrega' => $entrega,
             'companeros' => $entrega?->integrantes->reject(fn ($i) => $i->id === $estudiante->id)->values() ?? collect(),
+            // 6.8.6 y 6.8.7.1: quién subió la entrega grupal y, si el grupo excedió el tamaño, el tope aplicado
+            'subidaPor' => $entrega && $entrega->integrantes->count() > 1 ? $entrega->integrantes->firstWhere('id', $entrega->subida_por_id) : null,
+            'tope' => $entrega && $actividad->tamano_grupo !== null && $actividad->tope_exceso !== null && $entrega->integrantes->count() > $actividad->tamano_grupo
+                ? ['tope' => $escala->mostrar($actividad->tope_exceso), 'integrantes' => $entrega->integrantes->count(), 'para' => $actividad->tamano_grupo] : null,
             'vigente' => $vigente,
             'original' => $original,
             'segunda' => $segunda,

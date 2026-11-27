@@ -89,7 +89,7 @@ class DevolucionTest extends TestCase
 
         $this->assertStringContainsString('ARIAS, ANA', $html);
         $this->assertMatchesRegularExpression('/nota-grande">5\.0</', $html);           // 3 + 2
-        $this->assertStringContainsString('Correcta: <strong>b) Pila</strong>', $html);
+        $this->assertStringContainsString('Correcta: <strong>Pila</strong>', $html);   // 5.4.3: el texto, no la letra (cada uno vio otro orden)
         $this->assertStringContainsString('En una pila sale primero el último que entró.', $html);
         $this->assertStringContainsString('Comentario para ANA', $html);
         foreach (['BELTRAN', 'BETO', 'Comentario para BETO', 'La fila del banco', 'Salidas', 'salidas', 'Pegados'] as $ajeno) {

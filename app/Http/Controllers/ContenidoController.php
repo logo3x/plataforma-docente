@@ -52,16 +52,26 @@ class ContenidoController extends Controller
                 $avisos[] = "{$f->getClientOriginalName()}: casi no tiene texto (¿es un PDF escaneado?). No sirve como contexto.";
             }
             $sha = hash_file('sha256', $f->getRealPath());
+            $titulo = pathinfo($f->getClientOriginalName(), PATHINFO_FILENAME);
+            // 9.1: el mismo material cargado de nuevo es una versión nueva; si no cambió, no se duplica
+            $previas = $materia->contenidos()->where('titulo', $titulo);
+            if ((clone $previas)->where('sha256', $sha)->exists()) {
+                $avisos[] = "{$f->getClientOriginalName()}: ya estaba cargado sin cambios; no se duplicó.";
+
+                continue;
+            }
+            $version = (int) (clone $previas)->max('version') + 1;
             $ruta = $f->storeAs("contenido/{$materia->id}", $sha.'.'.$ext, 'local');
             $materia->contenidos()->create([
-                'titulo' => pathinfo($f->getClientOriginalName(), PATHINFO_FILENAME),
+                'version' => $version,
+                'titulo' => $titulo,
                 'tipo' => $request->input('tipo'),
                 'ruta' => $ruta,
                 'mime' => $f->getClientMimeType(),
                 'sha256' => $sha,
                 'texto_extraido' => $texto,
             ]);
-            $cargados[] = $f->getClientOriginalName();
+            $cargados[] = $f->getClientOriginalName().($version > 1 ? " (versión {$version})" : '');
         }
 
         return back()->with('estado', count($cargados).' archivo(s) cargado(s).')->with('avisos', $avisos);

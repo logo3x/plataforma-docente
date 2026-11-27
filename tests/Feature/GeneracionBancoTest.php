@@ -8,6 +8,7 @@ use App\Models\Artefacto;
 use App\Models\ConfigMotorIa;
 use App\Models\Contenido;
 use App\Models\GeneracionIa;
+use App\Models\PlantillaPrompt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -221,12 +222,22 @@ class GeneracionBancoTest extends TestCase
         $notas = Contenido::query()->where('titulo', 'notas')->sole();
         $original = file_get_contents($txt);
         $this->assertSame($original, $this->get(route('contenido.descargar', $notas))->assertOk()->assertDownload('notas.txt')->streamedContent());
-        $this->post(route('contenido.store', $this->materia), ['tipo' => 'guia', 'archivos' => [new UploadedFile($txt, 'notas.txt', 'text/plain', null, true)]]);
+        $this->post(route('contenido.store', $this->materia), ['tipo' => 'guia', 'archivos' => [new UploadedFile($txt, 'notas.txt', 'text/plain', null, true)]])
+            ->assertSessionHas('avisos', fn ($a) => in_array('notas.txt: ya estaba cargado sin cambios; no se duplicó.', $a, true));
+        $this->post(route('contenido.store', $this->materia), ['tipo' => 'guia', 'archivos' => [new UploadedFile($txt, 'notas de otro curso.txt', 'text/plain', null, true)]]);
         $this->delete(route('contenido.destroy', $notas))->assertRedirect();
-        $copia = Contenido::query()->where('titulo', 'notas')->sole();
+        $copia = Contenido::query()->where('titulo', 'notas de otro curso')->sole();
         $this->assertSame($original, $this->get(route('contenido.descargar', $copia))->assertOk()->streamedContent());
         $this->actingAs(User::factory()->create());
         $this->get(route('contenido.descargar', $copia))->assertForbidden();
+        $this->actingAs($this->docente);
+
+        // 9.1: el mismo material, cambiado, entra como versión nueva
+        file_put_contents($txt, 'Recorridos en profundidad y en amplitud, con ejemplos.');
+        $this->post(route('contenido.store', $this->materia), ['tipo' => 'guia', 'archivos' => [new UploadedFile($txt, 'notas de otro curso.txt', 'text/plain', null, true)]])
+            ->assertSessionHas('estado', '1 archivo(s) cargado(s).');
+        $this->assertSame([1, 2], Contenido::query()->where('titulo', 'notas de otro curso')->orderBy('id')->pluck('version')->all());
+        $this->get(route('contenido.index', $this->materia))->assertSee('versión 2');
     }
 
     #[Test]
@@ -239,8 +250,18 @@ class GeneracionBancoTest extends TestCase
         $this->assertStringContainsString('MATERIA V2: Estructura de Datos', $p['sistema']);
         $this->assertSame(2, $p['plantillas']['materia']);
 
-        $this->post(route('ia.plantillas.guardar'), ['clave' => 'materia', 'cuerpo' => 'ROTA: {{no_existe}}']);
-        $this->post(route('generacion.preparar', $this->materia), $this->formulario())->assertSessionHasErrors();
+        // 8.4.1: un campo que no existe se rechaza al guardar, no al generar
+        $this->post(route('ia.plantillas.guardar'), ['clave' => 'materia', 'cuerpo' => 'ROTA: {{no_existe}}'])
+            ->assertSessionHasErrors(['cuerpo' => 'La plantilla usa campos que no existen: {{no_existe}}. Los disponibles son {{materia}}, {{codigo_materia}}, {{unidades}}, {{alcance_grupo}}, {{herramientas}}, {{modalidad}}, {{tono}}, {{tipo_verificacion}}, {{glosario}}.']);
+        $this->assertSame(2, $this->post(route('generacion.preparar', $this->materia), $this->formulario())->viewData('prompt')['plantillas']['materia']);
+
+        // 8.4.4: volver a la versión 1 la deja como versión 3, sin borrar la historia
+        $v1 = PlantillaPrompt::query()->where('clave', 'materia')->where('version', 1)->sole();
+        $this->get(route('ia.plantillas'))->assertSee('Versiones anteriores (1)')->assertSee('Volver a esta versión');
+        $this->post(route('ia.plantillas.volver'), ['version_id' => $v1->id])->assertSessionHas('estado', 'Plantilla «materia»: se volvió a la versión 1 (queda como versión 3).');
+        $this->assertStringContainsString('MATERIA PROPIA: Estructura de Datos', $this->post(route('generacion.preparar', $this->materia), $this->formulario())->viewData('prompt')['sistema']);
+        $this->actingAs(User::factory()->create());
+        $this->post(route('ia.plantillas.volver'), ['version_id' => $v1->id])->assertNotFound();
     }
 
     #[Test]

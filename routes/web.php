@@ -119,6 +119,7 @@ Route::middleware('auth')->group(function () {
         Route::post('plantillas/perfil', [PlantillasIaController::class, 'perfil'])->name('plantillas.perfil');
         Route::post('plantillas', [PlantillasIaController::class, 'plantilla'])->name('plantillas.guardar');
         Route::post('plantillas/restaurar', [PlantillasIaController::class, 'restaurar'])->name('plantillas.restaurar');
+        Route::post('plantillas/volver', [PlantillasIaController::class, 'volver'])->name('plantillas.volver');
     });
     Route::get('/materias/{materia}/estilo', [PlantillasIaController::class, 'estilo'])->name('materias.estilo');
     Route::put('/materias/{materia}/estilo', [PlantillasIaController::class, 'guardarEstilo'])->name('materias.estilo.guardar');

@@ -27,7 +27,7 @@
             <tbody>
                 @foreach ($contenidos as $c)
                     <tr>
-                        <td><a href="{{ route('contenido.show', $c) }}">{{ $c->titulo }}</a> · <a href="{{ route('contenido.descargar', $c) }}" aria-label="Descargar «{{ $c->titulo }}»">Descargar</a></td>
+                         <td><a href="{{ route('contenido.show', $c) }}">{{ $c->titulo }}</a>@if ($c->version > 1) <span class="suave">versión {{ $c->version }}</span>@endif · <a href="{{ route('contenido.descargar', $c) }}" aria-label="Descargar «{{ $c->titulo }}»">Descargar</a></td>
                         <td>{{ $c->tipo }}</td>
                         <td class="num">{{ number_format(mb_strlen((string) $c->texto_extraido), 0, ',', '.') }} caracteres</td>
                         <td>{{ $c->created_at->format('Y-m-d') }}</td>

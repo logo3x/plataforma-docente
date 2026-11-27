@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\IA\ConstructorPrompt;
 use App\Models\Materia;
+use App\Models\PlantillaPrompt;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -39,6 +40,8 @@ class PlantillasIaController extends Controller
         return view('ia.plantillas', [
             'perfil' => $prompts->perfil($request->user()),
             'plantillas' => collect(array_keys(self::CLAVES))->mapWithKeys(fn ($c) => [$c => $prompts->plantilla($request->user(), $c)]),
+            'versiones' => PlantillaPrompt::query()->where('user_id', $request->user()->id)->whereNull('materia_id')
+                ->orderByDesc('version')->get(['id', 'clave', 'version', 'cuerpo', 'created_at'])->groupBy('clave'),
         ]);
     }
 
@@ -53,9 +56,36 @@ class PlantillasIaController extends Controller
     public function plantilla(Request $request, ConstructorPrompt $prompts): RedirectResponse
     {
         $d = $request->validate(['clave' => ['required', Rule::in(array_keys(self::CLAVES))], 'cuerpo' => ['required', 'string', 'max:20000']]);
+        // 8.4.1: un campo que la plataforma no llena haría fallar el prompt al generar; se avisa al guardar
+        $disponibles = self::campos(config("ia.plantillas.{$d['clave']}"));
+        $usados = self::campos($d['cuerpo']);
+        if ($desconocidos = array_diff($usados, $disponibles)) {
+            return back()->withInput()->withErrors(['cuerpo' => 'La plantilla usa campos que no existen: {{'.implode('}}, {{', $desconocidos).'}}. '
+                .'Los disponibles son {{'.implode('}}, {{', $disponibles).'}}.'])->with('clave_error', $d['clave']);
+        }
         $p = $prompts->guardarPlantilla($request->user(), $d['clave'], $d['cuerpo']);
+        $faltan = array_diff($disponibles, $usados);
 
-        return back()->with('estado', "Plantilla «{$d['clave']}» guardada como versión {$p->version}.");
+        return back()->with('estado', "Plantilla «{$d['clave']}» guardada como versión {$p->version}."
+            .($faltan ? ' Ya no usa {{'.implode('}}, {{', $faltan).'}}: la IA no recibirá ese dato.' : ''));
+    }
+
+    /** 8.4.4: vuelve a una versión anterior; queda como versión nueva, sin borrar la historia. */
+    public function volver(Request $request, ConstructorPrompt $prompts): RedirectResponse
+    {
+        $d = $request->validate(['version_id' => ['required', 'integer']]);
+        $anterior = PlantillaPrompt::query()->where('user_id', $request->user()->id)->whereNull('materia_id')->findOrFail($d['version_id']);
+        $p = $prompts->guardarPlantilla($request->user(), $anterior->clave, $anterior->cuerpo);
+
+        return back()->with('estado', "Plantilla «{$anterior->clave}»: se volvió a la versión {$anterior->version} (queda como versión {$p->version}).");
+    }
+
+    /** @return array<int, string> campos {{…}} de una plantilla, sin repetir */
+    public static function campos(?string $cuerpo): array
+    {
+        preg_match_all('/\{\{\s*(\w+)\s*\}\}/', (string) $cuerpo, $m);
+
+        return array_values(array_unique($m[1]));
     }
 
     public function restaurar(Request $request, ConstructorPrompt $prompts): RedirectResponse

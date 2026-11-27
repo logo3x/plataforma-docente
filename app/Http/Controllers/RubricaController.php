@@ -7,6 +7,7 @@ use App\Evaluacion\Rubricas;
 use App\IA\MotorNoDisponible;
 use App\IA\MotorNoPermitido;
 use App\IA\RespuestaRechazada;
+use App\Material\Publicador;
 use App\Models\ConfigMotorIa;
 use App\Models\GeneracionIa;
 use App\Models\Materia;
@@ -15,6 +16,7 @@ use App\Models\Respuesta;
 use App\Models\Rubrica;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
@@ -250,5 +252,14 @@ class RubricaController extends Controller
         abort_if($g->materia === null || $g->tarea !== 'rubrica', 404);
         Gate::authorize('gestionar', $g->materia);
         abort_if($borrador && $g->estado !== 'borrador', 409, 'Este borrador ya fue aprobado o descartado.');
+    }
+
+    /** 7.8: la rúbrica como documento HTML autocontenido o de Word. */
+    public function exportar(Rubrica $rubrica, string $formato, Publicador $publicador): Response
+    {
+        Gate::authorize('gestionar', $rubrica->materia);
+        $d = $publicador->documento(view('rubricas.documento', ['r' => $rubrica])->render(), $rubrica->titulo, $rubrica->materia, $formato);
+
+        return response($d['contenido'], 200, ['Content-Type' => $d['mime'], 'Content-Disposition' => 'attachment; filename="'.$d['nombre'].'"']);
     }
 }

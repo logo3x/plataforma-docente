@@ -8,6 +8,7 @@ use App\Http\Controllers\EjemploController;
 use App\Http\Controllers\PresentacionController;
 use App\Http\Controllers\ProyectoController;
 use App\Http\Controllers\VocabularioController;
+use App\Models\Materia;
 use App\Models\Material;
 use App\Models\Publicacion;
 use DOMDocument;
@@ -89,6 +90,31 @@ final class Publicador
         $controlador = self::CONTROLADORES[$m->tipo] ?? throw new InvalidArgumentException('Este tipo de material no se publica.');
         $html = app($controlador)->show(Request::create('/', 'GET', ['version' => 'estudiante']), $m)->render();
 
+        return $this->limpiar($html);
+    }
+
+    /**
+     * 7.8: exporta a HTML autocontenido o Word algo que no es material de clase (una rúbrica, una unidad didáctica),
+     * con una ficha mínima: no es la publicación institucional, es el documento para el docente o para compartir.
+     *
+     * @return array{nombre: string, contenido: string, mime: string}
+     */
+    public function documento(string $cuerpo, string $titulo, Materia $materia, string $formato): array
+    {
+        $ficha = ['titulo' => $titulo, 'autor' => $materia->docente->name, 'institucion' => (string) config('publicacion.institucion'),
+            'materia' => $materia->nombre, 'idioma' => 'es', 'licencia' => (string) config('publicacion.licencia')];
+        $base = Str::slug(Str::limit($titulo, 60, ''), '-') ?: 'documento';
+
+        return match ($formato) {
+            'html' => ['nombre' => "{$base}.html", 'contenido' => $this->html($cuerpo, $ficha, false), 'mime' => 'text/html; charset=UTF-8'],
+            'docx' => ['nombre' => "{$base}.docx", 'contenido' => $this->docx($cuerpo, $ficha), 'mime' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            default => throw new InvalidArgumentException('Formato no disponible.'),
+        };
+    }
+
+    /** El artículo de una página, sin lo que es de la plataforma: navegación, botones, formularios, avisos, enlaces internos. */
+    public function limpiar(string $html): string
+    {
         $doc = new DOMDocument;
         @$doc->loadHTML('<?xml encoding="UTF-8">'.$html, LIBXML_NOERROR | LIBXML_NOWARNING);
         $xp = new DOMXPath($doc);
@@ -228,7 +254,7 @@ XML;
         $zip->addFromString('word/document.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'
             .$cuerpoXml.'<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1418" w:right="1418" w:bottom="1418" w:left="1418" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>');
         $zip->addFromString('docProps/core.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            ."<dc:title>{$x($ficha['titulo'])}</dc:title><dc:creator>{$x($ficha['autor'])}</dc:creator><dc:description>{$x($ficha['descripcion'])}</dc:description>"
+            ."<dc:title>{$x($ficha['titulo'])}</dc:title><dc:creator>{$x($ficha['autor'])}</dc:creator><dc:description>{$x($ficha['descripcion'] ?? '')}</dc:description>"
             ."<cp:keywords>{$x($ficha['palabras_clave'] ?? '')}</cp:keywords><dc:language>{$x($ficha['idioma'] ?? 'es')}</dc:language>"
             .'<dcterms:created xsi:type="dcterms:W3CDTF">'.now()->toIso8601ZuluString().'</dcterms:created></cp:coreProperties>');
         $zip->close();
@@ -280,12 +306,52 @@ XML;
         }
     }
 
+    /** Una tabla de Word de verdad, con bordes y la fila de encabezado en negrita y repetida en cada página. */
     private function tabla(DOMElement $t, array &$p): void
     {
+        $filas = [];
         foreach ((new DOMXPath($t->ownerDocument))->query('.//tr', $t) as $tr) {
-            $p[] = $this->parrafo(collect(iterator_to_array($tr->childNodes))->filter(fn ($c) => $c instanceof DOMElement)
-                ->map(fn ($c) => trim(preg_replace('/\s+/u', ' ', $c->textContent)))->join(' | '));
+            $celdas = collect(iterator_to_array($tr->childNodes))->filter(fn ($c) => $c instanceof DOMElement && in_array($c->nodeName, ['td', 'th'], true))->values();
+            $filas[] = ['encabezado' => $celdas->isNotEmpty() && $celdas->every(fn ($c) => $c->nodeName === 'th'), 'celdas' => $celdas];
         }
+        $columnas = max(1, ...array_map(fn ($f) => $f['celdas']->count(), $filas ?: [['celdas' => collect()]]));
+        $ancho = (int) floor(9360 / $columnas);                              // ancho útil de una carta con márgenes de 2,5 cm
+        $borde = fn ($lado) => "<w:{$lado} w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"9CA3AF\"/>";
+        $xml = '<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblBorders>'.implode('', array_map($borde, ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']))
+            .'</w:tblBorders><w:tblCellMar><w:left w:w="80" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>'
+            .str_repeat("<w:gridCol w:w=\"{$ancho}\"/>", $columnas).'</w:tblGrid>';
+        foreach ($filas as $f) {
+            $xml .= '<w:tr>'.($f['encabezado'] ? '<w:trPr><w:tblHeader/></w:trPr>' : '');
+            foreach ($f['celdas'] as $c) {
+                // Cada línea de la celda (separadas por <br>) es un párrafo
+                $lineas = preg_split('/\n/u', trim(preg_replace(['/[ \t\r]+/u', '/ *\n */u'], [' ', "\n"], $this->textoConSaltos($c))));
+                $xml .= "<w:tc><w:tcPr><w:tcW w:w=\"{$ancho}\" w:type=\"dxa\"/>".($f['encabezado'] ? '<w:shd w:val="clear" w:color="auto" w:fill="E5E7EB"/>' : '').'</w:tcPr>';
+                foreach ($lineas as $l) {
+                    $t = htmlspecialchars($l, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+                    $xml .= '<w:p><w:pPr><w:spacing w:before="40" w:after="40"/></w:pPr><w:r>'.($f['encabezado'] ? '<w:rPr><w:b/></w:rPr>' : '')."<w:t xml:space=\"preserve\">{$t}</w:t></w:r></w:p>";
+                }
+                $xml .= '</w:tc>';
+            }
+            $xml .= str_repeat("<w:tc><w:tcPr><w:tcW w:w=\"{$ancho}\" w:type=\"dxa\"/></w:tcPr><w:p/></w:tc>", $columnas - $f['celdas']->count()).'</w:tr>';
+        }
+        $p[] = $xml.'</w:tbl>';
+        $p[] = '<w:p/>';                                                      // Word exige un párrafo después de una tabla al final
+    }
+
+    private function textoConSaltos(DOMNode $n): string
+    {
+        if ($n instanceof DOMElement && $n->nodeName === 'br') {
+            return "\n";
+        }
+        if (! $n->hasChildNodes()) {
+            return $n->textContent;
+        }
+        $t = '';
+        foreach ($n->childNodes as $h) {
+            $t .= $this->textoConSaltos($h);
+        }
+
+        return $n instanceof DOMElement && in_array($n->nodeName, ['p', 'div', 'li'], true) ? "\n".$t."\n" : $t;
     }
 
     private function parrafo(string $texto, ?string $estilo = null): string

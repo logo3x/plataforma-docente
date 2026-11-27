@@ -18,6 +18,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use OpenSpout\Reader\XLSX\Reader;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\CreaEscenario;
 use Tests\TestCase;
@@ -109,6 +110,29 @@ class EstadisticasTest extends TestCase
         $this->assertSame([12, '2.5', '4', '1', 6, 6], [$r['n'], $r['promedio'], $r['maxima'], $r['minima'], $r['aprobados'], $r['reprobados']]);
         $this->assertSame([0, 6, 0, 0, 6], array_column($r['rangos'], 'cantidad'));
         $this->assertSame(['0.0', '1.0'], [$r['rangos'][0]['desde'], $r['rangos'][0]['hasta']]);
+    }
+
+    #[Test]
+    public function las_estadisticas_viajan_en_el_excel_del_grupo(): void
+    {
+        // 6.10.6
+        $ruta = tempnam(sys_get_temp_dir(), 'x').'.xlsx';
+        file_put_contents($ruta, $this->get(route('exportar.xlsx', $this->grupo))->assertOk()->streamedContent());
+        $lector = new Reader;
+        $lector->open($ruta);
+        $hojas = [];
+        foreach ($lector->getSheetIterator() as $hoja) {
+            $hojas[$hoja->getName()] = collect(iterator_to_array($hoja->getRowIterator(), false))->map(fn ($f) => $f->toArray())->all();
+        }
+        $lector->close();
+        @unlink($ruta);
+
+        $this->assertArrayHasKey('Estadísticas', $hojas);
+        $filas = $hojas['Estadísticas'];
+        $this->assertStringContainsString($this->actividad->nombre, $filas[0][0]);
+        $this->assertSame('Calificadas', $filas[1][0]);
+        $this->assertSame(['Ítem', 'Tipo', 'Tema', 'Enunciado', 'Respuestas', 'Acierto %', 'Discriminación', 'Anulado', 'Revisar'], $filas[2]);
+        $this->assertSame(1, $filas[3][0]);
     }
 
     #[Test]

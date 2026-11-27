@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\IA\MotorNoDisponible;
 use App\IA\MotorNoPermitido;
 use App\IA\RespuestaRechazada;
+use App\Material\Publicador;
 use App\Models\ConfigMotorIa;
 use App\Models\GeneracionIa;
 use App\Models\Materia;
@@ -14,6 +15,7 @@ use App\Planificacion\GeneradorUnidad;
 use App\Planificacion\UnidadesDidacticas;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use InvalidArgumentException;
@@ -239,5 +241,14 @@ class UnidadDidacticaController extends Controller
         abort_if($g->materia === null || $g->tarea !== 'unidad', 404);
         Gate::authorize('gestionar', $g->materia);
         abort_if($borrador && $g->estado !== 'borrador', 409, 'Este borrador ya fue aprobado o descartado.');
+    }
+
+    /** 7.8: la unidad didáctica como documento HTML autocontenido o de Word. */
+    public function exportar(UnidadDidactica $unidad, string $formato, Publicador $publicador): Response
+    {
+        Gate::authorize('gestionar', $unidad->materia);
+        $d = $publicador->documento($publicador->limpiar($this->show($unidad, app(UnidadesDidacticas::class))->render()), $unidad->titulo, $unidad->materia, $formato);
+
+        return response($d['contenido'], 200, ['Content-Type' => $d['mime'], 'Content-Disposition' => 'attachment; filename="'.$d['nombre'].'"']);
     }
 }

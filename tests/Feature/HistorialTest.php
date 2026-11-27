@@ -13,6 +13,7 @@ use App\Models\Material;
 use App\Models\Rubrica;
 use App\Models\UnidadDidactica;
 use App\Models\User;
+use App\Planificacion\UnidadesDidacticas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\Test;
@@ -55,7 +56,7 @@ class HistorialTest extends TestCase
         Material::query()->create(['materia_id' => $this->materia->id, 'tipo' => 'debate', 'titulo' => 'Debate de colas', 'contenido' => app(PreguntasDebate::class)->normalizar([
             'titulo' => 'Debate de colas', 'preguntas' => [['pregunta' => '¿Es justo atender por orden de llegada?', 'enfoque' => 'dilema', 'dinamica' => 'grupos', 'minutos' => '15', 'cierre' => 'Depende del costo.',
                 'posturas' => [['postura' => 'Sí', 'argumentos' => ['Equidad']], ['postura' => 'No', 'argumentos' => ['Urgencias']]]]]])]);
-        UnidadDidactica::query()->create(['materia_id' => $this->materia->id, 'titulo' => 'Unidad de colas', 'contenido' => ['titulo' => 'Unidad de colas', 'sesiones' => [['titulo' => 'S1', 'objetivo' => 'O', 'desarrollo' => 'D', 'duracion' => '60']]]]);
+        UnidadDidactica::query()->create(['materia_id' => $this->materia->id, 'titulo' => 'Unidad de colas', 'contenido' => app(UnidadesDidacticas::class)->normalizar(['titulo' => 'Unidad de colas', 'sesiones' => [['titulo' => 'S1', 'objetivo' => 'O', 'desarrollo' => 'D', 'duracion' => '60']]])]);
         Carbon::setTestNow();
     }
 
@@ -123,6 +124,34 @@ class HistorialTest extends TestCase
         // Las evaluaciones se vuelven a aplicar, no se copian; y nada de otra materia se copia
         $this->post(route('historial.copiar', $this->materia), ['tipo' => 'evaluacion', 'id' => Artefacto::query()->sole()->id])->assertStatus(422);
         $this->post(route('historial.copiar', $this->materia), ['tipo' => 'apuntes', 'id' => $debate->id])->assertNotFound();
+    }
+
+    #[Test]
+    public function rubricas_y_unidades_se_exportan_a_html_y_word(): void
+    {
+        // 7.8
+        $r = Rubrica::query()->sole();
+        $html = $this->get(route('rubricas.exportar', [$r, 'html']))->assertOk()->assertHeader('Content-Disposition', 'attachment; filename="rubrica-de-sustentacion.html"')->getContent();
+        $this->assertStringContainsString('<th>Criterio</th>', $html);
+        $this->assertStringContainsString('Claridad', $html);
+        $docx = $this->get(route('rubricas.exportar', [$r, 'docx']))->assertOk()->getContent();
+        $ruta = tempnam(sys_get_temp_dir(), 'w');
+        file_put_contents($ruta, $docx);
+        $zip = new \ZipArchive;
+        $this->assertTrue($zip->open($ruta) === true);
+        $this->assertStringContainsString('Claridad', $zip->getFromName('word/document.xml'));
+        $zip->close();
+
+        $u = UnidadDidactica::query()->sole();
+        $html = $this->get(route('unidades.exportar', [$u, 'html']))->assertOk()->getContent();
+        $this->assertStringContainsString('Unidad de colas', $html);
+        $this->assertStringNotContainsString('Imprimir o guardar en PDF', $html, 'Sin los botones de la plataforma');
+        $this->get(route('unidades.exportar', [$u, 'docx']))->assertOk();
+        $this->get(route('unidades.exportar', [$u, 'pdf']))->assertNotFound();
+
+        $this->actingAs(User::factory()->create());
+        $this->get(route('rubricas.exportar', [$r, 'html']))->assertForbidden();
+        $this->get(route('unidades.exportar', [$u, 'docx']))->assertForbidden();
     }
 
     #[Test]

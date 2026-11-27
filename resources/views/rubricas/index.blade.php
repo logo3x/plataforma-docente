@@ -24,6 +24,8 @@
                     <span class="suave">{{ $r->generacion_ia_id ? 'Generada con IA y revisada' : 'Hecha a mano' }} ·
                         {{ $r->preguntas_count ? "en {$r->preguntas_count} pregunta(s)" : 'sin asociar' }}</span>
                     <a class="boton boton-sec boton-chico" href="{{ route('rubricas.edit', $r) }}">Editar y asociar</a>
+                    <a class="boton boton-sec boton-chico" href="{{ route('rubricas.exportar', [$r, 'docx']) }}" aria-label="Word de «{{ $r->titulo }}»">Word</a>
+                    <a class="boton boton-sec boton-chico" href="{{ route('rubricas.exportar', [$r, 'html']) }}" aria-label="HTML de «{{ $r->titulo }}»">HTML</a>
                 </div>
             </div>
             <table style="margin-top:.5rem"><thead><tr><th>Criterio</th><th class="num">Peso</th><th>Niveles</th></tr></thead><tbody>

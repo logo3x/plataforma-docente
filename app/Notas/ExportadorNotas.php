@@ -2,6 +2,7 @@
 
 namespace App\Notas;
 
+use App\Calificacion\EstadisticasActividad;
 use App\Models\Grupo;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Common\Entity\Style\Style;
@@ -63,6 +64,28 @@ final class ExportadorNotas
         $w->addNewSheetAndMakeItCurrent()->setName('Planilla');
         foreach ($this->planilla($tablero) as $i => $fila) {
             $w->addRow($i === 0 ? Row::fromValuesWithStyle($fila, $negrita) : Row::fromValues($fila));
+        }
+
+        // 6.10.6: las estadísticas de las actividades calificadas en la plataforma viajan con el corte
+        $actividades = $grupo->dictado->divisiones()->with('componentes.actividades')->get()
+            ->flatMap(fn ($d) => $d->componentes->flatMap(fn ($c) => $c->actividades->map(fn ($a) => [$d, $c, $a])))
+            ->filter(fn ($x) => $x[2]->artefacto_id !== null && $x[2]->entregas()->exists());
+        if ($actividades->isNotEmpty()) {
+            $w->addNewSheetAndMakeItCurrent()->setName('Estadísticas');
+            foreach ($actividades as [$d, $c, $a]) {
+                $est = new EstadisticasActividad($a, $grupo);
+                $r = $est->resumen();
+                $w->addRow(Row::fromValuesWithStyle(["{$d->nombre} › {$c->nombre} › {$a->nombre}"], $negrita));
+                $w->addRow(Row::fromValues(['Calificadas', $r['n'], 'Promedio', $this->numero($r['promedio'], $escala),
+                    'Aprobados', $r['aprobados'], 'Reprobados', $r['reprobados']]));
+                $w->addRow(Row::fromValuesWithStyle(['Ítem', 'Tipo', 'Tema', 'Enunciado', 'Respuestas', 'Acierto %', 'Discriminación', 'Anulado', 'Revisar'], $negrita));
+                foreach ($est->items() as $i) {
+                    $w->addRow(Row::fromValues([$i['numero'], $i['tipo'], $i['tema'] ?? '', $i['texto'], $i['respuestas'],
+                        $i['acierto'] === null ? null : round($i['acierto'] * 100, 1), $i['discriminacion'] === null ? null : (float) $i['discriminacion'],
+                        $i['item']->anulada_en ? 'Sí' : 'No', implode(' ', $i['marcas'])]));
+                }
+                $w->addRow(Row::fromValues([]));
+            }
         }
 
         $w->close();

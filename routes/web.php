@@ -135,6 +135,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/materias/{materia}/rubricas/prompt', [RubricaController::class, 'preparar'])->name('rubricas.preparar');
     Route::post('/materias/{materia}/rubricas/generar', [RubricaController::class, 'generar'])->name('rubricas.generar');
     Route::get('/rubricas/{rubrica}/editar', [RubricaController::class, 'edit'])->name('rubricas.edit');
+    Route::get('/rubricas/{rubrica}/documento.{formato}', [RubricaController::class, 'exportar'])->whereIn('formato', ['html', 'docx'])->name('rubricas.exportar');
     Route::put('/rubricas/{rubrica}', [RubricaController::class, 'update'])->name('rubricas.update');
     Route::delete('/rubricas/{rubrica}', [RubricaController::class, 'destroy'])->name('rubricas.destroy');
     Route::get('/generaciones/{generacion}/rubrica', [RubricaController::class, 'borrador'])->name('rubricas.borrador');
@@ -149,6 +150,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/materias/{materia}/unidades/generar', [UnidadDidacticaController::class, 'generar'])->name('unidades.generar');
     Route::get('/unidades/{unidad}', [UnidadDidacticaController::class, 'show'])->name('unidades.show');
     Route::get('/unidades/{unidad}/editar', [UnidadDidacticaController::class, 'edit'])->name('unidades.edit');
+    Route::get('/unidades/{unidad}/documento.{formato}', [UnidadDidacticaController::class, 'exportar'])->whereIn('formato', ['html', 'docx'])->name('unidades.exportar');
     Route::put('/unidades/{unidad}', [UnidadDidacticaController::class, 'update'])->name('unidades.update');
     Route::delete('/unidades/{unidad}', [UnidadDidacticaController::class, 'destroy'])->name('unidades.destroy');
     Route::get('/generaciones/{generacion}/unidad', [UnidadDidacticaController::class, 'borrador'])->name('unidades.borrador');

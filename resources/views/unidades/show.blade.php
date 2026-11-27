@@ -5,6 +5,8 @@
         <div class="fila no-imprimir">
             <a class="boton boton-sec" href="{{ route('unidades.edit', $u) }}">Editar</a>
             <button class="boton boton-sec" type="button" onclick="window.print()">Imprimir o guardar en PDF</button>
+            <a class="boton boton-sec" href="{{ route('unidades.exportar', [$u, 'docx']) }}">Word</a>
+            <a class="boton boton-sec" href="{{ route('unidades.exportar', [$u, 'html']) }}">HTML</a>
         </div>
     </div>
     <p class="suave">{{ $u->materia->nombre }}@if ($u->unidad) · {{ $u->unidad->titulo }}@endif · {{ count($c['sesiones']) }} sesión(es), {{ $minutos }} minutos

@@ -77,7 +77,7 @@ final class Publicador
 
         return match ($formato) {
             'html' => ['nombre' => "{$base}.html", 'contenido' => $this->html($cuerpo, $ficha, false), 'mime' => 'text/html; charset=UTF-8'],
-            'scorm' => ['nombre' => "{$base}-scorm.zip", 'contenido' => $this->scorm($cuerpo, $ficha, "plataforma-material-{$m->id}"), 'mime' => 'application/zip'],
+            'scorm' => ['nombre' => "{$base}-scorm.zip", 'contenido' => $this->scorm($cuerpo, $ficha, "material-{$m->id}"), 'mime' => 'application/zip'],
             'docx' => ['nombre' => "{$base}.docx", 'contenido' => $this->docx($cuerpo, $ficha), 'mime' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
             default => throw new InvalidArgumentException('Formato no disponible.'),
         };

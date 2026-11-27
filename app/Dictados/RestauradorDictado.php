@@ -35,7 +35,7 @@ final class RestauradorDictado
     {
         $e = [];
         $avisos = [];
-        if (($r['formato'] ?? null) !== RespaldoDictado::FORMATO) {
+        if (! RespaldoDictado::esFormato($r['formato'] ?? null)) {
             return ['errores' => ['El archivo no es un respaldo de periodo de esta plataforma.'], 'avisos' => [], 'resumen' => []];
         }
         $version = (int) ($r['version'] ?? 0);

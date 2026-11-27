@@ -49,7 +49,7 @@ class ClassroomTest extends TestCase
         $this->beto = $this->crearEstudiante('102', 'BELTRAN', 'BETO');
         $this->carla = $this->crearEstudiante('103', 'CASTRO', 'CARLA');
         $this->ana->update(['email' => 'ana@ejemplo.edu.co']);
-        $this->beto->update(['email' => 'Beto@plataforma.edu.co']);
+        $this->beto->update(['email' => 'Beto@Ejemplo.edu.co']);
         CuentaGoogle::query()->create(['user_id' => $this->docente->id, 'email' => 'docente@ejemplo.edu.co', 'access_token' => 'tok-1', 'refresh_token' => 'ref-1', 'expira_en' => now()->addHour()]);
         $this->falsoClassroom();
     }

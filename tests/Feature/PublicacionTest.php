@@ -24,6 +24,7 @@ class PublicacionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['publicacion.institucion' => 'Institución de prueba', 'plataforma.institucion' => 'Institución de prueba']);
         $this->crearEscenario(estudiantes: 0);
         $this->actingAs($this->docente);
         $this->m = Material::query()->create(['materia_id' => $this->materia->id, 'tipo' => 'apuntes', 'titulo' => 'Normalizar sin miedo',

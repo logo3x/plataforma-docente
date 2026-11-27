@@ -443,9 +443,9 @@ TXT,
 
     /* Valores por defecto de la capa 1 (el docente los cambia en su perfil). */
     'perfil_por_defecto' => [
-        'institucion' => 'la institución',
+        'institucion' => env('INSTITUCION') ?: 'institución de educación superior',
         'programa' => 'Ingeniería Informática',
-        'ciudad' => 'Barrancabermeja, Santander',
+        'ciudad' => env('INSTITUCION_CIUDAD', 'Colombia'),
         'idioma' => 'español de Colombia, trato de usted, sin tuteo',
         'perfil_estudiantes' => 'estudiantes de pregrado; equipos de la sala de cómputo sin internet',
         'reglas_escritura' => 'poco texto explicativo y mucho ejercicio práctico; enunciados como situaciones problema; contenido incremental',

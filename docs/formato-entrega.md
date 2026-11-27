@@ -1,6 +1,6 @@
 # Formato «plataforma-entrega» v1
 
-Archivo que descarga el examen al finalizar: `SIGLA_DOCUMENTO.json`.
+Archivo que descarga el examen al finalizar: `SIGLA_DOCUMENTO.json`. Las entregas de exámenes repartidos antes del cambio de nombre de la plataforma, con su nombre de formato anterior (cualquier `…-entrega`), se siguen recibiendo.
 
 ```json
 {

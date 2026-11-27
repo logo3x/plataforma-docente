@@ -18,6 +18,8 @@ Archivo JSON con una actividad evaluable (quiz, parcial o taller). Se importa en
 - `sigla`: identificador único del examen. Viaja dentro de cada entrega y le permite al calificador reconocer el examen sin elegirlo a mano (6.1.3).
 - `valor`: la suma de los `peso` de los ítems de cada versión debe ser exactamente este valor. Si no coincide, el banco no se importa (9.2.4).
 
+Los bancos guardados con el nombre de formato anterior de la plataforma (cualquier `…-banco`) se siguen importando.
+
 ## `configuracion` (todo opcional)
 
 Todo esto se edita después en **Actividades evaluables → Configuración**, sin volver a importar el banco.

@@ -3,7 +3,7 @@
     <main class="acceso">
         <div class="tarjeta">
             <h1>{{ $titulo }}</h1>
-            <p class="suave">Plataforma docente — Instituto Universitario de la Paz</p>
+            <p class="suave">{{ config('app.name') }}@if (filled(config('plataforma.institucion'))) — {{ config('plataforma.institucion') }}@endif</p>
             {{ $slot }}
         </div>
     </main>

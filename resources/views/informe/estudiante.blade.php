@@ -23,7 +23,7 @@ main { max-width: 900px; }
 <body>
 <main>
     <div class="encabezado-informe">
-        <div class="suave">{{ $materia->nombre }} · {{ $dictado->periodo }} · Instituto Universitario de la Paz</div>
+        <div class="suave">{{ $materia->nombre }} · {{ $dictado->periodo }}@if (filled(config('plataforma.institucion'))) · {{ config('plataforma.institucion') }}@endif</div>
         <h1 style="margin:.25rem 0">{{ $actividad->nombre }}</h1>
         <div><strong>{{ $estudiante->nombreCompleto() }}</strong> · documento {{ $estudiante->documento }}
             @if ($companeros->isNotEmpty())<br><span class="suave">Entrega grupal con {{ $companeros->map->nombreCompleto()->join(', ') }}</span>@endif</div>

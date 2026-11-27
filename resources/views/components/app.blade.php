@@ -1,7 +1,7 @@
 @props(['titulo' => null])
 <x-layouts.base :titulo="$titulo">
     <nav class="barra" aria-label="Principal">
-        <a href="{{ route('inicio') }}" class="marca">Plataforma educativa</a>
+        <a href="{{ route('inicio') }}" class="marca">{{ config('app.name') }}</a>
         <a href="{{ route('inicio') }}">Mis materias</a>
         <a href="{{ route('bitacora.index') }}">Bitácora</a>
         {{-- 3.3.2: lo poco frecuente va en un menú secundario --}}

@@ -161,6 +161,21 @@ class CalificadorEntregasTest extends TestCase
     }
 
     #[Test]
+    public function acepta_bancos_y_entregas_con_el_nombre_de_formato_anterior(): void
+    {
+        // Bancos guardados y exámenes repartidos antes del cambio de nombre de la plataforma siguen sirviendo
+        $this->assertTrue(ImportadorBanco::esFormatoBanco('anterior-banco'));
+        $this->assertFalse(ImportadorBanco::esFormatoBanco('otra-cosa'));
+        $this->assertSame([], app(ImportadorBanco::class)->validar(['formato' => 'anterior-banco'] + $this->banco));
+
+        $a = $this->aplicar();
+        $this->post(route('calificador.subir', $a), ['entregas' => [$this->entrega($a, $this->ana, $this->perfectas($a), ['sobre' => ['formato' => 'anterior-entrega']])]])
+            ->assertSessionHas('resultados', fn ($r) => $r[0]['estado'] === 'procesada');
+        $this->post(route('calificador.subir', $a), ['entregas' => [$this->entrega($a, $this->ana, $this->perfectas($a), ['sobre' => ['formato' => 'otra-cosa']])]])
+            ->assertSessionHas('resultados', fn ($r) => $r[0]['estado'] !== 'procesada');
+    }
+
+    #[Test]
     public function ciclo_completo_hasta_el_registro(): void
     {
         $a = $this->aplicar();

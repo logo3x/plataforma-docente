@@ -22,6 +22,12 @@ final class ImportadorBanco
 {
     public const FORMATO = 'plataforma-banco';
 
+    /** También se aceptan los bancos guardados con el nombre de formato anterior de la plataforma: cualquier «…-banco». */
+    public static function esFormatoBanco(mixed $f): bool
+    {
+        return is_string($f) && preg_match('/^[a-z][a-z0-9]*-banco$/', $f) === 1;
+    }
+
     /** Versiones de un ítem (5.4.2): A y B en el primer banco; 2A y 2B en el segundo, para otra jornada. */
     public const VERSIONES = ['A', 'B', '2A', '2B'];
 
@@ -68,7 +74,7 @@ final class ImportadorBanco
     public function validar(array $b): array
     {
         $errores = [];
-        if (($b['formato'] ?? null) !== self::FORMATO || (int) ($b['version'] ?? 0) !== 1) {
+        if (! self::esFormatoBanco($b['formato'] ?? null) || (int) ($b['version'] ?? 0) !== 1) {
             return ['El archivo no es un banco «plataforma-banco» versión 1.'];
         }
         foreach (['sigla', 'titulo', 'valor'] as $campo) {

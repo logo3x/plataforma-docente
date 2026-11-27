@@ -44,6 +44,18 @@ php artisan migrate:fresh --seed
 
 Usuario: `demo@ejemplo.edu.co`, contraseña `demo-plataforma-2026`.
 
+## Nombre de la plataforma y de la institución
+
+En `.env`:
+
+```dotenv
+APP_NAME="Plataforma educativa"          # el nombre que se ve en la barra, las pestañas y los archivos generados
+INSTITUCION="Nombre de su institución"   # portada de acceso, informes de los estudiantes y ficha de lo publicado
+INSTITUCION_CIUDAD="Ciudad, departamento" # contexto por defecto del prompt de IA (cada docente lo cambia en su perfil)
+```
+
+Si `INSTITUCION` queda vacía, no se muestra ninguna. Después de cambiarlos: `php artisan config:clear`.
+
 ## En un servidor del programa
 
 Además de lo anterior:

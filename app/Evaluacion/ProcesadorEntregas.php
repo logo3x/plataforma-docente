@@ -171,7 +171,7 @@ final class ProcesadorEntregas
             throw new RuntimeException('no es un archivo de entrega (no es JSON).');
         }
         // Aquí se agregará el adaptador del formato del calificador HTML anterior.
-        if (($s['formato'] ?? null) !== 'plataforma-entrega' || (int) ($s['version'] ?? 0) !== 1) {
+        if (! self::esFormatoEntrega($s['formato'] ?? null) || (int) ($s['version'] ?? 0) !== 1) {
             throw new RuntimeException('formato de entrega no reconocido.');
         }
         foreach (['sigla', 'artefacto', 'documento'] as $c) {
@@ -265,5 +265,11 @@ final class ProcesadorEntregas
         }
 
         return mb_strtolower(preg_replace('/\s+/u', '', $t));
+    }
+
+    /** «plataforma-entrega», o el nombre anterior de la plataforma en exámenes que ya se repartieron: cualquier «…-entrega». */
+    public static function esFormatoEntrega(mixed $f): bool
+    {
+        return is_string($f) && preg_match('/^[a-z][a-z0-9]*-entrega$/', $f) === 1;
     }
 }

@@ -71,7 +71,7 @@ class AutenticacionTest extends TestCase
             ->assertFailed();
 
         $this->artisan('docente:crear', ['email' => 'docente@ejemplo.edu.co', '--nombre' => 'Docente Prueba'])
-            ->expectsQuestion('Contraseña (mínimo 12 caracteres)', 'plataforma-segura-2026')
+            ->expectsQuestion('Contraseña (mínimo 12 caracteres)', 'clave-segura-2026')
             ->assertSuccessful();
 
         $this->assertDatabaseHas('users', ['email' => 'docente@ejemplo.edu.co']);

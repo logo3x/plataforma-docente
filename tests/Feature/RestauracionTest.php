@@ -136,6 +136,10 @@ class RestauracionTest extends TestCase
         unset($d, $c, $a);
         $this->subir(json_encode($r))->assertOk()->assertSee('versión 1')->assertSee('Restaurar como periodo nuevo');
 
+        $anterior = json_decode($this->respaldo(), true);
+        $anterior['formato'] = 'nombre-anterior/respaldo-dictado';                // hecho antes del cambio de nombre de la plataforma
+        $this->subir(json_encode($anterior))->assertOk()->assertSee('Restaurar como periodo nuevo');
+
         $this->subir('esto no es json')->assertSessionHasErrors(['respaldo' => 'El archivo no es JSON válido.']);
         $this->subir(json_encode(['formato' => 'otra-cosa']))->assertSee('no es un respaldo de periodo de esta plataforma');
         $malo = json_decode($this->respaldo(), true);

@@ -17,6 +17,12 @@ final class RespaldoDictado
 {
     public const FORMATO = 'plataforma-educativa/respaldo-dictado';
 
+    /** También los respaldos hechos con el nombre anterior de la plataforma: cualquier «…/respaldo-dictado». */
+    public static function esFormato(mixed $f): bool
+    {
+        return is_string($f) && preg_match('#^[a-z0-9-]+/respaldo-dictado$#', $f) === 1;
+    }
+
     public const VERSION = 2;          // 2: orden, clave de actividad (para la bitácora), valores y examen aplicado
 
     /** @return array<string, mixed> */

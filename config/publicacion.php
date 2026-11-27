@@ -9,7 +9,7 @@
  * si es obligatorio, su tipo (texto, area o lista) y, si se quiere, a qué elemento de LOM o Dublin Core va.
  */
 return [
-    'institucion' => env('PUBLICACION_INSTITUCION', 'Instituto Universitario de la Paz — la institución'),
+    'institucion' => env('PUBLICACION_INSTITUCION') ?: env('INSTITUCION', ''),
     'licencia' => env('PUBLICACION_LICENCIA', 'CC BY-NC-SA 4.0'),
 
     'campos' => [

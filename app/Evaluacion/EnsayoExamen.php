@@ -25,7 +25,7 @@ final class EnsayoExamen
     public function procesar(Actividad $actividad, User $docente, string $contenido): array
     {
         $sobre = json_decode($contenido, true);
-        if (! is_array($sobre) || ($sobre['formato'] ?? null) !== 'plataforma-entrega') {
+        if (! is_array($sobre) || ! ProcesadorEntregas::esFormatoEntrega($sobre['formato'] ?? null)) {
             throw new RuntimeException('El archivo no es una entrega de examen.');
         }
         if (empty($sobre['ensayo'])) {

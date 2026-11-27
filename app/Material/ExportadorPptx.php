@@ -82,14 +82,14 @@ final class ExportadorPptx
         $zip->addFromString('ppt/notesMasters/notesMaster1.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:notesMaster '.self::NS.'>'
             .'<p:cSld><p:spTree>'.$this->grupo().$this->marcador(2, 'Notas', 'body', 1, 685800, 4400550, 5486400, 3600450).'</p:spTree></p:cSld>'.$this->mapaColores().'</p:notesMaster>');
         $zip->addFromString('ppt/notesMasters/_rels/notesMaster1.xml.rels', $this->rels([['theme', '../theme/theme2.xml']]));
-        $zip->addFromString('ppt/theme/theme1.xml', $this->tema('la institución'));
+        $zip->addFromString('ppt/theme/theme1.xml', $this->tema('Plataforma'));
         $zip->addFromString('ppt/theme/theme2.xml', $this->tema('Notas'));
         $x = fn ($v) => htmlspecialchars((string) $v, ENT_XML1 | ENT_QUOTES, 'UTF-8');
         $zip->addFromString('docProps/core.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
             ."<dc:title>{$x($c['titulo'])}</dc:title><dc:creator>{$x($autor)}</dc:creator><dc:subject>{$x($materia)}</dc:subject><dc:language>es-CO</dc:language>"
             .'<dcterms:created xsi:type="dcterms:W3CDTF">'.now()->toIso8601ZuluString().'</dcterms:created></cp:coreProperties>');
         $zip->addFromString('docProps/app.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">'
-            ."<Application>Plataforma educativa</Application><Slides>{$n}</Slides><Notes>{$n}</Notes></Properties>");
+            .'<Application>'.$x(config('app.name'))."</Application><Slides>{$n}</Slides><Notes>{$n}</Notes></Properties>");
         $zip->close();
         $datos = file_get_contents($ruta);
         @unlink($ruta);
@@ -215,12 +215,12 @@ final class ExportadorPptx
         $efecto = '<a:effectStyle><a:effectLst/></a:effectStyle>';
 
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="'.$nombre.'"><a:themeElements>'
-            .'<a:clrScheme name="la institución"><a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1><a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1>'
+            .'<a:clrScheme name="Plataforma"><a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1><a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1>'
             .$c('dk2', self::MARINO).$c('lt2', 'F3F4F6').$c('accent1', self::CIAN).$c('accent2', 'B45309').$c('accent3', '166534').$c('accent4', '991B1B')
             .$c('accent5', '7C3AED').$c('accent6', '0369A1').$c('hlink', self::CIAN).$c('folHlink', '6D28D9').'</a:clrScheme>'
-            .'<a:fontScheme name="la institución"><a:majorFont><a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>'
+            .'<a:fontScheme name="Plataforma"><a:majorFont><a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>'
             .'<a:minorFont><a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme>'
-            .'<a:fmtScheme name="la institución"><a:fillStyleLst>'.str_repeat($relleno, 3).'</a:fillStyleLst><a:lnStyleLst>'.str_repeat($linea, 3).'</a:lnStyleLst>'
+            .'<a:fmtScheme name="Plataforma"><a:fillStyleLst>'.str_repeat($relleno, 3).'</a:fillStyleLst><a:lnStyleLst>'.str_repeat($linea, 3).'</a:lnStyleLst>'
             .'<a:effectStyleLst>'.str_repeat($efecto, 3).'</a:effectStyleLst><a:bgFillStyleLst>'.str_repeat($relleno, 3).'</a:bgFillStyleLst></a:fmtScheme>'
             .'</a:themeElements><a:objectDefaults/><a:extraClrSchemeLst/></a:theme>';
     }

@@ -258,6 +258,7 @@ Route::middleware('auth')->group(function () {
         Route::post('actividades/{actividad}/entregas', [CalificadorController::class, 'subir'])->name('subir');
         Route::get('actividades/{actividad}/retos-pendientes', [CalificadorController::class, 'retosPendientes'])->name('retos');
         Route::post('actividades/{actividad}/registro', [CalificadorController::class, 'pasarAlRegistro'])->name('registro');
+        Route::post('actividades/{actividad}/practica', [CalificadorController::class, 'columnaPractica'])->name('practica');
         Route::post('actividades/{actividad}/en-vivo', [SesionVivoController::class, 'abrir'])->name('vivo.abrir');
         Route::get('en-vivo/{sesion}', [SesionVivoController::class, 'panel'])->name('vivo.panel');
         Route::get('en-vivo/{sesion}/proyectar', [SesionVivoController::class, 'proyectar'])->name('vivo.proyectar');

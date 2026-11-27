@@ -19,6 +19,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -90,6 +91,29 @@ class CalificadorController extends Controller
             ->with('estado', 'Actividad aplicada: ya aparece como columna en el registro. Descargue el examen y, después de aplicarlo, suba aquí las entregas.')
             ->with('aviso_vistas', $vistas ? ($vistas['estudiantes'] === 1 ? 'Un estudiante de estos grupos ya respondió' : "Hasta {$vistas['estudiantes']} estudiantes de estos grupos ya respondieron")
                 .', en '.implode(', ', $vistas['periodos']).', '.($vistas['preguntas'] === 1 ? 'una pregunta' : "{$vistas['preguntas']} preguntas").' de este examen. Si no quiere repetírselas, cámbielas en el banco o use otra versión.' : null);
+    }
+
+    /**
+     * 6.2.3: modalidad II. La práctica se entrega aparte y solo se registra su nota: una columna junto al examen,
+     * en el mismo componente y para los mismos grupos, donde se digitan la nota y el comentario.
+     */
+    public function columnaPractica(Actividad $actividad): RedirectResponse
+    {
+        $this->autorizar($actividad);
+        $practica = $actividad->practica ?? DB::transaction(function () use ($actividad) {
+            $p = $actividad->componente->actividades()->create([
+                'nombre' => Str::limit('Práctica — '.$actividad->nombre, 120, ''),
+                'valor_max' => $actividad->valor_max,
+                'practica_de_id' => $actividad->id,
+                'orden' => $actividad->orden + 1,
+            ]);
+            $p->grupos()->attach($actividad->grupos()->pluck('grupos.id'));
+
+            return $p;
+        });
+        $grupo = $actividad->grupos()->first() ?? $actividad->componente->division->dictado->grupos()->first();
+
+        return redirect()->route('registro', $grupo)->with('estado', "Columna «{$practica->nombre}» lista en «{$actividad->componente->nombre}»: digite ahí la nota de la práctica y su comentario.");
     }
 
     /** El examen de un banco (5.4.2): el banco 2 es para la otra jornada, con otros datos. */

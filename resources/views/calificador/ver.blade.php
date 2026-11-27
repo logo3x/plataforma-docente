@@ -79,6 +79,16 @@
                     <button class="boton" type="submit" @disabled($indicadores['calificadas'] === 0)>Pasar notas al registro</button></form>
             </div>
             <p id="estado-retos" class="suave" role="status"></p>
+            @if (\App\Evaluacion\ConfiguracionActividad::efectiva($actividad->artefacto)['anexo'])
+                {{-- 6.2.3: modalidad II, la práctica se entrega aparte y solo se registra su nota --}}
+                <p style="margin-bottom:0">La práctica se entrega como anexo:
+                    @if ($actividad->practica)
+                        su nota va en la columna <a href="{{ route('registro', $actividad->grupos->first() ?? $actividad->componente->division->dictado->grupos->first()) }}">«{{ $actividad->practica->nombre }}»</a> del registro.
+                    @else
+                        <form method="POST" action="{{ route('calificador.practica', $actividad) }}" style="display:inline">@csrf
+                            <button class="enlace" type="submit">crear la columna de la práctica en el registro</button></form>, junto a este examen.
+                    @endif</p>
+            @endif
         </section>
     </div>
 

@@ -49,6 +49,7 @@ Instalación: [`docs/instalacion.md`](docs/instalacion.md).
 | Modelo de datos completo: materia, dictado, divisiones anidables, grupos, estudiantes, artefactos, banco, actividades, entregas, notas, IA | `database/migrations`, `app/Models` | 2.6, 2.7, 9.1, 11.5 |
 | Cálculo de notas exacto (sin `float`): promedio que ignora vacías, definitiva, aporte, estados, escala y redondeo configurables, conversión de escala | `app/Notas/CalculadoraNotas.php`, `Escala.php` | 3.1.6, 3.2 |
 | Nota del examen por puntos o por partes (escrita y práctica con el peso que fije el docente), con la cuenta explicada en el detalle y en el informe | `app/Calificacion/CalificadorEntrega.php`, panel de configuración | 3.2 |
+| Modalidad II (práctica entregada aparte): solo se registra su nota; el calificador crea la columna «Práctica — examen» junto al examen, en el mismo componente y grupos | `CalificadorController::columnaPractica` | 6.2.3 |
 | Grupos de trabajo en dos vías: el docente los arma (por defecto sin conexión, con reparto al azar) o el estudiante escoge a sus compañeros de la lista por nombre, sin que el archivo lleve los documentos del curso | `app/Calificacion/GruposTrabajo.php`, `/calificador/actividades/{id}/grupos-de-trabajo` | 6.8.1 a 6.8.3 |
 | Simulador de cierre: nota necesaria, «no alcanza», «aprueba por redondeo», al margen | `CalculadoraNotas::simularCierre` | 3.7 |
 | Registro de notas con bitácora inmutable (triggers en BD), deshacer por operación, vacías a ceros reversible, eliminación con confirmación | `app/Notas/RegistroNotas.php` | 3.1.9, 3.5, 9.1 |

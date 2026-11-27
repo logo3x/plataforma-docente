@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /** Columna del registro de notas: una actividad aplicada dentro de un componente (3.1.4). */
 class Actividad extends Model
@@ -41,6 +42,12 @@ class Actividad extends Model
     public function artefacto(): BelongsTo
     {
         return $this->belongsTo(Artefacto::class);
+    }
+
+    /** 6.2.3: la columna donde se digita la nota de la práctica entregada aparte (modalidad II). */
+    public function practica(): HasOne
+    {
+        return $this->hasOne(self::class, 'practica_de_id');
     }
 
     public function grupos(): BelongsToMany

@@ -80,6 +80,13 @@
             </fieldset>
         </section>
 
+        <section class="tarjeta">
+            <h2 style="margin-top:0">Antes de aplicar</h2>
+            <label style="font-weight:400"><input type="checkbox" name="exigir_ensayo" value="1" @checked(old('exigir_ensayo', $c['exigir_ensayo']))>
+                Exigir el ensayo: el examen para los estudiantes no se descarga hasta cerrar el ciclo del ensayo con este examen</label>
+            <p class="suave" style="margin:.2rem 0 0">Si cambia las preguntas después del ensayo, hay que ensayar de nuevo. El ensayo se hace desde el calificador de la actividad.</p>
+        </section>
+
         <div class="fila">
             <button class="boton" type="submit">Guardar configuración</button>
             @foreach ($a->versiones() as $v)

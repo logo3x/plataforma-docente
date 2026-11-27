@@ -54,6 +54,7 @@ Estado: ✅ corregido · 🔧 pendiente, sin decisiones abiertas · ❓ necesita
 | 3.2.1, 3.2.3 | Escala editable después del alta (valor seguro elegido sin respuesta) | ✅ Nota mínima, decimales y redondeo siempre; mínimo y máximo solo sin notas, para no convertir notas ya publicadas |
 | 5.4.13, 5.4.14 | Historial por pregunta y equilibrio (valor seguro: avisar, no excluir solo) | ✅ Marca de «ya la respondieron», orden y filtro al traer preguntas, aviso al aplicar y tabla por tema y dificultad |
 | 7.9 | Copiar a otra materia (valor seguro: copia independiente) | ✅ Rúbricas, unidades y material desde el historial; contenido del repositorio desde su página; el tema se busca por título; las plantillas ya valen para todas las materias |
+| 9.2 | Pruebas 8 y 9 automáticas y exigir el ensayo (valor seguro: exigirlo es opcional) | ✅ Prueba 8 con la solución modelo opcional del reto; la 9 ya corría sola en el examen de ensayo; opción por examen para exigir el ensayo, y editar las preguntas lo deja pendiente |
 | 4.4.3, 4.4.5 | Incluir el editor de código en el examen | ✅ CodeMirror dentro del examen: 440 KB con JavaScript y 630 KB con los demás lenguajes (más de los 300 KB estimados); solo en exámenes con retos |
 
 ## Necesita una decisión del docente
@@ -70,4 +71,3 @@ Estado: ✅ corregido · 🔧 pendiente, sin decisiones abiertas · ❓ necesita
 | 7.5, 7.10 | Manuales interactivos con el entorno de prueba, guías y boletines |
 | 8.4.5 | Biblioteca de plantillas que funcionaron, reutilizable entre materias |
 | 8.5.3 | Perfil de escritura del docente con muestras de sus comentarios para la IA |
-| 9.2 | Pruebas 8 y 9 automáticas (entregable modelo frente a uno con fallas) y exigir el ensayo antes de aplicar |

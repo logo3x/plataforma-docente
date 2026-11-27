@@ -60,6 +60,13 @@ Todos llevan `tipo`, `enunciado` y `peso`. Opcionales: `tema`, `dificultad` (`ba
 - Una verificación con `"reservada": true` no se muestra al estudiante. El examen solo anuncia cuántas hay (4.3.3).
 - En el informe del estudiante, ya calificada la actividad, las reservadas salen **completas** (nombre, resultado y valor) o **solo como cantidad** («2 verificaciones reservadas · superó 1 de 2 · 1.5 de 2.5»), según la opción `reservadas_informe` del panel de configuración (decisión pendiente 8). Por defecto, solo la cantidad en los parciales, cuyo banco se reutiliza en otra jornada u otro semestre, y completas en talleres y quices. El docente las ve siempre completas en el detalle de la entrega.
 
+### Solución modelo (`"solucion"`, opcional)
+
+Cualquier reto puede traer la solución del docente. Se guarda con las verificaciones y **nunca viaja al examen**. Sirve para la prueba 8 del ensayo (9.2.8): la solución modelo debe superar todas las verificaciones, y el código inicial (`plantilla_codigo`) no debe superarlas todas; si ya las supera, alguna verificación es demasiado floja y regala puntaje.
+
+- En JavaScript, HTML y SQL es el código, en texto: `"solucion": "function total(p) { return p.reduce((s, x) => s + x, 0); }"`. Se prueba en el navegador del docente con «Probar con la solución modelo», en el modo de ensayo.
+- En PHP es un objeto con el código de cada archivo: `"solucion": { "routes/web.php": "<?php …", "app/Http/Controllers/ProductoController.php": "<?php …" }`. La revisa el servidor en las pruebas mínimas.
+
 ### Retos de HTML y CSS (`"lenguaje": "html"`)
 
 El estudiante escribe una página completa (HTML, CSS y, si el reto lo pide, JavaScript) y con «Probar» la ve en una vista previa con la que puede interactuar. La ayuda señala las etiquetas sin cerrar o mal cerradas.

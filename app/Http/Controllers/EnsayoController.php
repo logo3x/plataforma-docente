@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Evaluacion\EnsayoExamen;
 use App\Evaluacion\GeneradorExamen;
+use App\Evaluacion\ImportadorBanco;
 use App\Evaluacion\PruebasMinimas;
 use App\Models\Actividad;
 use App\Models\Ensayo;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -29,6 +31,25 @@ class EnsayoController extends Controller
             'aprobadas' => PruebasMinimas::aprobadas($resultados),
             'ensayos' => Ensayo::query()->where('actividad_id', $actividad->id)->latest()->get(),
         ]);
+    }
+
+    /** 9.2.8: los retos que se ejecutan, con su solución modelo y su código inicial, para probarlos en el navegador. */
+    public function modelos(Actividad $actividad): JsonResponse
+    {
+        $this->autorizar($actividad);
+        abort_if($actividad->artefacto_id === null, 404);
+        $retos = $actividad->artefacto->items()->with('pregunta')->whereNull('anulada_en')->orderBy('banco')->orderBy('orden')->get()
+            ->filter(fn ($it) => $it->pregunta->tipo === 'reto' && ($it->pregunta->clave['lenguaje'] ?? null) !== 'php' && ! empty($it->pregunta->clave['solucion']))
+            ->map(fn ($it) => [
+                'item' => 'Ítem '.($it->orden + 1).($it->banco !== 'A' ? " ({$it->banco})" : ''),
+                'lenguaje' => $it->pregunta->enunciado['lenguaje'] ?? 'javascript',
+                'esquema' => $it->pregunta->enunciado['esquema'] ?? null,
+                'solucion' => $it->pregunta->clave['solucion'],
+                'inicial' => $it->pregunta->enunciado['plantilla_codigo'] ?? '',
+                'verificaciones' => collect($it->pregunta->clave['verificaciones'])->map(fn ($v) => ImportadorBanco::criterio($v) + ['id' => $v['id'], 'fraccion' => (string) $v['fraccion']])->values(),
+            ])->values();
+
+        return response()->json(['tiempo_ms' => (int) ($actividad->artefacto->configuracion['tiempo_ejecucion_ms'] ?? 2000), 'retos' => $retos]);
     }
 
     public function examen(Request $request, Actividad $actividad, GeneradorExamen $generador): Response

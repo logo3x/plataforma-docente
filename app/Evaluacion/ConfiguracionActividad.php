@@ -51,6 +51,7 @@ final class ConfiguracionActividad
             // En un parcial el banco se reutiliza (otra jornada, otro semestre): nombrar lo reservado lo gasta
             'reservadas_informe' => array_key_exists($c['reservadas_informe'] ?? '', self::RESERVADAS_INFORME) ? $c['reservadas_informe'] : ($tipo === 'parcial' ? 'cantidad' : 'completas'),
             'calculo_nota' => array_key_exists($c['calculo_nota'] ?? '', self::CALCULO_NOTA) ? $c['calculo_nota'] : 'puntos',
+            'exigir_ensayo' => (bool) ($c['exigir_ensayo'] ?? false),
             'peso_escrita' => (int) ($c['peso_escrita'] ?? 50),
         ];
     }
@@ -74,6 +75,7 @@ final class ConfiguracionActividad
             'anexo' => ['nullable', 'boolean'],
             'reservadas_informe' => ['nullable', 'in:'.implode(',', array_keys(self::RESERVADAS_INFORME))],
             'calculo_nota' => ['nullable', 'in:'.implode(',', array_keys(self::CALCULO_NOTA))],
+            'exigir_ensayo' => ['nullable', 'boolean'],
             'peso_escrita' => ['nullable', 'required_if:calculo_nota,partes', 'integer', 'between:1,99'],
         ];
     }
@@ -96,6 +98,7 @@ final class ConfiguracionActividad
             'anexo' => (bool) ($d['anexo'] ?? false),
             'reservadas_informe' => $d['reservadas_informe'] ?? self::efectiva($a)['reservadas_informe'],     // si no llega, se conserva
             'calculo_nota' => $d['calculo_nota'] ?? self::efectiva($a)['calculo_nota'],
+            'exigir_ensayo' => (bool) ($d['exigir_ensayo'] ?? false),
             'peso_escrita' => (int) ($d['peso_escrita'] ?? self::efectiva($a)['peso_escrita']),
         ] + ($a->configuracion ?? [])]);
     }

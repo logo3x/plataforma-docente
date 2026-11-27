@@ -4,6 +4,7 @@
     <p class="suave">Pruebe el examen antes de aplicarlo: primero las pruebas automáticas, luego el examen de ensayo en un equipo igual al de la sala
         y, por último, su entrega aquí para cerrar el ciclo. Nada de esto crea notas.</p>
 
+    @error('ensayo')<div class="aviso aviso-error" role="alert">{{ $message }}</div>@enderror
     <section class="tarjeta">
         <h2 style="margin-top:0">1. Pruebas automáticas
             <span @class(['estado', 'estado-aprobado' => $aprobadas, 'estado-reprobado' => ! $aprobadas])>{{ $aprobadas ? '✓ Pasan' : '✗ Hay fallas: corrija antes de aplicar' }}</span></h2>
@@ -24,6 +25,14 @@
                 @endforeach
             </tbody>
         </table>
+        @php($conModelo = collect($pruebas)->firstWhere('numero', 8))
+        @if ($conModelo && str_contains($conModelo['detalle'], 'Probar con la solución modelo'))
+            <div class="fila" style="margin-top:.75rem">
+                <button class="boton boton-sec" id="probar-modelos" type="button">Probar con la solución modelo</button>
+                <span class="suave">Corre las verificaciones aquí, en su navegador, sobre la solución modelo y sobre el código inicial de cada reto.</span>
+            </div>
+            <div id="resultado-modelos" role="status" aria-live="polite"></div>
+        @endif
     </section>
 
     <div class="rejilla">
@@ -70,4 +79,45 @@
     @empty
         <div class="tarjeta vacio"><strong>Este examen aún no se ha ensayado en un equipo.</strong></div>
     @endforelse
+    @if (isset($conModelo) && $conModelo && str_contains($conModelo['detalle'], 'Probar con la solución modelo'))
+    <script src="{{ asset('js/ejecutor.js') }}"></script>
+    <script src="{{ asset('js/ejecutor-dom.js') }}"></script>
+    <script src="{{ asset('js/ejecutor-sql.js') }}" data-motor="{{ asset('vendor/sql.js') }}"></script>
+    <script>
+    /* 9.2.8: la solución modelo debe superar todas las verificaciones; el código inicial, no todas.
+       Lo que el código inicial ya supera es puntaje que se regala sin hacer nada. */
+    (function () {
+        const boton = document.getElementById('probar-modelos'), salida = document.getElementById('resultado-modelos');
+        const pasa = async (r, codigo, v, ms) => r.lenguaje === 'sql' ? (await window.verificarSQL(r.esquema, codigo, v, ms)).ok
+            : r.lenguaje === 'html' ? (await window.ejecutarHTML(codigo, v.prueba, ms)).ok : (await window.ejecutarJS(codigo, v.prueba, ms)).ok;
+        const pct = (vs, ok) => Math.round(vs.reduce((s, v, i) => s + (ok[i] ? Number(v.fraccion) : 0), 0) * 1000) / 10;
+        boton.addEventListener('click', async () => {
+            boton.disabled = true; salida.textContent = 'Probando…';
+            const d = await (await fetch('{{ route('calificador.ensayo.modelos', $actividad) }}', {headers: {Accept: 'application/json'}})).json();
+            const filas = [];
+            for (const r of d.retos) {
+                const modelo = [], inicial = [];
+                for (const v of r.verificaciones) { modelo.push(await pasa(r, r.solucion, v, d.tiempo_ms)); inicial.push(await pasa(r, r.inicial, v, d.tiempo_ms)); }
+                const fallan = r.verificaciones.filter((v, i) => !modelo[i]).map(v => v.nombre);
+                const regaladas = r.verificaciones.filter((v, i) => inicial[i]).map(v => v.nombre);
+                filas.push({ r, ok: !fallan.length && regaladas.length < r.verificaciones.length, modelo: pct(r.verificaciones, modelo), inicial: pct(r.verificaciones, inicial), fallan, regaladas });
+            }
+            const t = document.createElement('table'); t.style.marginTop = '.75rem';
+            t.innerHTML = '<thead><tr><th>Reto</th><th>Resultado</th><th class="num">Solución modelo</th><th class="num">Código inicial</th><th>Detalle</th></tr></thead>';
+            const tb = document.createElement('tbody');
+            for (const f of filas) {
+                const tr = document.createElement('tr');
+                const celda = (txt, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = txt; tr.append(c); return c; };
+                celda(f.r.item);
+                const e = celda(''); const s = document.createElement('span'); s.className = 'estado ' + (f.ok ? 'estado-aprobado' : 'estado-reprobado'); s.textContent = f.ok ? '✓ Pasa' : '✗ Falla'; e.append(s);
+                celda(f.modelo + ' %', 'num'); celda(f.inicial + ' %', 'num');
+                celda([f.fallan.length ? 'La solución modelo no supera: ' + f.fallan.join(', ') + '.' : '',
+                    f.regaladas.length ? 'El código inicial ya supera: ' + f.regaladas.join(', ') + (f.regaladas.length === f.r.verificaciones.length ? ' (todas).' : '.') : ''].filter(Boolean).join(' ') || 'Bien.', 'suave');
+                tb.append(tr);
+            }
+            t.append(tb); salida.replaceChildren(t); boton.disabled = false;
+        });
+    })();
+    </script>
+    @endif
 </x-app>

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Evaluacion\ClavesDictado;
+use App\Evaluacion\EditorBanco;
 use App\Evaluacion\EnsayoExamen;
 use App\Evaluacion\ImportadorBanco;
 use App\Evaluacion\PruebasMinimas;
@@ -75,6 +76,47 @@ class EnsayoTest extends TestCase
         file_put_contents($ruta, $json);
 
         return new UploadedFile($ruta, $nombre, 'application/json', null, true);
+    }
+
+    #[Test]
+    public function la_solucion_modelo_se_prueba_en_el_ensayo_y_no_viaja_al_examen(): void
+    {
+        $this->assertSame(['navegador'], $this->pruebas()[8]);
+        $this->assertStringContainsString('Sin «solucion» en el banco: ítem 4', collect(app(PruebasMinimas::class)->ejecutar($this->actividad))->firstWhere('numero', 8)['detalle']);
+
+        $reto = $this->artefacto->items()->with('pregunta')->get()->firstWhere('pregunta.tipo', 'reto')->pregunta;
+        $modelo = 'function invertir(t) { return t.split("").reverse().join(""); }';
+        $reto->update(['clave' => ['solucion' => $modelo] + $reto->clave]);
+
+        $p8 = collect(app(PruebasMinimas::class)->ejecutar($this->actividad->fresh()))->firstWhere('numero', 8);
+        $this->assertSame('navegador', $p8['estado']);
+        $this->assertStringContainsString('Probar con la solución modelo', $p8['detalle']);
+        $this->get(route('calificador.ensayo', $this->actividad))->assertOk()->assertSee('id="probar-modelos"', false);
+        $this->getJson(route('calificador.ensayo.modelos', $this->actividad))->assertOk()
+            ->assertJsonPath('retos.0.solucion', $modelo)->assertJsonPath('retos.0.inicial', "function invertir(t) {\n}\n")
+            ->assertJsonPath('retos.0.verificaciones.1.fraccion', '0.5');
+
+        $html = $this->get(route('calificador.ensayo.examen', $this->actividad))->assertOk()->getContent();
+        $this->assertStringNotContainsString('reverse().join', $html, 'la solución modelo nunca viaja al examen');
+        $this->assertSame(['ok'], $this->pruebas()[7]);
+    }
+
+    #[Test]
+    public function si_se_exige_el_ensayo_el_examen_no_sale_hasta_hacerlo(): void
+    {
+        $this->artefacto->update(['configuracion' => ['exigir_ensayo' => true] + $this->artefacto->configuracion]);
+
+        $this->get(route('calificador.examen', $this->actividad))->assertRedirect(route('calificador.ensayo', $this->actividad))
+            ->assertSessionHasErrors('ensayo');
+        $this->get(route('calificador.ensayo.examen', $this->actividad))->assertOk();
+
+        $this->artefacto->update(['ensayado_en' => now()]);
+        $this->get(route('calificador.examen', $this->actividad))->assertOk()->assertHeader('Content-Disposition');
+
+        // Cambiar las preguntas deja el ensayo pendiente otra vez
+        $editor = app(EditorBanco::class);
+        $editor->guardar($this->artefacto->fresh(), $editor->exportar($this->artefacto->fresh(), true));
+        $this->assertNull($this->artefacto->fresh()->ensayado_en);
     }
 
     #[Test]

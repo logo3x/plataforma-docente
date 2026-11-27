@@ -261,6 +261,7 @@ Route::middleware('auth')->group(function () {
         Route::get('actividades/{actividad}/estadisticas', [EstadisticasController::class, 'show'])->name('estadisticas');
         Route::get('actividades/{actividad}/ensayo', [EnsayoController::class, 'show'])->name('ensayo');
         Route::get('actividades/{actividad}/ensayo/examen.html', [EnsayoController::class, 'examen'])->name('ensayo.examen');
+        Route::get('actividades/{actividad}/ensayo/modelos', [EnsayoController::class, 'modelos'])->name('ensayo.modelos');
         Route::post('actividades/{actividad}/ensayo', [EnsayoController::class, 'subir'])->name('ensayo.subir');
         Route::get('actividades/{actividad}/similitud', [SimilitudController::class, 'index'])->name('similitud');
         Route::get('actividades/{actividad}/similitud/{a}/{b}', [SimilitudController::class, 'ver'])->name('similitud.ver');

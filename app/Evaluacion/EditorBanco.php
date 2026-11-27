@@ -97,7 +97,9 @@ final class EditorBanco
                 }
             }
             $a->update(['sigla' => $banco['sigla'], 'titulo' => $banco['titulo'], 'tipo' => $banco['tipo'] ?? $a->tipo,
-                'configuracion' => ['valor' => (string) BigDecimal::of((string) $banco['valor'])] + ($a->configuracion ?? [])]);
+                'configuracion' => ['valor' => (string) BigDecimal::of((string) $banco['valor'])] + ($a->configuracion ?? []),
+                // 9.2: el ensayo era de las preguntas de antes; el examen cambiado se vuelve a ensayar
+                'ensayado_en' => null, 'ensayado_equipo' => null]);
 
             return ['items' => count($banco['items']), 'nuevos' => $nuevos, 'quitados' => $quitados->count()];
         });

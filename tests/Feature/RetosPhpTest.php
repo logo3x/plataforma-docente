@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Calificacion\RevisionEstatica;
 use App\Evaluacion\ClavesDictado;
 use App\Evaluacion\ImportadorBanco;
+use App\Evaluacion\PruebasMinimas;
 use App\Models\Actividad;
 use App\Models\Artefacto;
 use App\Models\Entrega;
@@ -82,6 +83,31 @@ class RetosPhpTest extends TestCase
             self::CONTROLADOR => "<?php\n\nnamespace App\\Http\\Controllers;\n\nuse App\\Models\\Producto;\n\nclass ProductoController extends Controller\n{\n    public function index()\n    {\n        return view(\n            'productos.index', ['productos' => Producto::orderBy('nombre')->get()]);\n    }\n}\n",
             self::VISTA => "<ul>\n@foreach (\$productos as \$p)\n    <li>{{ \$p->nombre }}</li>\n@endforeach\n</ul>\n",
         ];
+    }
+
+    #[Test]
+    public function la_solucion_modelo_de_php_se_revisa_en_las_pruebas_minimas(): void
+    {
+        $reto = Artefacto::query()->sole()->items()->with('pregunta')->first()->pregunta;
+        $buena = [self::RUTAS => "<?php\nRoute::get('/productos', [ProductoController::class, 'index']);\n",
+            self::CONTROLADOR => "<?php\nclass ProductoController { public function index() { return view('productos.index'); } }\n", self::VISTA => '<h1>Productos</h1>'];
+        $reto->update(['clave' => ['solucion' => $buena] + $reto->clave]);
+        $p8 = collect(app(PruebasMinimas::class)->ejecutar($this->actividad->fresh()))->firstWhere('numero', 8);
+        $this->assertSame(['ok', '1 reto(s) de PHP revisados con su solución modelo.'], [$p8['estado'], $p8['detalle']]);
+
+        $mala = [self::CONTROLADOR => "<?php\nclass ProductoController { public function index() { return view('otra'); } }\n"] + $buena;
+        $reto->update(['clave' => ['solucion' => $mala] + $reto->clave]);
+        $p8 = collect(app(PruebasMinimas::class)->ejecutar($this->actividad->fresh()))->firstWhere('numero', 8);
+        $this->assertSame('falla', $p8['estado']);
+        $this->assertStringContainsString('ítem 1: la solución modelo no supera «El controlador usa la vista productos.index»', $p8['detalle']);
+    }
+
+    #[Test]
+    public function la_solucion_de_php_debe_traer_el_codigo_de_cada_archivo(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('«solucion» debe ser un objeto con el código de cada archivo');
+        app(ImportadorBanco::class)->importar($this->materia, ['sigla' => 'DW2-OTRO'] + $this->banco(['solucion' => 'texto suelto']));
     }
 
     #[Test]

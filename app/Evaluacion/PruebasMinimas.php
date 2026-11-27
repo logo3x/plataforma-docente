@@ -3,6 +3,7 @@
 namespace App\Evaluacion;
 
 use App\Calificacion\CalificadorDeterminista;
+use App\Calificacion\RevisionEstatica;
 use App\Models\Actividad;
 use App\Models\ArtefactoPregunta;
 use Brick\Math\BigDecimal;
@@ -79,9 +80,9 @@ final class PruebasMinimas
         // 7. El archivo del estudiante no lleva respuestas, verificaciones ni la clave privada
         $r[] = $this->archivoLimpio($actividad, $items);
 
-        // 8 y 9: necesitan ejecutar código en un navegador real
-        $r[] = ['numero' => 8, 'nombre' => 'Los retos de código se califican con sus verificaciones', 'estado' => 'navegador',
-            'detalle' => 'Se comprueba con el examen de ensayo: responda los retos y suba la entrega aquí.'];
+        // 8. Una solución modelo supera todas las verificaciones y el código inicial no
+        $r[] = $this->solucionesModelo($items);
+        // 9. Necesita ejecutar código en el navegador real de la sala
         $r[] = ['numero' => 9, 'nombre' => 'El entorno de prueba reporta sus cinco estados', 'estado' => 'navegador',
             'detalle' => 'El examen de ensayo lo verifica solo al iniciar, en el equipo de la sala.'];
 
@@ -92,6 +93,63 @@ final class PruebasMinimas
             $sinDetalle->isEmpty() ? 'Todos los ítems calificables explican su resultado.' : 'Sin detalle: ítem(s) '.$sinDetalle->join(', ').'.');
 
         return $r;
+    }
+
+    /**
+     * 9.2.8: con la «solucion» modelo del reto, sus verificaciones deben darle el puntaje completo, y el código
+     * inicial no (si ya lo da, una verificación es demasiado floja). Los retos de PHP se revisan aquí mismo; los
+     * que se ejecutan (JavaScript, HTML, SQL) los corre el navegador del docente con el botón del ensayo.
+     *
+     * @return array{numero: int, nombre: string, estado: string, detalle: string}
+     */
+    private function solucionesModelo(Collection $items): array
+    {
+        $nombre = 'Una solución modelo supera todas las verificaciones y el código inicial no';
+        $retos = $items->filter(fn ($it) => $it->pregunta->tipo === 'reto')->values();
+        if ($retos->isEmpty()) {
+            return $this->resultado(8, $nombre, true, 'No aplica: el examen no tiene retos de código.');
+        }
+        $fallas = [];
+        $sinSolucion = [];
+        $enNavegador = 0;
+        $revisados = 0;
+        foreach ($retos as $it) {
+            $clave = $it->pregunta->clave;
+            $n = 'ítem '.($it->orden + 1).($it->banco !== 'A' ? " ({$it->banco})" : '');
+            if (empty($clave['solucion'])) {
+                $sinSolucion[] = $n;
+
+                continue;
+            }
+            if (($clave['lenguaje'] ?? null) !== 'php') {
+                $enNavegador++;
+
+                continue;
+            }
+            $revision = new RevisionEstatica;
+            $modelo = $revision->calificar($clave, $clave['solucion'], (string) $it->peso);
+            $noSupera = collect($modelo->desglose['verificaciones'])->reject(fn ($v) => $v['superada'])->pluck('nombre');
+            if ($noSupera->isNotEmpty()) {
+                $fallas[] = "{$n}: la solución modelo no supera «".$noSupera->join('», «').'».';
+            }
+            $inicial = collect($it->pregunta->enunciado['archivos'] ?? [])->mapWithKeys(fn ($f) => [$f['nombre'] => $f['plantilla'] ?? ''])->all();
+            $regaladas = collect($revision->calificar($clave, $inicial, (string) $it->peso)->desglose['verificaciones'])->filter(fn ($v) => $v['superada'])->pluck('nombre');
+            if ($regaladas->count() === count($clave['verificaciones'])) {
+                $fallas[] = "{$n}: el código inicial ya supera todas las verificaciones.";
+            }
+            $revisados++;
+        }
+
+        $partes = array_filter([
+            $revisados ? "{$revisados} reto(s) de PHP revisados con su solución modelo." : null,
+            $enNavegador ? "{$enNavegador} reto(s) que se ejecutan: pruébelos con «Probar con la solución modelo», abajo." : null,
+            $sinSolucion ? 'Sin «solucion» en el banco: '.implode(', ', $sinSolucion).'. Agréguela para comprobarlos solos; si no, se comprueban con el examen de ensayo.' : null,
+        ]);
+        if ($fallas) {
+            return $this->resultado(8, $nombre, false, implode(' ', [...$fallas, ...$partes]));
+        }
+
+        return ['numero' => 8, 'nombre' => $nombre, 'estado' => $enNavegador || $sinSolucion ? 'navegador' : 'ok', 'detalle' => implode(' ', $partes)];
     }
 
     /** @param  array<int, array{estado: string}>  $resultados */

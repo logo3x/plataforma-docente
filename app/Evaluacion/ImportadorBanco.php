@@ -237,7 +237,8 @@ final class ImportadorBanco
             'ordenar' => ['pasos' => $e['pasos'], 'orden' => $c['orden']],
             'completar' => ['plantilla' => $e['plantilla'], 'huecos' => $c['huecos']],
             'abierta' => ['lineas' => $e['lineas'] ?? 6, 'referencia' => $c['referencia'] ?? null, 'rubrica' => $c['rubrica'] ?? null],
-            'reto' => self::publicoDeLenguaje($e) + ['plantilla_codigo' => $e['plantilla_codigo'] ?? '', 'casos_visibles' => $e['casos_visibles'] ?? [], 'verificaciones' => $c['verificaciones']],
+            'reto' => self::publicoDeLenguaje($e) + ['plantilla_codigo' => $e['plantilla_codigo'] ?? '', 'casos_visibles' => $e['casos_visibles'] ?? [], 'verificaciones' => $c['verificaciones'],
+                'solucion' => $c['solucion'] ?? null],
             default => [],
         } + ['justificacion' => $p->justificacion], fn ($v) => $v !== null);
     }
@@ -341,11 +342,14 @@ final class ImportadorBanco
             ] + (($it['lenguaje'] ?? null) === 'php' ? [
                 // Revisión estática: el estudiante sabe qué se va a revisar (4.6), sin ver cómo
                 'criterios_visibles' => array_values(array_map(fn ($v) => $v['nombre'], array_filter($it['verificaciones'], fn ($v) => empty($v['reservada'])))),
-            ] : []), ['verificaciones' => array_values($it['verificaciones'])] + (($it['lenguaje'] ?? null) === 'php' ? [
-                'lenguaje' => 'php',
-                'archivos' => array_column(self::archivosPhp($it), 'nombre'),
-                'alcance' => filled($it['alcance'] ?? null) ? (string) $it['alcance'] : null,
-            ] : [])],
+            ] : []), ['verificaciones' => array_values($it['verificaciones'])]
+                // 9.2.8: la solución modelo del docente vive en la clave; nunca viaja al examen
+                + (isset($it['solucion']) && $it['solucion'] !== '' && $it['solucion'] !== [] ? ['solucion' => $it['solucion']] : [])
+                + (($it['lenguaje'] ?? null) === 'php' ? [
+                    'lenguaje' => 'php',
+                    'archivos' => array_column(self::archivosPhp($it), 'nombre'),
+                    'alcance' => filled($it['alcance'] ?? null) ? (string) $it['alcance'] : null,
+                ] : [])],
         };
     }
 
@@ -411,6 +415,11 @@ final class ImportadorBanco
                 }
                 if ($lenguaje === 'sql' && (! is_string($it['esquema'] ?? null) || trim($it['esquema']) === '')) {
                     $e[] = 'un reto de SQL necesita «esquema»: las instrucciones que crean y llenan sus tablas.';
+                }
+                if (isset($it['solucion']) && ! ($lenguaje === 'php'
+                    ? is_array($it['solucion']) && array_filter($it['solucion'], fn ($c) => ! is_string($c)) === []
+                    : is_string($it['solucion']))) {
+                    $e[] = $lenguaje === 'php' ? '«solucion» debe ser un objeto con el código de cada archivo: {"routes/web.php": "…"}.' : '«solucion» debe ser el código de la solución modelo, en texto.';
                 }
                 $v = (array) ($it['verificaciones'] ?? []);
                 if ($v === []) {

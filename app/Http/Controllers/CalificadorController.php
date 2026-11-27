@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Calificacion\CalificadorEntrega;
 use App\Calificacion\PasoAlRegistro;
+use App\Evaluacion\ConfiguracionActividad;
 use App\Evaluacion\GeneradorExamen;
 use App\Evaluacion\ImportadorBanco;
 use App\Evaluacion\ProcesadorEntregas;
@@ -92,12 +93,17 @@ class CalificadorController extends Controller
     }
 
     /** El examen de un banco (5.4.2): el banco 2 es para la otra jornada, con otros datos. */
-    public function examen(Request $request, Actividad $actividad, GeneradorExamen $generador): Response
+    public function examen(Request $request, Actividad $actividad, GeneradorExamen $generador): Response|RedirectResponse
     {
         $this->autorizar($actividad);
         abort_if($actividad->artefacto_id === null, 404);
         $banco = $request->integer('banco', 1);
         abort_unless(in_array($banco, $actividad->artefacto->bancos(), true), 404, 'El examen no tiene ese banco.');
+        // 9.2: si el docente lo exige, el examen real no sale sin un ensayo de estas mismas preguntas
+        if (ConfiguracionActividad::efectiva($actividad->artefacto)['exigir_ensayo'] && $actividad->artefacto->ensayado_en === null) {
+            return redirect()->route('calificador.ensayo', $actividad)
+                ->withErrors(['ensayo' => 'Este examen exige el ensayo antes de aplicarlo: descargue el examen de ensayo, pruébelo en un equipo de la sala y suba aquí su entrega.']);
+        }
 
         return response($generador->html($actividad, banco: $banco), 200, [
             'Content-Type' => 'text/html; charset=UTF-8',

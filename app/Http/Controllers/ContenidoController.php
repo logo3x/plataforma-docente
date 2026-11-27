@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 /** Repositorio de contenido de la materia: el contexto de la IA (módulo 4). */
@@ -73,11 +74,24 @@ class ContenidoController extends Controller
         return view('contenido.ver', ['contenido' => $contenido]);
     }
 
+    /** El archivo original, tal como se cargó (7.11: el material sigue siendo del docente). */
+    public function descargar(Contenido $contenido): StreamedResponse
+    {
+        Gate::authorize('gestionar', $contenido->materia);
+        abort_unless(Storage::disk('local')->exists($contenido->ruta), 404);
+
+        return Storage::disk('local')->download($contenido->ruta, $contenido->titulo.'.'.pathinfo($contenido->ruta, PATHINFO_EXTENSION),
+            ['Content-Type' => $contenido->mime ?: 'application/octet-stream']);
+    }
+
     public function destroy(Contenido $contenido): RedirectResponse
     {
         Gate::authorize('gestionar', $contenido->materia);
-        Storage::disk('local')->delete($contenido->ruta);
         $contenido->delete();
+        // El nombre en disco es el hash: el mismo archivo cargado dos veces comparte ruta y no se borra mientras otro lo use
+        if (! Contenido::query()->where('ruta', $contenido->ruta)->exists()) {
+            Storage::disk('local')->delete($contenido->ruta);
+        }
 
         return back()->with('estado', "«{$contenido->titulo}» eliminado del repositorio.");
     }

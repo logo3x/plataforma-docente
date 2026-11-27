@@ -125,6 +125,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/materias/{materia}/contenido', [ContenidoController::class, 'index'])->name('contenido.index');
     Route::post('/materias/{materia}/contenido', [ContenidoController::class, 'store'])->name('contenido.store');
     Route::get('/contenido/{contenido}', [ContenidoController::class, 'show'])->name('contenido.show');
+    Route::get('/contenido/{contenido}/archivo', [ContenidoController::class, 'descargar'])->name('contenido.descargar');
     Route::delete('/contenido/{contenido}', [ContenidoController::class, 'destroy'])->name('contenido.destroy');
     Route::get('/materias/{materia}/rubricas', [RubricaController::class, 'index'])->name('rubricas.index');
     Route::get('/materias/{materia}/rubricas/nueva', [RubricaController::class, 'create'])->name('rubricas.create');

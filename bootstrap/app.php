@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\PoliticaSeguridad;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // El examen en vivo no tiene sesión de la plataforma: se autentica con su credencial de participante
         $middleware->validateCsrfTokens(except: ['v/*']);
+        $middleware->appendToGroup('web', PoliticaSeguridad::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

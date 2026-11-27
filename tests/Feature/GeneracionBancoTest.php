@@ -216,6 +216,17 @@ class GeneracionBancoTest extends TestCase
         $textos = Contenido::query()->orderBy('id')->pluck('texto_extraido', 'titulo');
         $this->assertSame("Pilas y colas\nLIFO & FIFO", $textos['Unidad 3']);
         $this->assertSame("Árboles binarios\n\nRecorridos", $textos['notas']);
+
+        // 7.11: el original se descarga tal cual; el mismo archivo cargado dos veces comparte ruta y borrar uno no borra el otro
+        $notas = Contenido::query()->where('titulo', 'notas')->sole();
+        $original = file_get_contents($txt);
+        $this->assertSame($original, $this->get(route('contenido.descargar', $notas))->assertOk()->assertDownload('notas.txt')->streamedContent());
+        $this->post(route('contenido.store', $this->materia), ['tipo' => 'guia', 'archivos' => [new UploadedFile($txt, 'notas.txt', 'text/plain', null, true)]]);
+        $this->delete(route('contenido.destroy', $notas))->assertRedirect();
+        $copia = Contenido::query()->where('titulo', 'notas')->sole();
+        $this->assertSame($original, $this->get(route('contenido.descargar', $copia))->assertOk()->streamedContent());
+        $this->actingAs(User::factory()->create());
+        $this->get(route('contenido.descargar', $copia))->assertForbidden();
     }
 
     #[Test]

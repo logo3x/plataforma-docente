@@ -1,7 +1,11 @@
 /* Ejecuta código JavaScript aislado en un Worker sin red y con límite de tiempo (calificación híbrida, 5.3).
    Lo usan el calificador (retos de los estudiantes) y los ejemplos prácticos (verificar el código de la IA). */
 (function () {
-    const W = `self.fetch=undefined;self.XMLHttpRequest=undefined;self.WebSocket=undefined;self.importScripts=undefined;
+    /* Sin red: se borran de toda la cadena de prototipos (tapar «self.fetch» no basta, el prototipo la conserva) y
+       también Worker, para que no haya un worker anidado. Corre en el navegador del docente, con su sesión abierta. */
+    const W = `for(const n of ['fetch','XMLHttpRequest','WebSocket','EventSource','importScripts','Worker','SharedWorker','WebTransport','Request','BroadcastChannel']){
+        for(let o=self;o;o=Object.getPrototypeOf(o)){try{delete o[n];}catch(e){}}
+        try{Object.defineProperty(self,n,{value:undefined,writable:false,configurable:false});}catch(e){}}
       const L=[];console.log=console.info=console.warn=console.error=(...a)=>{if(L.length<200)L.push(a.map(x=>typeof x==='object'&&x!==null?JSON.stringify(x):String(x)).join(' '))};
       self.onmessage=(ev)=>{const {codigo,prueba}=ev.data;
         try{const r=new Function(codigo+'\\n;return ('+prueba+');')();self.postMessage({ok:r===true,consola:L});}

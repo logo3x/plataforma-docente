@@ -11,6 +11,7 @@
                 <a href="{{ route('ia.motores') }}">Motores de IA</a>
                 <a href="{{ route('ia.plantillas') }}">Plantillas de IA</a>
                 <a href="{{ route('ia.biblioteca') }}">Biblioteca de lo que funcionó</a>
+                <a href="{{ route('ia.perfil-escritura') }}">Perfil de escritura</a>
                 <a href="{{ route('generadores.index') }}">Generadores de documentos</a>
                 <a href="{{ route('catalogo-errores.index') }}">Errores frecuentes</a>
                 <a href="{{ route('alertas.politica') }}">Política de alertas</a>

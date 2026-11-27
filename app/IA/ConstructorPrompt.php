@@ -18,6 +18,9 @@ use InvalidArgumentException;
  */
 final class ConstructorPrompt
 {
+    /** Tareas cuyo texto lee el estudiante como escrito por su profesor (8.5). */
+    public const TAREAS_AL_ESTUDIANTE = ['comentarios'];
+
     /** Plantilla vigente de una capa: la última versión del docente o la de fábrica. */
     public function plantilla(User $docente, string $clave): array
     {
@@ -85,11 +88,14 @@ final class ConstructorPrompt
 
         // Anexo B: lo aprendido en el aula con esta materia, para no repetir los mismos tropiezos
         $lecciones = app(BitacoraAula::class)->leccionesParaIa($materia);
+        // 8.5.3: el texto que va al estudiante, en la voz del docente, si activó su perfil de escritura
+        $voz = in_array($claveTarea, self::TAREAS_AL_ESTUDIANTE, true) ? app(PerfilEscritura::class)->bloque($docente) : '';
 
         return [
             'sistema' => "Usted es el asistente de un docente universitario para crear material de clase y evaluaciones.\n\n"
                 ."## Contexto general\n{$capa1}\n\n## Estilo de la materia\n{$capa2}"
-                .($lecciones !== '' ? "\n\n## Lecciones aprendidas en el aula con esta materia (téngalas en cuenta)\n{$lecciones}" : ''),
+                .($lecciones !== '' ? "\n\n## Lecciones aprendidas en el aula con esta materia (téngalas en cuenta)\n{$lecciones}" : '')
+                .($voz !== '' ? "\n\n{$voz}" : ''),
             'usuario' => "{$capa3}\n\n## Material de referencia del docente\n".($material ?: '(No se seleccionó material: use solo el tema indicado.)'),
             'plantillas' => [
                 'contexto' => $p1['version'], 'materia' => $p2['version'], $claveTarea => $p3['version'],

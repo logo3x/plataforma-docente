@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\IA\ConstructorPrompt;
+use App\IA\PerfilEscritura;
 use App\Models\GeneracionIa;
 use App\Models\Generador;
 use App\Models\Materia;
@@ -97,6 +98,25 @@ class PlantillasIaController extends Controller
         $p = $prompts->guardarPlantilla($request->user(), $d['clave'], config("ia.plantillas.{$d['clave']}"));
 
         return back()->with('estado', "Plantilla «{$d['clave']}» restaurada a la de fábrica (versión {$p->version}).");
+    }
+
+    /** 8.5.3: el perfil de escritura, con las muestras que verá la IA. */
+    public function perfilEscritura(Request $request, PerfilEscritura $perfil): View
+    {
+        return view('ia.perfil-escritura', ['activo' => $perfil->activo($request->user()), 'candidatas' => $perfil->candidatas($request->user()),
+            'enUso' => PerfilEscritura::MAX_MUESTRAS, 'bloque' => $perfil->bloque($request->user())]);
+    }
+
+    public function guardarPerfilEscritura(Request $request, PerfilEscritura $perfil): RedirectResponse
+    {
+        $d = $request->validate(['activo' => ['nullable', 'boolean'], 'usar' => ['nullable', 'array'], 'usar.*' => ['string', 'size:16']]);
+        $usar = array_flip($d['usar'] ?? []);
+        $excluidos = $perfil->candidatas($request->user())->pluck('huella')->reject(fn ($h) => isset($usar[$h]))->values()->all();
+        $request->user()->forceFill(['perfil_escritura' => ['activo' => (bool) ($d['activo'] ?? false), 'excluidos' => $excluidos]])->save();
+
+        return back()->with('estado', ($d['activo'] ?? false)
+            ? 'Perfil de escritura activo: la IA propondrá los comentarios para los estudiantes en su estilo, con '.(($n = count($perfil->muestras($request->user()->fresh()))) === 1 ? '1 muestra.' : "{$n} muestras.")
+            : 'Perfil de escritura desactivado: los comentarios se proponen en un registro neutro de aula.');
     }
 
     /** 8.4.5: lo que funcionó, para volver a usarlo en cualquier materia. */

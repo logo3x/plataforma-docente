@@ -32,6 +32,7 @@ class User extends Authenticatable
             'perfil_ia' => 'array',
             'catalogo_errores_en' => 'datetime',
             'politica_alertas' => 'array',
+            'perfil_escritura' => 'array',
         ];
     }
 

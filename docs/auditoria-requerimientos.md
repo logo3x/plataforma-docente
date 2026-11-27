@@ -61,6 +61,7 @@ Estado: ✅ corregido · 🔧 pendiente, sin decisiones abiertas · ❓ necesita
 | 7.4.3 | Generador genérico desde una plantilla de prompt | ✅ Generadores del docente con campos e instrucciones en lenguaje natural; salida en documento por secciones |
 | 7.5, 7.10 | Manuales interactivos, guías y boletines | ✅ Tres generadores de fábrica; el manual trae ejemplos que se ejecutan y ejercicios que se comprueban solos |
 | 8.4.5 | Biblioteca de plantillas que funcionaron | ✅ Marca «funcionó» en plantillas y generadores, «Esto funcionó» desde el material, biblioteca y copia del estilo entre materias |
+| 8.5.3 | Perfil de escritura con muestras de sus comentarios, solo si lo activa | ✅ Muestras de lo que el docente escribió, editables; entran solo en los comentarios para los estudiantes |
 | 2.7.4 | Divisiones anidadas | No se hacen: la institución usa cortes planos. El modelo las sigue admitiendo |
 | 4.4.1 | Aviso de punto y coma faltante | No se avisa: JavaScript no lo exige y el aviso daría falsos positivos |
 | 5.7 | Interruptores del panel (versiones, segundo banco, casos reservados) | No se hacen: no se usan |
@@ -68,6 +69,4 @@ Estado: ✅ corregido · 🔧 pendiente, sin decisiones abiertas · ❓ necesita
 
 ## Necesita una decisión del docente
 
-| Req. | Pregunta |
-|---|---|
-| 8.5.3 | Perfil de escritura del docente con muestras de sus comentarios para la IA |
+Ninguna: todas las decisiones están tomadas e implementadas.

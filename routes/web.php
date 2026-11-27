@@ -135,6 +135,8 @@ Route::middleware('auth')->group(function () {
         Route::post('plantillas/restaurar', [PlantillasIaController::class, 'restaurar'])->name('plantillas.restaurar');
         Route::post('plantillas/volver', [PlantillasIaController::class, 'volver'])->name('plantillas.volver');
         Route::get('biblioteca', [PlantillasIaController::class, 'biblioteca'])->name('biblioteca');
+        Route::get('perfil-escritura', [PlantillasIaController::class, 'perfilEscritura'])->name('perfil-escritura');
+        Route::put('perfil-escritura', [PlantillasIaController::class, 'guardarPerfilEscritura'])->name('perfil-escritura.guardar');
         Route::post('plantillas/{plantilla}/funciono', [PlantillasIaController::class, 'funciono'])->name('plantillas.funciono');
         Route::post('generaciones/{generacion}/funciono', [PlantillasIaController::class, 'generacionFunciono'])->name('generaciones.funciono');
     });

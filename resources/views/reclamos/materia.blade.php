@@ -26,7 +26,10 @@
                             @if ($r->estado === 'abierto')<span class="estado estado-incompleto">Abierto</span>
                             @elseif ($r->estado === 'rechazado')<span class="estado estado-sin_actividades">Rechazado</span> {{ $r->resolucion }}
                             @else<span class="estado estado-aprobado">{{ R::ACCIONES[$r->accion] }}</span> {{ $r->resolucion }}
-                                @if (isset($r->detalle['clave_nueva']))<div class="suave">Clave corregida: <code>{{ json_encode($r->detalle['clave_anterior']['correcta'] ?? $r->detalle['clave_anterior']['correctas'] ?? $r->detalle['clave_anterior']['huecos'] ?? '', JSON_UNESCAPED_UNICODE) }}</code> → <code>{{ json_encode(collect($r->detalle['clave_nueva'])->first(), JSON_UNESCAPED_UNICODE) }}</code></div>@endif
+                                @if (isset($r->detalle['clave_nueva']))
+                                    @php($campo = array_key_first($r->detalle['clave_nueva']))
+                                    <div class="suave">Clave corregida: <code>{{ \Illuminate\Support\Str::limit(json_encode($r->detalle['clave_anterior'][$campo] ?? '', JSON_UNESCAPED_UNICODE), 160) }}</code> → <code>{{ \Illuminate\Support\Str::limit(json_encode($r->detalle['clave_nueva'][$campo], JSON_UNESCAPED_UNICODE), 160) }}</code></div>
+                                @endif
                             @endif
                         </td>
                     </tr>

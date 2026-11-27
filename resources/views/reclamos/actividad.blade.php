@@ -91,6 +91,28 @@
                                             <input id="hueco-{{ $r->id }}-{{ $n }}" name="huecos[]" type="text" value="{{ implode(' | ', (array) $h) }}">
                                         @endforeach
                                         @break
+                                    @case('emparejar')
+                                        <p class="suave" style="margin:0 0 .3rem">La pareja correcta de cada elemento.</p>
+                                        @foreach ($r->item->pregunta->enunciado['izquierda'] as $k => $t)
+                                            <label for="par-{{ $r->id }}-{{ $k }}">{{ $k }}. {{ $t }}</label>
+                                            <select id="par-{{ $r->id }}-{{ $k }}" name="pares[{{ $k }}]">@foreach ($r->item->pregunta->enunciado['derecha'] as $dk => $dt)<option value="{{ $dk }}" @selected((string) ($clave['pares'][$k] ?? '') === (string) $dk)>{{ $dt }}</option>@endforeach</select>
+                                        @endforeach
+                                        @break
+                                    @case('ordenar')
+                                        <p class="suave" style="margin:0 0 .3rem">La posición correcta de cada paso (1 = primero).</p>
+                                        @php($posicion = array_flip(array_map('strval', $clave['orden'] ?? [])))
+                                        @foreach ($r->item->pregunta->enunciado['pasos'] as $k => $t)
+                                            <label for="orden-{{ $r->id }}-{{ $k }}">{{ $t }}</label>
+                                            <select id="orden-{{ $r->id }}-{{ $k }}" name="orden[{{ $k }}]">@for ($i = 1; $i <= count($r->item->pregunta->enunciado['pasos']); $i++)<option value="{{ $i }}" @selected(($posicion[(string) $k] ?? -1) + 1 === $i)>{{ $i }}</option>@endfor</select>
+                                        @endforeach
+                                        @break
+                                    @case('reto')
+                                        <label for="verif-{{ $r->id }}">Verificaciones del reto (JSON). Corrija la que no contemplaba una solución válida; las fracciones deben sumar 1.</label>
+                                        <textarea id="verif-{{ $r->id }}" name="verificaciones" rows="10" spellcheck="false" style="font-size:.85rem">{{ json_encode($clave['verificaciones'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}</textarea>
+                                        @unless (\App\Calificacion\CalificadorDeterminista::loCalificaElServidor('reto', $clave))
+                                            <p class="suave">Después, en el calificador, pulse «Ejecutar retos de código»: las entregas de este reto quedan pendientes para volver a ejecutarlas.</p>
+                                        @endunless
+                                        @break
                                 @endswitch
                             </div>
                         @endif

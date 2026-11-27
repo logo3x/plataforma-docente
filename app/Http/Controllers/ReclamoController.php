@@ -65,6 +65,9 @@ class ReclamoController extends Controller
             'correcta' => ['nullable', 'string', 'max:20'],
             'correctas' => ['nullable', 'array'],
             'huecos' => ['nullable', 'array'],
+            'pares' => ['nullable', 'array'],
+            'orden' => ['nullable', 'array'],
+            'verificaciones' => ['nullable', 'string', 'max:50000'],
         ]);
 
         try {
@@ -124,6 +127,10 @@ class ReclamoController extends Controller
                 fn ($h) => array_values(array_filter(array_map('trim', explode('|', (string) $h)), fn ($x) => $x !== '')),
                 array_values($d['huecos'] ?? []),
             )],
+            'emparejar' => ['pares' => array_map('strval', $d['pares'] ?? [])],
+            // La posición de cada paso → el orden de los pasos
+            'ordenar' => ['orden' => collect($d['orden'] ?? [])->map(fn ($pos) => (int) $pos)->sort()->keys()->map(fn ($k) => (string) $k)->values()->all()],
+            'reto' => ['verificaciones' => array_values((array) json_decode((string) ($d['verificaciones'] ?? ''), true))],
             default => null,
         };
     }

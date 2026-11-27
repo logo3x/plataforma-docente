@@ -9,10 +9,12 @@ use App\Models\Actividad;
 use App\Models\Artefacto;
 use App\Models\ArtefactoPregunta;
 use App\Models\ConfigMotorIa;
+use App\Models\Entrega;
 use App\Models\Estudiante;
 use App\Models\Nota;
 use App\Models\NotaCambio;
 use App\Models\Reclamo;
+use App\Models\Respuesta;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -129,6 +131,44 @@ class ReclamosTest extends TestCase
         $this->assertSame(['aceptado', 'correccion_clave', ['return'], [['return', 'devolver']], 3],
             [$r->estado, $r->accion, $r->detalle['clave_anterior']['huecos'], $r->detalle['clave_nueva']['huecos'], $r->detalle['respuestas_recalificadas']]);
         $this->assertStringContainsString('Corrección de la clave del ítem 2', NotaCambio::query()->where('estudiante_id', $this->beto->id)->latest('id')->value('motivo'));
+    }
+
+    #[Test]
+    public function se_corrige_la_clave_de_emparejar_ordenar_y_las_verificaciones_de_un_reto(): void
+    {
+        // 6.5.4: antes solo única, V/F, múltiple y completar
+        $art = app(ImportadorBanco::class)->importar($this->materia, ['formato' => 'plataforma-banco', 'version' => 1, 'sigla' => 'ED-REC-T2', 'titulo' => 'Taller', 'valor' => '3', 'items' => [
+            ['tipo' => 'emparejar', 'peso' => '1', 'enunciado' => 'Empareje.', 'izquierda' => ['1' => 'Pila', '2' => 'Cola'], 'derecha' => ['a' => 'LIFO', 'b' => 'FIFO'], 'pares' => ['1' => 'b', '2' => 'a']],
+            ['tipo' => 'ordenar', 'peso' => '1', 'enunciado' => 'Ordene.', 'pasos' => ['p1' => 'Crear', 'p2' => 'Llenar', 'p3' => 'Vaciar'], 'orden' => ['p1', 'p3', 'p2']],
+            ['tipo' => 'reto', 'peso' => '1', 'enunciado' => 'Sume.', 'verificaciones' => [['id' => 'v1', 'nombre' => 'Suma', 'fraccion' => '1', 'prueba' => 'sumar(1, 2) === 4']]],
+        ]]);
+        $act = $this->parcial->actividades()->create(['artefacto_id' => $art->id, 'nombre' => 'Taller 2', 'valor_max' => '3']);
+        $act->grupos()->attach($this->grupo->id);
+        [$emp, $ord, $reto] = $art->items()->orderBy('orden')->get()->all();
+        $e = Entrega::query()->create(['actividad_id' => $act->id, 'subida_por_id' => $this->ana->id, 'ruta' => 'x', 'sha256' => str_repeat('a', 64)]);
+        $e->integrantes()->attach($this->ana->id);
+        foreach ([[$emp, ['1' => 'a', '2' => 'b']], [$ord, ['p1', 'p2', 'p3']], [$reto, 'function sumar(a, b) { return a + b; }']] as [$it, $v]) {
+            Respuesta::query()->create(['entrega_id' => $e->id, 'artefacto_pregunta_id' => $it->id, 'respuesta' => ['valor' => $v], 'puntaje' => '0', 'puntaje_max' => '1', 'calificado_por' => 'servidor']);
+        }
+        $resolver = function ($it, array $datos) use ($act) {
+            $this->post(route('calificador.reclamos.store', $act), ['estudiante_id' => $this->ana->id, 'artefacto_pregunta_id' => $it->id, 'descripcion' => 'La clave está mal'])->assertSessionHas('estado');
+
+            return $this->post(route('calificador.reclamos.resolver', Reclamo::query()->latest('id')->first()), ['decision' => 'aceptar', 'accion' => 'correccion_clave', 'resolucion' => 'La clave estaba invertida.'] + $datos);
+        };
+        $puntaje = fn ($it) => (string) Respuesta::query()->where('artefacto_pregunta_id', $it->id)->value('puntaje');
+
+        $resolver($emp, ['pares' => ['1' => 'a', '2' => 'b']])->assertSessionHas('estado');
+        $this->assertSame('1.0000', $puntaje($emp));
+        $resolver($ord, ['orden' => ['p1' => '1', 'p2' => '2', 'p3' => '3']])->assertSessionHas('estado');
+        $this->assertSame(['p1', 'p2', 'p3'], $ord->pregunta->fresh()->clave['orden']);
+        $this->assertSame('1.0000', $puntaje($ord));
+
+        // Un reto de JavaScript se ejecuta en el navegador del docente: queda pendiente para volver a ejecutarlo
+        $resolver($reto, ['verificaciones' => json_encode([['id' => 'v1', 'nombre' => 'Suma', 'fraccion' => '1', 'prueba' => 'sumar(1, 2) === 3']])])->assertSessionHas('estado');
+        $this->assertSame('sumar(1, 2) === 3', $reto->pregunta->fresh()->clave['verificaciones'][0]['prueba']);
+        $this->assertSame('', $puntaje($reto));
+        // Una corrección inválida no se aplica
+        $resolver($reto, ['verificaciones' => json_encode([['id' => 'v1', 'nombre' => 'Suma', 'fraccion' => '0.5', 'prueba' => 'x']])])->assertSessionHas('error_reclamo');
     }
 
     #[Test]

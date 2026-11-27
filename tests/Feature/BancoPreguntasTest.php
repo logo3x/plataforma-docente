@@ -122,6 +122,7 @@ class BancoPreguntasTest extends TestCase
         $this->post(route('bancos.duplicar', $this->a), ['sigla' => 'ED-BAN-P1-R', 'titulo' => 'Parcial 1 (repetición)'])->assertRedirect();
         $copia = Artefacto::query()->where('sigla', 'ED-BAN-P1-R')->sole();
         $this->assertSame(3, $copia->items()->count());
+        $this->assertSame($this->a->id, $copia->origen_artefacto_id);           // 2.8.3
         $this->assertSame(50, $copia->configuracion['reloj_minutos']);
         $this->assertSame($rubrica->id, $copia->items()->with('pregunta')->get()[2]->pregunta->rubrica_id);
         $this->get(route('bancos.edit', $copia))->assertOk()->assertDontSee('Solo lectura');

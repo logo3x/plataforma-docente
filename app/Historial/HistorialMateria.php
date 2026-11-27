@@ -46,7 +46,7 @@ final class HistorialMateria
 
         foreach ($materia->artefactos()->withCount('items')->with('actividades.componente.division.dictado', 'actividades.grupos')->get() as $a) {
             $entradas->push($this->entrada('evaluacion', $a, $a->titulo, $ia($a), $dictados, [
-                'detalle' => "{$a->sigla} · ".ucfirst($a->tipo)." · {$a->items_count} ítems",
+                'detalle' => "{$a->sigla} · ".ucfirst($a->tipo)." · {$a->items_count} ítems".$this->copiaDe($a, 'origen_artefacto_id'),
                 'aplicaciones' => $a->actividades->map(fn ($act) => [
                     'dictado_id' => $act->componente->division->dictado->id,
                     'texto' => $act->componente->division->dictado->periodo.' › '.$act->componente->division->nombre
@@ -59,13 +59,13 @@ final class HistorialMateria
         }
         foreach ($materia->rubricas()->withCount('preguntas')->get() as $r) {
             $entradas->push($this->entrada('rubrica', $r, $r->titulo, $ia($r), $dictados, [
-                'detalle' => count($r->criterios).' criterios'.($r->preguntas_count ? " · en {$r->preguntas_count} pregunta(s)" : ' · sin asociar'),
+                'detalle' => count($r->criterios).' criterios'.($r->preguntas_count ? " · en {$r->preguntas_count} pregunta(s)" : ' · sin asociar').$this->copiaDe($r),
                 'abrir' => route('rubricas.edit', $r), 'editar' => route('rubricas.edit', $r),
             ]));
         }
         foreach ($materia->unidadesDidacticas()->with('unidad')->get() as $u) {
             $entradas->push($this->entrada('unidad', $u, $u->titulo, $ia($u), $dictados, [
-                'detalle' => count($u->contenido['sesiones'] ?? []).' sesión(es)'.($u->unidad ? " · {$u->unidad->titulo}" : ''),
+                'detalle' => count($u->contenido['sesiones'] ?? []).' sesión(es)'.($u->unidad ? " · {$u->unidad->titulo}" : '').$this->copiaDe($u),
                 'abrir' => route('unidades.show', $u), 'editar' => route('unidades.edit', $u),
             ]));
         }
@@ -76,7 +76,7 @@ final class HistorialMateria
             $ruta = self::RUTAS_MATERIAL[$m->tipo];
             $coleccion = ['apuntes' => 'secciones', 'ejemplos' => 'ejemplos', 'debate' => 'preguntas', 'vocabulario' => 'terminos', 'proyectos' => 'proyectos', 'presentacion' => 'diapositivas'][$m->tipo];
             $entradas->push($this->entrada($m->tipo, $m, $m->titulo, $ia($m), $dictados, [
-                'detalle' => count($m->contenido[$coleccion] ?? []).' '.['secciones' => 'sección(es)', 'ejemplos' => 'ejemplo(s)', 'preguntas' => 'pregunta(s)', 'terminos' => 'término(s)', 'proyectos' => 'proyecto(s)', 'diapositivas' => 'diapositiva(s)'][$coleccion],
+                'detalle' => count($m->contenido[$coleccion] ?? []).' '.['secciones' => 'sección(es)', 'ejemplos' => 'ejemplo(s)', 'preguntas' => 'pregunta(s)', 'terminos' => 'término(s)', 'proyectos' => 'proyecto(s)', 'diapositivas' => 'diapositiva(s)'][$coleccion].$this->copiaDe($m),
                 'abrir' => route("{$ruta}.show", $m), 'editar' => route("{$ruta}.edit", $m),
             ]));
         }
@@ -114,12 +114,22 @@ final class HistorialMateria
         };
         $copia = $original->replicate(['generacion_ia_id', 'created_at', 'updated_at']);
         $copia->titulo = Str::limit($original->titulo, 240, '').' (copia)';
+        $copia->origen_id = $original->getKey();                     // 2.8.3: la copia sabe de dónde salió
         if (! $original instanceof Rubrica) {
             $copia->contenido = ['titulo' => $copia->titulo] + $original->contenido;
         }
         $copia->save();
 
         return $copia;
+    }
+
+    /** 2.8.3: « · copia de «Original»» si salió de otra; el original puede haberse borrado. */
+    private function copiaDe($modelo, string $columna = 'origen_id'): string
+    {
+        $id = $modelo->{$columna} ?? null;
+        $titulo = $id ? $modelo::query()->whereKey($id)->value('titulo') : null;
+
+        return $id ? ' · copia de «'.($titulo ?? 'un original ya borrado').'»' : '';
     }
 
     /** A dónde ir para editar la copia. */

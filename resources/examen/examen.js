@@ -364,8 +364,18 @@
       if (v === undefined) return 'undefined'; if (v === null) return 'null';
       if (typeof v === 'function') return '[función ' + (v.name || 'anónima') + ']';
       if (typeof v === 'string') return v;
-      if (typeof v === 'object') { if (vistos.has(v)) return '[referencia circular]'; vistos.add(v);
-        try { return JSON.stringify(v, (k, x) => typeof x === 'object' && x !== null ? (k && vistos.has(x) ? '[referencia circular]' : x) : (x === undefined ? 'undefined' : typeof x === 'function' ? '[función]' : x), 2); } catch (e) { return String(v); } }
+      if (typeof v === 'object') {
+        /* 4.2.4: un ciclo a cualquier profundidad se muestra como [referencia circular]; solo cuenta lo que está en
+           la rama actual (un mismo objeto repetido en dos ramas no es un ciclo). */
+        const enRama = [];
+        try { return JSON.stringify(v, function (k, x) {
+          if (typeof x === 'object' && x !== null) {
+            while (enRama.length && enRama[enRama.length - 1] !== this) enRama.pop();
+            if (enRama.includes(x)) return '[referencia circular]';
+            enRama.push(x); return x;
+          }
+          return x === undefined ? 'undefined' : typeof x === 'function' ? '[función]' : typeof x === 'bigint' ? x + 'n' : x;
+        }, 2); } catch (e) { return String(v); } }
       return String(v);
     };
     const registrar = (nivel) => (...a) => { if (lineas.length < MAX) lineas.push({ nivel, texto: a.map(x => ser(x)).join(' ') }); else if (lineas.length === MAX) lineas.push({ nivel: 'warn', texto: '… salida truncada' }); };

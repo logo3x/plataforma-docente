@@ -114,6 +114,12 @@ class HistorialTest extends TestCase
         $this->post(route('historial.copiar', $this->materia), ['tipo' => 'unidad', 'id' => UnidadDidactica::query()->sole()->id])->assertRedirect();
         $this->assertSame(2, UnidadDidactica::query()->count());
 
+        // 2.8.3: cada copia conserva el vínculo con su original y el historial lo dice
+        $this->assertSame($debate->id, $copia->origen_id);
+        $this->assertSame($rub->id, $copiaR->origen_id);
+        $this->assertNotNull(UnidadDidactica::query()->latest('id')->first()->origen_id);
+        $this->get(route('historial.index', $this->materia))->assertSee('copia de «Debate de colas»')->assertSee('copia de «Rúbrica de sustentación»');
+
         // Las evaluaciones se vuelven a aplicar, no se copian; y nada de otra materia se copia
         $this->post(route('historial.copiar', $this->materia), ['tipo' => 'evaluacion', 'id' => Artefacto::query()->sole()->id])->assertStatus(422);
         $this->post(route('historial.copiar', $this->materia), ['tipo' => 'apuntes', 'id' => $debate->id])->assertNotFound();

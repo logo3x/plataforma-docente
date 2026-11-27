@@ -115,6 +115,7 @@ final class EditorBanco
         $banco = ['sigla' => $sigla, 'titulo' => $titulo] + $this->exportar($a);
         $banco['configuracion'] = $a->configuracion ?? [];
         $copia = $this->importador->importar($a->materia, $banco);
+        $copia->update(['origen_artefacto_id' => $a->id]);            // 2.8.3
         $rubricas = $a->items()->with('pregunta:id,rubrica_id')->get()->pluck('pregunta.rubrica_id')->values();
         foreach ($copia->items()->with('pregunta')->get()->values() as $i => $ap) {
             if ($rubricas[$i] ?? null) {

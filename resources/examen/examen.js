@@ -75,6 +75,14 @@
     const doc = $('#documento').value.replace(/\D/g, '');
     const nombre = $('#nombre').value.trim();
     if (doc.length < 5 || nombre.length < 5) { const e = $('#error-portada'); e.textContent = 'Escriba su documento y su nombre completo.'; e.classList.remove('oculto'); return; }
+    // 5.7.1 y 5.7.3: en modo desconectado no se inicia con internet; la pantalla lo dice y el examen arranca solo al desconectarse
+    if (D.modo_desconectado && !D.ensayo && await hayInternet()) {
+      const capa = $('#bloqueo');
+      capa.textContent = 'Desconéctese del internet para iniciar. El examen empieza solo cuando el equipo quede sin conexión.';
+      capa.classList.remove('oculto');
+      while (await hayInternet()) await new Promise(ok => setTimeout(ok, 3000));
+      capa.classList.add('oculto');
+    }
     clave = (D.ensayo ? 'plataforma-ensayo:' : 'plataforma:') + D.sigla + ':' + doc;   // el ensayo nunca pisa el guardado de un estudiante
     const previo = localStorage.getItem(clave);
     if (previo) { E = JSON.parse(previo); E.sesion.restauraciones = (E.sesion.restauraciones || 0) + 1; }
@@ -509,11 +517,14 @@
   }
 
   // ---------- Reloj (5.4.8) ----------
+  let reconectadoDesde = null;
   function iniciarReloj() {
     const r = $('#reloj'); const t0 = new Date(E.inicio).getTime(); const avisos = new Set();
     const tic = () => {
       if (E.cierre) return;
-      const s = Math.floor((Date.now() - t0) / 1000);
+      // El tiempo en pausa por reconexión (5.7.4) no cuenta
+      const pausa = (E.sesion.reconexiones || []).reduce((t, x) => t + x.segundos * 1000, 0) + (reconectadoDesde ? Date.now() - reconectadoDesde : 0);
+      const s = Math.floor((Date.now() - t0 - pausa) / 1000);
       if (!D.reloj_minutos) { r.textContent = '⏱ ' + fmt(s); return; }
       const resta = D.reloj_minutos * 60 - s;
       r.textContent = '⏱ ' + fmt(Math.max(resta, 0));
@@ -538,15 +549,26 @@
   }
 
   // ---------- Modo desconectado (5.7) ----------
+  /* 5.7.5 y 5.7.6: hay internet solo si la sonda responde; un fallo (o que tarde) cuenta como sin conexión. */
+  async function hayInternet() {
+    try { await fetch(D.sonda + '?t=' + Date.now(), { mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(4000) }); return true; } catch (e) { return false; }
+  }
   function vigilarConexion() {
     if (!D.modo_desconectado) return;
-    const capa = $('#bloqueo'); let desde = null;
+    const capa = $('#bloqueo');
     const sondear = async () => {
       if (E.cierre) return;
-      let conectado = false;
-      try { await fetch(D.sonda + '?t=' + Date.now(), { mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(4000) }); conectado = true; } catch (e) { conectado = false; }
-      if (conectado && !desde) { desde = Date.now(); capa.classList.remove('oculto'); }
-      if (!conectado && desde) { E.sesion.reconexiones.push({ inicio: new Date(desde).toISOString(), segundos: Math.round((Date.now() - desde) / 1000) }); desde = null; capa.classList.add('oculto'); guardar(); }
+      const conectado = await hayInternet();
+      // 5.7.4: con conexión el examen se pausa (el reloj también) y queda en el registro con hora y duración
+      if (conectado && !reconectadoDesde) {
+        reconectadoDesde = Date.now();
+        capa.textContent = 'El equipo volvió a tener internet. El examen está en pausa, y el reloj también: desconéctese para continuar.';
+        capa.classList.remove('oculto');
+      }
+      if (!conectado && reconectadoDesde) {
+        E.sesion.reconexiones.push({ inicio: new Date(reconectadoDesde).toISOString(), segundos: Math.round((Date.now() - reconectadoDesde) / 1000) });
+        reconectadoDesde = null; capa.classList.add('oculto'); guardar();
+      }
     };
     sondear(); setInterval(sondear, (D.intervalo_sonda || 20) * 1000);
   }

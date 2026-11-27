@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AlertasController;
 use App\Http\Controllers\ApunteController;
+use App\Http\Controllers\BancoController;
 use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\Calificador\ResultadosNavegadorController;
 use App\Http\Controllers\CalificadorController;
@@ -100,6 +101,12 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/materias/{materia}/actividades', [CalificadorController::class, 'artefactos'])->name('artefactos.index');
     Route::post('/materias/{materia}/actividades', [CalificadorController::class, 'importar'])->name('artefactos.importar');
+    Route::get('/materias/{materia}/bancos/nuevo', [BancoController::class, 'create'])->name('bancos.create');
+    Route::post('/materias/{materia}/bancos', [BancoController::class, 'store'])->name('bancos.store');
+    Route::get('/examenes/{artefacto}/banco', [BancoController::class, 'edit'])->name('bancos.edit');
+    Route::put('/examenes/{artefacto}/banco', [BancoController::class, 'update'])->name('bancos.update');
+    Route::post('/examenes/{artefacto}/copia', [BancoController::class, 'duplicar'])->name('bancos.duplicar');
+    Route::get('/examenes/{artefacto}/banco.json', [BancoController::class, 'descargar'])->name('bancos.descargar');
     Route::post('/actividades-evaluables/{artefacto}/aplicar', [CalificadorController::class, 'aplicar'])->name('artefactos.aplicar');
 
     Route::prefix('ia')->name('ia.')->group(function () {

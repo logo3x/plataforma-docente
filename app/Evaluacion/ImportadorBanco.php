@@ -315,7 +315,7 @@ final class ImportadorBanco
      *
      * @return array{0: array<string, mixed>, 1: array<string, mixed>}
      */
-    private function separar(array $it): array
+    public function separar(array $it): array
     {
         $publico = ['texto' => $it['enunciado'], 'tema' => $it['tema'] ?? null];
 

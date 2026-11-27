@@ -264,3 +264,14 @@ th .suave { color: inherit; opacity: .85; }
 [x-cloak] { display: none !important; }
 @media (max-width: 900px) { .fila-diapositiva { grid-template-columns: 1fr; } }
 @media print { .fila-diapositiva { grid-template-columns: 1fr; break-inside: avoid; } .notas-orador, .proyeccion { display: none; } .diapositiva { break-inside: avoid; box-shadow: none; } }
+
+/* Editor del banco de preguntas (13.5) */
+.texto-alerta { color: var(--mal); font-weight: 600; }
+.editor-banco fieldset.opciones-banco { border: 1px solid var(--borde, #d1d5db); border-radius: 6px; padding: .5rem .75rem; margin: 0 0 .75rem; }
+.editor-banco fieldset.opciones-banco legend { font-weight: 600; padding: 0 .25rem; }
+.item-banco .resumen-item { text-align: left; text-decoration: none; color: var(--texto); flex: 1; }
+.item-banco .resumen-item:hover { text-decoration: underline; }
+.lista-otras { list-style: none; padding: 0; margin: .5rem 0; max-height: 26rem; overflow: auto; }
+.lista-otras li { padding: .4rem 0; border-bottom: 1px solid var(--borde, #e5e7eb); gap: .75rem; }
+.barra-guardar { position: sticky; bottom: 0; background: var(--fondo, #f3f4f6); padding: .75rem 0; z-index: 2; }
+.sin-marco { border: 0; padding: 0; margin: 0; min-width: 0; }

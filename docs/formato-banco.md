@@ -1,6 +1,6 @@
 # Formato «plataforma-banco» v1
 
-Archivo JSON con una actividad evaluable (quiz, parcial o taller). Se importa en **Actividades evaluables** de cada materia. Es el mismo formato que producirá el generador con IA. Hay un ejemplo completo en [`ejemplos/banco-ejemplo.json`](ejemplos/banco-ejemplo.json).
+Archivo JSON con una actividad evaluable (quiz, parcial o taller). Se importa en **Actividades evaluables** de cada materia. No hace falta escribirlo a mano: el **banco de preguntas** de cada examen se edita en la aplicación pregunta por pregunta (los retos de código, en este mismo JSON), se puede crear un examen desde cero o con preguntas traídas de otros exámenes de la materia, y se descarga en este formato. Es el mismo formato que producirá el generador con IA. Hay un ejemplo completo en [`ejemplos/banco-ejemplo.json`](ejemplos/banco-ejemplo.json).
 
 ```json
 {

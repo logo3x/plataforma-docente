@@ -3,7 +3,8 @@
     <h1>Actividades evaluables — {{ $materia->nombre }}</h1>
     <p class="suave">Quices, parciales y talleres de la materia. Se guardan en la materia y se pueden aplicar en cualquier periodo.</p>
 
-    <p><a class="boton" href="{{ route('generacion.create', $materia) }}">Generar una actividad con IA</a></p>
+    <p class="fila"><a class="boton" href="{{ route('generacion.create', $materia) }}">Generar una actividad con IA</a>
+        <a class="boton boton-sec" href="{{ route('bancos.create', $materia) }}">Crear un examen desde cero</a></p>
     <section class="tarjeta">
         <h2 style="margin-top:0">Importar una actividad</h2>
         <p>Archivo JSON en formato «plataforma-banco» (vea <code>docs/formato-banco.md</code> en el repositorio). Se valida antes de guardar:
@@ -29,7 +30,7 @@
                     @endforeach
                 </ul>
             @endif
-            <p style="margin:.3rem 0"><a href="{{ route('configuracion.edit', $a) }}">Configuración (reloj, conexión, salidas, ayuda de código)</a> ·
+            <p style="margin:.3rem 0"><a href="{{ route('bancos.edit', $a) }}">Banco de preguntas</a> · <a href="{{ route('configuracion.edit', $a) }}">Configuración (reloj, conexión, salidas, ayuda de código)</a> ·
                 Versiones: <strong>{{ implode(', ', $a->versiones()) }}</strong>
                 @if (\App\Evaluacion\GeneradorVariante::posibles($a)) · <a href="{{ route('variantes.create', $a) }}">Generar la versión B o un segundo banco con IA</a>@endif</p>
             <details>

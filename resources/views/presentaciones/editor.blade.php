@@ -98,4 +98,5 @@
             </form>
         @endif
     </div>
+    @if ($existente instanceof \Illuminate\Database\Eloquent\Model)@include('versiones._lista', ['modelo' => $existente])@endif
 </x-app>

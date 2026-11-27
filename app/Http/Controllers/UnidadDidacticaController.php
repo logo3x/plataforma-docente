@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Historial\Versiones;
 use App\IA\MotorNoDisponible;
 use App\IA\MotorNoPermitido;
 use App\IA\RespuestaRechazada;
@@ -88,6 +89,7 @@ class UnidadDidacticaController extends Controller
             return back()->withInput()->with('observaciones', $e);
         }
         $u = $servicio->normalizar($datos);
+        app(Versiones::class)->guardar($unidad);           // 7.6: cómo estaba
         $unidad->update(['titulo' => $u['titulo'], 'contenido' => $u, 'temario_item_id' => $unidadId]);
 
         return redirect()->route('unidades.show', $unidad)->with('estado', 'Unidad actualizada.');

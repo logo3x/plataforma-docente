@@ -29,7 +29,7 @@ final class HistorialMateria
     ];
 
     /** Prefijo de rutas de cada tipo de material. */
-    private const RUTAS_MATERIAL = ['apuntes' => 'apuntes', 'ejemplos' => 'ejemplos', 'debate' => 'debates', 'vocabulario' => 'vocabularios', 'proyectos' => 'proyectos', 'presentacion' => 'presentaciones'];
+    public const RUTAS_MATERIAL = ['apuntes' => 'apuntes', 'ejemplos' => 'ejemplos', 'debate' => 'debates', 'vocabulario' => 'vocabularios', 'proyectos' => 'proyectos', 'presentacion' => 'presentaciones'];
 
     /**
      * @param  array{tipo?: ?string, dictado?: ?int, origen?: ?string, q?: ?string}  $filtros

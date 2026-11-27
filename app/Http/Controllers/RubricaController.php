@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Evaluacion\GeneradorRubrica;
 use App\Evaluacion\Rubricas;
+use App\Historial\Versiones;
 use App\IA\MotorNoDisponible;
 use App\IA\MotorNoPermitido;
 use App\IA\RespuestaRechazada;
@@ -82,6 +83,7 @@ class RubricaController extends Controller
             return back()->withInput()->with('observaciones', $e);
         }
         DB::transaction(function () use ($rubrica, $rubricas, $datos, $preguntas) {
+            app(Versiones::class)->guardar($rubrica);    // 7.6: cómo estaba
             $rubrica->update($rubricas->normalizar($datos));
             $this->asociar($rubrica, $preguntas);
         });

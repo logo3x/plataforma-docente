@@ -211,4 +211,5 @@
                 <a href="{{ route('configuracion.edit', $a) }}">Configuración del examen</a></p>
         @endif
     </div>
+    @if ($a)@include('versiones._lista', ['modelo' => $a])@endif
 </x-app>

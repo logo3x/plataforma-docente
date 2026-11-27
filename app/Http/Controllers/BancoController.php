@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Evaluacion\EditorBanco;
+use App\Historial\Versiones;
 use App\Models\Artefacto;
 use App\Models\Materia;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use InvalidArgumentException;
@@ -51,7 +53,12 @@ class BancoController extends Controller
         Gate::authorize('gestionar', $artefacto->materia);
         $banco = $this->leer($request);
         try {
-            $r = $this->editor->guardar($artefacto, $banco);
+            // 7.6: la foto de cómo estaba solo queda si el cambio se guarda
+            $r = DB::transaction(function () use ($artefacto, $banco) {
+                app(Versiones::class)->guardar($artefacto);
+
+                return $this->editor->guardar($artefacto, $banco);
+            });
         } catch (InvalidArgumentException $e) {
             return back()->with('banco_previo', $banco)->with('errores_banco', explode("\n", $e->getMessage()));
         }

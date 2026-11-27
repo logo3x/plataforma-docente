@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Historial\Versiones;
 use App\IA\MotorNoDisponible;
 use App\IA\MotorNoPermitido;
 use App\IA\RespuestaRechazada;
@@ -120,6 +121,7 @@ abstract class MaterialController extends Controller
             return back()->withInput()->with('observaciones', $e);
         }
         $d = $this->tipo()->normalizar($datos);
+        app(Versiones::class)->guardar($material);        // 7.6: cómo estaba
         $material->update(['titulo' => $d['titulo'], 'contenido' => $d]);
 
         return redirect()->route($this->ruta().'.show', $material)->with('estado', 'Cambios guardados.');

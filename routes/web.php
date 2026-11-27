@@ -43,6 +43,7 @@ use App\Http\Controllers\SimilitudController;
 use App\Http\Controllers\TemarioController;
 use App\Http\Controllers\UnidadDidacticaController;
 use App\Http\Controllers\VarianteController;
+use App\Http\Controllers\VersionController;
 use App\Http\Controllers\VivoEstudianteController;
 use App\Http\Controllers\VocabularioController;
 use Illuminate\Support\Facades\Route;
@@ -127,6 +128,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/materias/{materia}/contenido', [ContenidoController::class, 'index'])->name('contenido.index');
     Route::post('/materias/{materia}/contenido', [ContenidoController::class, 'store'])->name('contenido.store');
     Route::get('/contenido/{contenido}', [ContenidoController::class, 'show'])->name('contenido.show');
+    Route::post('/versiones/{version}/restaurar', [VersionController::class, 'restaurar'])->name('versiones.restaurar');
     Route::get('/contenido/{contenido}/archivo', [ContenidoController::class, 'descargar'])->name('contenido.descargar');
     Route::put('/contenido/{contenido}/tema', [ContenidoController::class, 'asignarTema'])->name('contenido.tema');
     Route::delete('/contenido/{contenido}', [ContenidoController::class, 'destroy'])->name('contenido.destroy');

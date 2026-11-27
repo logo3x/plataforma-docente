@@ -32,7 +32,7 @@ class UnidadDidacticaController extends Controller
             'planeadas' => $materia->unidadesDidacticas()->with('unidad')->latest()->get(),
             'unidades' => $this->unidadesDelTemario($materia),
             'dictados' => $materia->dictados()->with('grupos')->latest()->get(),
-            'contenidos' => $materia->contenidos()->latest()->get(['id', 'titulo']),
+            'contenidos' => $materia->contenidos()->with('tema')->latest()->get(['id', 'titulo', 'temario_item_id']),
             'motores' => ConfigMotorIa::query()->where('user_id', $request->user()->id)->orderByDesc('predeterminado')->get(),
             'borradores' => GeneracionIa::query()->where('materia_id', $materia->id)->where('tarea', 'unidad')->where('estado', 'borrador')->latest()->limit(10)->get(),
         ]);

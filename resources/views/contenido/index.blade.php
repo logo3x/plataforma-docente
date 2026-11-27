@@ -23,11 +23,19 @@
         <div class="tarjeta vacio"><strong>El repositorio está vacío.</strong>Sin material, la IA solo cuenta con el tema que usted escriba.</div>
     @else
         <table>
-            <thead><tr><th>Título</th><th>Tipo</th><th class="num">Texto extraído</th><th>Cargado</th><th></th></tr></thead>
+            <thead><tr><th>Título</th><th>Unidad o tema</th><th>Tipo</th><th class="num">Texto extraído</th><th>Cargado</th><th></th></tr></thead>
             <tbody>
                 @foreach ($contenidos as $c)
                     <tr>
                          <td><a href="{{ route('contenido.show', $c) }}">{{ $c->titulo }}</a>@if ($c->version > 1) <span class="suave">versión {{ $c->version }}</span>@endif · <a href="{{ route('contenido.descargar', $c) }}" aria-label="Descargar «{{ $c->titulo }}»">Descargar</a></td>
+                        <td><form method="POST" action="{{ route('contenido.tema', $c) }}">@csrf @method('PUT')
+                            <select name="temario_item_id" aria-label="Unidad o tema de «{{ $c->titulo }}»" onchange="this.form.submit()" style="max-width:16rem">
+                                <option value="">Sin asignar</option>
+                                @foreach ($temario as $u)
+                                    <option value="{{ $u->id }}" @selected($c->temario_item_id === $u->id)>{{ $u->titulo }} (toda la unidad)</option>
+                                    @foreach ($u->hijos as $t)<option value="{{ $t->id }}" @selected($c->temario_item_id === $t->id)>&nbsp;&nbsp;{{ $t->titulo }}</option>@endforeach
+                                @endforeach
+                            </select><noscript><button class="boton boton-sec boton-chico">Asignar</button></noscript></form></td>
                         <td>{{ $c->tipo }}</td>
                         <td class="num">{{ number_format(mb_strlen((string) $c->texto_extraido), 0, ',', '.') }} caracteres</td>
                         <td>{{ $c->created_at->format('Y-m-d') }}</td>

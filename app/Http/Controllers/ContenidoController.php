@@ -21,7 +21,8 @@ class ContenidoController extends Controller
     {
         Gate::authorize('gestionar', $materia);
 
-        return view('contenido.index', ['materia' => $materia, 'contenidos' => $materia->contenidos()->latest()->get()]);
+        return view('contenido.index', ['materia' => $materia, 'contenidos' => $materia->contenidos()->with('tema')->latest()->get(),
+            'temario' => $materia->temario()->whereNull('parent_id')->with('hijos')->orderBy('orden')->get()]);
     }
 
     public function store(Request $request, Materia $materia, ExtractorTexto $extractor): RedirectResponse
@@ -82,6 +83,17 @@ class ContenidoController extends Controller
         Gate::authorize('gestionar', $contenido->materia);
 
         return view('contenido.ver', ['contenido' => $contenido]);
+    }
+
+    /** 7.2: asigna el material a una unidad o a un tema del temario de la materia (o lo deja sin asignar). */
+    public function asignarTema(Request $request, Contenido $contenido): RedirectResponse
+    {
+        Gate::authorize('gestionar', $contenido->materia);
+        $id = $request->integer('temario_item_id') ?: null;
+        abort_if($id && ! $contenido->materia->temario()->whereKey($id)->exists(), 422);
+        $contenido->update(['temario_item_id' => $id]);
+
+        return back()->with('estado', "«{$contenido->titulo}» ".($id ? 'quedó en «'.$contenido->fresh()->tema->titulo.'».' : 'quedó sin unidad ni tema.'));
     }
 
     /** El archivo original, tal como se cargó (7.11: el material sigue siendo del docente). */

@@ -67,7 +67,7 @@
             <input id="enfasis" name="enfasis" type="text" value="{{ old('enfasis') }}" placeholder="más práctica en el laboratorio; el grupo nocturno trabaja"></div>
         <fieldset class="campo" style="border:0;padding:0"><legend style="font-weight:600">Material de referencia (<a href="{{ route('contenido.index', $materia) }}">repositorio</a>)</legend>
             @forelse ($contenidos as $c)
-                <label style="font-weight:400"><input type="checkbox" name="contenidos[]" value="{{ $c->id }}"> {{ $c->titulo }}</label>
+                <label style="font-weight:400"><input type="checkbox" name="contenidos[]" value="{{ $c->id }}" data-tema="{{ $c->temario_item_id }}"> {{ $c->titulo }}@if ($c->tema) <span class="suave">· {{ $c->tema->titulo }}</span>@endif</label>
             @empty <p class="suave">El repositorio está vacío.</p> @endforelse
         </fieldset>
         <button class="boton" type="submit" @disabled($motores->isEmpty() || $dictados->isEmpty())>Ver el prompt antes de enviar</button>

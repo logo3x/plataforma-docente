@@ -43,7 +43,7 @@
                 @foreach ($unidades as $u)
                     @continue($u->hijos->isEmpty())
                     <p style="margin:.3rem 0 .1rem" class="suave">{{ $u->titulo }}</p>
-                    @foreach ($u->hijos as $t)<label style="font-weight:400;display:inline-block;margin-right:1rem"><input type="checkbox" name="temas[]" value="{{ $t->id }}" @checked(in_array($t->id, $marcados, true))> {{ $t->titulo }}</label>@endforeach
+                    @foreach ($u->hijos as $t)<label style="font-weight:400;display:inline-block;margin-right:1rem"><input type="checkbox" name="temas[]" data-unidad="{{ $u->id }}" value="{{ $t->id }}" @checked(in_array($t->id, $marcados, true))> {{ $t->titulo }}</label>@endforeach
                 @endforeach
             </fieldset>
         @endif
@@ -67,7 +67,7 @@
         <fieldset class="campo" style="border:0;padding:0"><legend style="font-weight:600">Material de referencia (<a href="{{ route('contenido.index', $materia) }}">repositorio</a>)</legend>
             <p class="suave" style="margin:.1rem 0 .3rem">Recomendado: el texto se basa en este material y lo cita como fuente.</p>
             @forelse ($contenidos as $c)
-                <label style="font-weight:400"><input type="checkbox" name="contenidos[]" value="{{ $c->id }}"> {{ $c->titulo }}</label>
+                <label style="font-weight:400"><input type="checkbox" name="contenidos[]" value="{{ $c->id }}" data-tema="{{ $c->temario_item_id }}"> {{ $c->titulo }}@if ($c->tema) <span class="suave">· {{ $c->tema->titulo }}</span>@endif</label>
             @empty <p class="suave">El repositorio está vacío.</p> @endforelse
         </fieldset>
         <button class="boton" type="submit" @disabled($motores->isEmpty() || $dictados->isEmpty())>Ver el prompt antes de enviar</button>

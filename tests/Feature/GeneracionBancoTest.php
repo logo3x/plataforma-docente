@@ -8,6 +8,7 @@ use App\Models\Artefacto;
 use App\Models\ConfigMotorIa;
 use App\Models\Contenido;
 use App\Models\GeneracionIa;
+use App\Models\Materia;
 use App\Models\PlantillaPrompt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -238,6 +239,30 @@ class GeneracionBancoTest extends TestCase
             ->assertSessionHas('estado', '1 archivo(s) cargado(s).');
         $this->assertSame([1, 2], Contenido::query()->where('titulo', 'notas de otro curso')->orderBy('id')->pluck('version')->all());
         $this->get(route('contenido.index', $this->materia))->assertSee('versión 2');
+    }
+
+    #[Test]
+    public function el_material_se_asigna_a_un_tema_y_se_ofrece_por_tema_al_generar(): void
+    {
+        // 7.2
+        $u = $this->materia->temario()->create(['tipo' => 'unidad', 'titulo' => 'Estructuras lineales', 'orden' => 1]);
+        $pilas = $this->materia->temario()->create(['tipo' => 'tema', 'titulo' => 'Pilas', 'parent_id' => $u->id, 'orden' => 1]);
+        $guia = $this->materia->contenidos()->create(['titulo' => 'Guía de pilas', 'tipo' => 'guia', 'ruta' => 'x', 'mime' => 'text/plain', 'sha256' => str_repeat('b', 64), 'texto_extraido' => 'LIFO']);
+
+        $this->get(route('contenido.index', $this->materia))->assertOk()->assertSee('Estructuras lineales (toda la unidad)');
+        $this->put(route('contenido.tema', $guia), ['temario_item_id' => $pilas->id])->assertSessionHas('estado', '«Guía de pilas» quedó en «Pilas».');
+        $this->assertSame($pilas->id, $guia->fresh()->temario_item_id);
+
+        // El generador marca el material del tema elegido (el atributo lo usa el script común) y dice de qué tema es
+        $this->get(route('generacion.create', $this->materia))->assertOk()
+            ->assertSee('data-tema="'.$pilas->id.'"', false)->assertSee('data-unidad="'.$u->id.'" value=', false)->assertSee('· Pilas');
+
+        // Solo temas de la misma materia
+        $otra = Materia::query()->create(['user_id' => $this->docente->id, 'nombre' => 'Otra', 'codigo' => 'OT1']);
+        $ajeno = $otra->temario()->create(['tipo' => 'tema', 'titulo' => 'Ajeno', 'orden' => 1]);
+        $this->put(route('contenido.tema', $guia), ['temario_item_id' => $ajeno->id])->assertStatus(422);
+        $this->put(route('contenido.tema', $guia), ['temario_item_id' => ''])->assertSessionHas('estado');
+        $this->assertNull($guia->fresh()->temario_item_id);
     }
 
     #[Test]

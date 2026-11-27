@@ -21,4 +21,10 @@ class Contenido extends Model
     {
         return $this->belongsTo(TemarioItem::class);
     }
+
+    /** La unidad o el tema del temario a que pertenece (7.2). */
+    public function tema(): BelongsTo
+    {
+        return $this->belongsTo(TemarioItem::class, 'temario_item_id');
+    }
 }

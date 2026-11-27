@@ -34,7 +34,7 @@ class RubricaController extends Controller
             'rubricas' => $materia->rubricas()->withCount('preguntas')->latest()->get(),
             'abiertas' => $this->abiertas($materia),
             'dictados' => $materia->dictados()->with('grupos')->latest()->get(),
-            'contenidos' => $materia->contenidos()->latest()->get(['id', 'titulo', 'texto_extraido']),
+            'contenidos' => $materia->contenidos()->with('tema')->latest()->get(['id', 'titulo', 'texto_extraido', 'temario_item_id']),
             'motores' => ConfigMotorIa::query()->where('user_id', $request->user()->id)->orderByDesc('predeterminado')->get(),
             'borradores' => GeneracionIa::query()->where('materia_id', $materia->id)->where('tarea', 'rubrica')->where('estado', 'borrador')->latest()->limit(10)->get(),
             'unidades' => $materia->temario()->whereNull('parent_id')->with(['hijos' => fn ($q) => $q->where('tipo', 'tema')->orderBy('orden')])->get(),

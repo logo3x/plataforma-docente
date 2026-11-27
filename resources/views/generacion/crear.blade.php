@@ -31,7 +31,7 @@
                 @foreach ($unidades as $u)
                     @continue($u->hijos->isEmpty())
                     <p style="margin:.3rem 0 .1rem" class="suave">{{ $u->titulo }}</p>
-                    @foreach ($u->hijos as $t)<label style="font-weight:400;display:inline-block;margin-right:1rem"><input type="checkbox" name="temas[]" value="{{ $t->id }}" @checked(in_array($t->id, array_map('intval', (array) old('temas', request('temas', []))), true))> {{ $t->titulo }}</label>@endforeach
+                    @foreach ($u->hijos as $t)<label style="font-weight:400;display:inline-block;margin-right:1rem"><input type="checkbox" name="temas[]" data-unidad="{{ $u->id }}" value="{{ $t->id }}" @checked(in_array($t->id, array_map('intval', (array) old('temas', request('temas', []))), true))> {{ $t->titulo }}</label>@endforeach
                 @endforeach
                 <p class="suave" style="margin:.3rem 0 0">Si elige un grupo, la IA recibe además qué temas ya vio según la lista de chequeo y cuáles no debe evaluar.</p>
             </fieldset>
@@ -53,7 +53,7 @@
 
         <fieldset class="campo" style="border:0;padding:0"><legend style="font-weight:600">Material de referencia (<a href="{{ route('contenido.index', $materia) }}">repositorio</a>)</legend>
             @forelse ($contenidos as $c)
-                <label style="font-weight:400"><input type="checkbox" name="contenidos[]" value="{{ $c->id }}"> {{ $c->titulo }} <span class="suave">({{ number_format(mb_strlen((string) $c->texto_extraido), 0, ',', '.') }} caracteres)</span></label>
+                <label style="font-weight:400"><input type="checkbox" name="contenidos[]" value="{{ $c->id }}" data-tema="{{ $c->temario_item_id }}"> {{ $c->titulo }}@if ($c->tema) <span class="suave">· {{ $c->tema->titulo }}</span>@endif <span class="suave">({{ number_format(mb_strlen((string) $c->texto_extraido), 0, ',', '.') }} caracteres)</span></label>
             @empty <p class="suave">El repositorio está vacío: la IA solo contará con el tema.</p> @endforelse
         </fieldset>
         <button class="boton" type="submit" @disabled($motores->isEmpty())>Ver el prompt antes de enviar</button>

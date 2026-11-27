@@ -6,6 +6,7 @@ use App\Models\Entrega;
 use App\Models\Estudiante;
 use App\Models\Grupo;
 use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 
 /**
  * Cierre del periodo (3.7): simulador «qué necesita para pasar» y revisión de ceros y vacíos.
@@ -59,6 +60,7 @@ final class CierrePeriodo
                 'pendientes' => $pendientes,
                 'simulacion' => $this->calc->simularCierre($acum, (string) $pendiente, $this->margen),
                 'beneficio_vacias' => $this->apruebaPorVacias($f['estudiante']),
+                'metas' => $this->metas($f['estudiante']),
             ];
         }
 
@@ -129,6 +131,66 @@ final class CierrePeriodo
         usort($items, fn ($a, $b) => BigDecimal::of($a['distancia'])->compareTo($b['distancia']) ?: strcmp($a['estudiante']->apellidos, $b['estudiante']->apellidos));
 
         return $items;
+    }
+
+    /**
+     * 3.7.1: la nota mínima que necesita en las actividades que aún no se aplican (el parcial, el proyecto) para
+     * aprobar el corte y, si con eso se completa el periodo, para aprobar el periodo. Se busca simulando notas en el
+     * tablero, así que respeta todas las reglas de cálculo. Si son varias, la misma nota en cada una.
+     *
+     * @return array<int, array{division: string, actividades: array<int, string>, corte: ?string, periodo: ?string, ya: bool}>
+     */
+    private function metas(Estudiante $e): array
+    {
+        $escala = $this->tablero->escala();
+        $estudiantes = $this->tablero->estudiantes();
+        $metas = [];
+        $todas = [];
+        foreach ($this->tablero->pestanas() as $d) {
+            if ($this->tablero->resultado($d, $e)->esFinal()) {
+                continue;
+            }
+            // Pendiente: nadie del grupo tiene nota todavía (si otros sí, es una vacía, y se ve en la revisión de ceros)
+            $pend = $d->componentes->flatMap->actividades->filter(fn ($a) => $this->tablero->notaEfectiva($a->id, $e->id) === null
+                && ! $estudiantes->contains(fn ($x) => $this->tablero->notaEfectiva($a->id, $x->id) !== null))->values();
+            if ($pend->isEmpty()) {
+                continue;
+            }
+            $todas = [...$todas, ...$pend->pluck('id')->all()];
+            $corte = $this->minima(fn ($t) => ($r = $t->resultado($d, $e))->esFinal() && $escala->aprueba($r->definitiva), $pend->pluck('id')->all(), $e);
+            $metas[] = ['division' => $d->nombre, 'actividades' => $pend->pluck('nombre')->all(), 'corte' => $corte, 'periodo' => null,
+                'ya' => $corte !== null && BigDecimal::of($corte)->isEqualTo($escala->minimo)];
+        }
+        // Para el periodo: con todas las pendientes calificadas, ¿cuánto necesita en cada una?
+        if ($metas) {
+            $fila = fn ($t) => collect($t->filasConsolidado())->first(fn ($x) => $x['estudiante']->id === $e->id);
+            // Solo si con eso se completa el periodo; si aún faltan otros cortes, la meta del periodo no se puede decir
+            if ($fila($this->tablero->conNotas($todas, $e->id, $escala->maximo))['estado'] !== EstadoCorte::Incompleto) {
+                $metas[count($metas) - 1]['periodo'] = $this->minima(fn ($t) => $escala->aprueba($fila($t)['acumulado']), $todas, $e) ?? 'no';
+            }
+        }
+
+        return $metas;
+    }
+
+    /** La menor nota de la escala (en sus decimales) que cumple la condición; null si ni con la máxima. */
+    private function minima(callable $aprueba, array $actividades, Estudiante $e): ?string
+    {
+        $escala = $this->tablero->escala();
+        $paso = BigDecimal::one()->dividedBy(BigDecimal::ten()->power($escala->decimales), $escala->decimales);
+        $min = BigDecimal::of($escala->minimo);
+        $pasos = BigDecimal::of($escala->maximo)->minus($min)->dividedBy($paso, 0, RoundingMode::Down)->toInt();
+        $valor = fn (int $k) => (string) $min->plus($paso->multipliedBy($k))->toScale($escala->decimales);
+        if (! $aprueba($this->tablero->conNotas($actividades, $e->id, $valor($pasos)))) {
+            return null;
+        }
+        [$lo, $hi] = [0, $pasos];
+        while ($lo < $hi) {
+            $m = intdiv($lo + $hi, 2);
+            $aprueba($this->tablero->conNotas($actividades, $e->id, $valor($m))) ? $hi = $m : $lo = $m + 1;
+        }
+
+        return $valor($lo);
     }
 
     /**

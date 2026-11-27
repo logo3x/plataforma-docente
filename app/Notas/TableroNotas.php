@@ -114,6 +114,17 @@ final class TableroNotas
         return $this->divisiones->firstWhere('id', $id);
     }
 
+    /** Copia del tablero con una nota hipotética: para simular, nunca para guardar (3.7.5). */
+    public function conNotas(array $actividadIds, int $estudianteId, string $valor): self
+    {
+        $c = clone $this;
+        foreach ($actividadIds as $a) {
+            $c->notas[$a][$estudianteId] = $valor;
+        }
+
+        return $c;
+    }
+
     public function nota(int $actividadId, int $estudianteId): ?string
     {
         return $this->notas[$actividadId][$estudianteId] ?? null;

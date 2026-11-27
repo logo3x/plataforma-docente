@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Archivos\LectorTabla;
 use App\Dictados\RespaldoDictado;
 use App\Models\Estudiante;
+use App\Models\Nota;
 use App\Models\User;
 use App\Notas\CierrePeriodo;
 use App\Notas\ClasificacionCierre;
@@ -137,6 +138,26 @@ class CierreYExportacionTest extends TestCase
 
         $this->get(route('cierre', $this->grupo))->assertOk()
             ->assertSee('solo calcula')->assertSee('Ceros y vacías para revisar')->assertSee('0 Cero');
+    }
+
+    #[Test]
+    public function calcula_la_nota_minima_que_necesita_en_la_actividad_pendiente(): void
+    {
+        // 3.7.1: quiz y parcial pesan 50/50 en el corte 1; el parcial aún no se aplica
+        $r = app(RegistroNotas::class);
+        $q = $this->crearActividad($this->trabajos, ['nombre' => 'Quiz 1']);
+        $p = $this->crearActividad($this->parcial, ['nombre' => 'Parcial 1']);
+        $r->asignar($q, $this->e[0], '2.0', 'digitada');   // necesita 4.0 en el parcial
+        $r->asignar($q, $this->e[1], '5.0', 'digitada');   // con 1.0 ya llega a 3.0
+        $r->asignar($q, $this->e[2], '0.5', 'digitada');   // no alcanza: necesitaría 5.5
+
+        $metas = collect((new CierrePeriodo($this->grupo))->simulacion())->mapWithKeys(fn ($f) => [$f['estudiante']->documento => $f['metas'][0] ?? null]);
+        $this->assertSame(['Parcial 1'], $metas['1']['actividades']);
+        $this->assertSame('4.0', $metas['1']['corte']);
+        $this->assertSame('1.0', $metas['2']['corte']);
+        $this->assertNull($metas['3']['corte']);
+        $this->get(route('cierre', $this->grupo))->assertOk()->assertSee('para aprobar el corte');
+        $this->assertSame('2.0000', Nota::query()->where('actividad_id', $q->id)->where('estudiante_id', $this->e[0]->id)->value('valor'), 'Solo calcula: no cambia ninguna nota');
     }
 
     #[Test]

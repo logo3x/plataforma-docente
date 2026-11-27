@@ -5,6 +5,7 @@ namespace App\Calificacion;
 use App\Archivos\ExtractorTexto;
 use App\Evaluacion\Rubricas;
 use App\Models\Actividad;
+use App\Models\Alerta;
 use App\Models\Entrega;
 use App\Models\Estudiante;
 use Brick\Math\BigDecimal;
@@ -85,9 +86,21 @@ final class EntregasArchivo
             return $e;
         });
 
+        // 6.1.4: el mismo archivo ya está en otra actividad del periodo: probablemente se subió a la equivocada
+        $otra = Entrega::query()->where('sha256', $sha)->whereKeyNot($entrega->id)
+            ->whereHas('actividad.componente.division', fn ($q) => $q->where('dictado_id', $actividad->componente->division->dictado_id))
+            ->with('actividad')->first();
+        if ($otra) {
+            foreach ($integrantes->isEmpty() ? [null] : $integrantes as $i) {
+                Alerta::query()->create(['actividad_id' => $actividad->id, 'entrega_id' => $entrega->id, 'estudiante_id' => $i?->id, 'tipo' => 'otra_actividad',
+                    'datos' => ['actividad' => $otra->actividad->nombre, 'actividad_id' => $otra->actividad_id]]);
+            }
+            $aviso = " Atención: este mismo archivo ya está en «{$otra->actividad->nombre}». ¿Se subió a la actividad equivocada?";
+        }
+
         return $integrantes->isEmpty()
-            ? ['estado' => 'sin_identificar', 'entrega' => $entrega, 'mensaje' => "{$nombre}: no trae el documento de ningún estudiante en el nombre. Asígnele los integrantes al calificarlo."]
-            : ['estado' => 'recibida', 'entrega' => $entrega, 'mensaje' => "{$nombre}: de ".$integrantes->map->nombreCompleto()->join(' · ').'.'];
+            ? ['estado' => 'sin_identificar', 'entrega' => $entrega, 'mensaje' => "{$nombre}: no trae el documento de ningún estudiante en el nombre. Asígnele los integrantes al calificarlo.".($aviso ?? '')]
+            : ['estado' => 'recibida', 'entrega' => $entrega, 'mensaje' => "{$nombre}: de ".$integrantes->map->nombreCompleto()->join(' · ').'.'.($aviso ?? '')];
     }
 
     /** Estudiantes del periodo cuyo documento aparece en el nombre del archivo («1098765432_informe.pdf»). */

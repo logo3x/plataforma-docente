@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Calificacion\Similitud;
 use App\Evaluacion\Rubricas;
 use App\Models\Actividad;
+use App\Models\Alerta;
 use App\Models\Entrega;
 use App\Models\Estudiante;
 use App\Models\Materia;
@@ -63,6 +64,18 @@ class EntregasArchivoTest extends TestCase
             ['nombre' => 'Implementación', 'descripcion' => '', 'peso' => '60', 'niveles' => $niveles],
             ['nombre' => 'Documentación', 'descripcion' => '', 'peso' => '40', 'niveles' => $niveles],
         ]]));
+    }
+
+    #[Test]
+    public function avisa_si_el_mismo_archivo_ya_esta_en_otra_actividad_del_periodo(): void
+    {
+        // 6.1.4: el consolidado del laboratorio subido a la jornada equivocada
+        $otra = $this->crearActividad(null, ['nombre' => 'Taller de pilas']);
+        $this->post(route('calificador.archivos.subir', $otra), ['archivos' => [$this->pdf('1098765432_taller.pdf', 3)]]);
+        $this->post(route('calificador.archivos.subir', $this->actividad), ['archivos' => [$this->pdf('1098765432_taller.pdf', 3)]])
+            ->assertSessionHas('resultados', fn ($r) => str_contains($r[0]['mensaje'], 'este mismo archivo ya está en «Taller de pilas». ¿Se subió a la actividad equivocada?'));
+        $alerta = Alerta::query()->where('tipo', 'otra_actividad')->sole();
+        $this->assertSame([$this->actividad->id, $this->ana->id], [$alerta->actividad_id, $alerta->estudiante_id]);
     }
 
     #[Test]

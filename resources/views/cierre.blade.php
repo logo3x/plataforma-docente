@@ -40,6 +40,14 @@
                         <td>
                             <span class="estado {{ $clases[$s->clasificacion->value][0] }}">{{ $clases[$s->clasificacion->value][1] }}</span>
                             @if ($s->alMargen) <span class="estado estado-incompleto">◎ Al margen</span> @endif
+                            @foreach ($f['metas'] as $m)
+                                <div class="suave" style="margin-top:.2rem">En {{ implode(', ', $m['actividades']) }} ({{ $m['division'] }}) necesita
+                                    @if ($m['corte'] === null)<strong>más de {{ $escala->mostrar($escala->maximo) }}</strong> para aprobar el corte
+                                    @elseif ($m['ya'])<strong>cualquier nota</strong>: ya aprueba el corte
+                                    @else<strong>{{ $escala->mostrar($m['corte']) }}</strong> para aprobar el corte @endif
+                                    @if ($loop->last && $m['periodo'] !== null && $m['periodo'] !== $m['corte'])· {{ $m['periodo'] === 'no' ? 'el periodo no se alcanza ni con '.$escala->mostrar($escala->maximo) : $escala->mostrar($m['periodo']).' para aprobar el periodo' }}@endif
+                                    @if (count($m['actividades']) > 1)<span>(la misma nota en cada una)</span>@endif</div>
+                            @endforeach
                             @if ($f['beneficio_vacias'])
                                 <div class="redondeo">⚠ Aprueba un corte solo porque una celda vacía no promedia: revise si corresponde supletorio.</div>
                             @endif

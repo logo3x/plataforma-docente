@@ -27,6 +27,7 @@ final class PoliticaAlertas
         'reconexion' => ['Reconexión', 'El equipo recuperó internet en una actividad sin conexión.', true],
         'estudiante_en_dos_entregas' => ['En dos entregas', 'Aparece como integrante de dos entregas de la actividad.', true],
         'grupo_no_cuadra' => ['Otro grupo', 'La entrega es de un grupo distinto al de la actividad.', true],
+        'otra_actividad' => ['Ya entregado en otra actividad', 'El mismo archivo ya estaba en otra actividad del periodo: ¿se subió a la equivocada?', true],
         'integrante_desconocido' => ['Integrante que no está en la lista', 'Declaró un integrante que no está en el periodo.', true],
         'autor_distinto' => ['La subió otra persona', 'En Classroom, la entrega la subió alguien distinto a quien la respondió.', true],
         'entrega_tardia' => ['Entregada tarde', 'Classroom la marcó como entregada después de la fecha límite.', false],

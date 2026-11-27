@@ -36,6 +36,29 @@ class RegistroNotasPantallaTest extends TestCase
     }
 
     #[Test]
+    public function una_actividad_cambia_de_componente_con_sus_notas(): void
+    {
+        $quiz = $this->crearActividad($this->trabajos, ['nombre' => 'Quiz mal ubicado']);
+        $e = $this->grupo->estudiantes()->first();
+        app(Registro::class)->asignar($quiz, $e, '4.0', 'digitada');
+
+        Livewire::test(RegistroNotas::class, ['grupo' => $this->grupo])
+            ->assertSee('Parcial')->call('cambiarComponente', $quiz->id, $this->parcial->id);
+        $this->assertSame($this->parcial->id, $quiz->fresh()->componente_id);
+        $this->assertSame('4.0000', Nota::query()->where('actividad_id', $quiz->id)->sole()->valor);
+
+        // Solo dentro del mismo periodo
+        $otro = $this->dictado->replicate()->fill(['periodo' => '2099-1']);
+        $otro->save();
+        $div = $this->cortes[0]->replicate()->fill(['dictado_id' => $otro->id]);
+        $div->save();
+        $ajeno = $this->trabajos->replicate()->fill(['division_id' => $div->id]);
+        $ajeno->save();
+        Livewire::test(RegistroNotas::class, ['grupo' => $this->grupo])->call('cambiarComponente', $quiz->id, $ajeno->id)->assertForbidden();
+        $this->assertSame($this->parcial->id, $quiz->fresh()->componente_id);
+    }
+
+    #[Test]
     public function crear_columna_y_digitar_notas_recalcula_la_definitiva(): void
     {
         $c = Livewire::test(RegistroNotas::class, ['grupo' => $this->grupo])

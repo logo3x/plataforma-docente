@@ -34,4 +34,24 @@
             </tbody>
         </table>
     @endif
+
+    <h2>Ítems anulados para todo el grupo</h2>
+    @if ($anulaciones->isEmpty())
+        <p class="suave">Ninguno. Un ítem se anula desde el reclamo que lo pide o desde las estadísticas de la actividad.</p>
+    @else
+        <table>
+            <thead><tr><th>Fecha</th><th>Examen</th><th>Ítem</th><th>Regla</th><th>Motivo</th></tr></thead>
+            <tbody>
+                @foreach ($anulaciones as $ap)
+                    <tr>
+                        <td>{{ \Illuminate\Support\Carbon::parse($ap->anulada_en)->format('Y-m-d') }}</td>
+                        <td>{{ $ap->artefacto->sigla }} · {{ $ap->artefacto->titulo }}</td>
+                        <td>{{ \Illuminate\Support\Str::limit($ap->pregunta->enunciado['texto'] ?? '', 80) }}</td>
+                        <td>{{ $ap->regla_anulacion === 'dar_por_buena' ? 'Se dio por buena a todos' : 'Se retiró y se reescaló' }}</td>
+                        <td>{{ $ap->motivo_anulacion }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
 </x-app>

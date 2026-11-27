@@ -7,6 +7,7 @@ use App\IA\ExtractorJson;
 use App\IA\GestorIA;
 use App\IA\SolicitudIA;
 use App\Models\Artefacto;
+use App\Models\ArtefactoPregunta;
 use App\Models\ConfigMotorIa;
 use App\Models\Contenido;
 use App\Models\Dictado;
@@ -62,6 +63,10 @@ final class GeneradorBanco
             ->whereHas('actividad.componente.division.dictado', fn ($q) => $q->where('materia_id', $materia->id))
             ->with('item.pregunta')->latest()->limit(20)->get()
             ->map(fn ($r) => '- «'.Str::limit($r->item?->pregunta->enunciado['texto'] ?? '', 120).'»: '.Str::limit($r->resolucion, 160))
+            // Los ítems anulados para todo el grupo también son errores del examen (6.5.5)
+            ->merge(ArtefactoPregunta::query()->whereNotNull('anulada_en')
+                ->whereHas('artefacto', fn ($q) => $q->where('materia_id', $materia->id))->with('pregunta')->latest('anulada_en')->limit(10)->get()
+                ->map(fn ($ap) => '- «'.Str::limit($ap->pregunta->enunciado['texto'] ?? '', 120).'»: anulado para todo el grupo. '.Str::limit((string) $ap->motivo_anulacion, 160)))
             ->join("\n");
 
         // Temas elegidos del temario (7.1) y alcance real del grupo según la lista de chequeo (7.1.5)

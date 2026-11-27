@@ -102,7 +102,7 @@ class CalificadorController extends Controller
 
     // ---------- Calificador ----------
 
-    public function show(Actividad $actividad): View
+    public function show(Request $request, Actividad $actividad): View
     {
         $this->autorizar($actividad);
         $actividad->load('artefacto', 'componente.division.dictado.materia', 'grupos');
@@ -123,15 +123,31 @@ class CalificadorController extends Controller
         $escala = $actividad->componente->division->dictado->escala();
         $notas = $filas->pluck('nota')->filter(fn ($n) => $n !== null);
 
+        // 6.2.4: filtros por estado y por alerta; los indicadores son siempre de todo el grupo
+        $estado = $request->query('estado');
+        $alerta = $request->query('alerta');
+        $visibles = $filas
+            ->when($estado === 'pendientes', fn ($c) => $c->filter(fn ($f) => $f['retos'] + $f['abiertas'] > 0))
+            ->when($estado === 'calificadas', fn ($c) => $c->filter(fn ($f) => $f['nota'] !== null))
+            ->when($estado === 'reprobadas', fn ($c) => $c->filter(fn ($f) => $f['nota'] !== null && ! $escala->aprueba($f['nota'])))
+            ->when($alerta === 'con', fn ($c) => $c->filter(fn ($f) => $f['entrega']->alertas->isNotEmpty()))
+            ->when($alerta === 'sin', fn ($c) => $c->filter(fn ($f) => $f['entrega']->alertas->isEmpty()))
+            ->when($alerta && ! in_array($alerta, ['con', 'sin'], true), fn ($c) => $c->filter(fn ($f) => $f['entrega']->alertas->contains('tipo', $alerta)))
+            ->values();
+
         return view('calificador.ver', [
             'actividad' => $actividad,
-            'filas' => $filas,
+            'filas' => $visibles,
+            'total' => $filas->count(),
+            'filtros' => ['estado' => $estado, 'alerta' => $alerta],
+            'tiposPresentes' => $entregas->flatMap->alertas->pluck('tipo')->unique()->values(),
             'escala' => $escala,
             'indicadores' => [
                 'procesadas' => $entregas->count(),
                 'calificadas' => $notas->count(),
                 'promedio' => $notas->isEmpty() ? null : $escala->mostrar((string) ($notas->sum(fn ($n) => (float) $n) / $notas->count())),
                 'aprobados' => $notas->filter(fn ($n) => $escala->aprueba($n))->count(),
+                'reprobados' => $notas->reject(fn ($n) => $escala->aprueba($n))->count(),
                 'pendientes' => $filas->sum(fn ($f) => $f['retos'] + $f['abiertas']),
             ],
             'tieneAbiertas' => $actividad->artefacto?->items()->whereHas('pregunta', fn ($q) => $q->where('tipo', 'abierta'))->exists(),

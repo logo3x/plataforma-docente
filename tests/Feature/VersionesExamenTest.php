@@ -131,7 +131,7 @@ class VersionesExamenTest extends TestCase
         $this->assertSame(2, $e->respuestas()->count(), 'Solo los ítems de su versión: los de A no le cuentan como cero');
         $this->assertEqualsWithDelta(5.0, (float) $e->respuestas()->sum('puntaje'), 0.0001);
         $this->assertSame(0, Alerta::query()->where('tipo', 'version_no_coincide')->count());
-        $this->get(route('calificador.show', $this->actividad))->assertSee('versión B');
+        $this->get(route('calificador.show', $this->actividad))->assertSee('<th>Versión</th>', false)->assertSee('<td>B</td>', false);
     }
 
     #[Test]

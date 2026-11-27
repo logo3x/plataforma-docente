@@ -6,6 +6,7 @@ use App\Calificacion\AjustesDeExamen;
 use App\Calificacion\InformeEstudiante;
 use App\Calificacion\Reclamos;
 use App\Models\Actividad;
+use App\Models\ArtefactoPregunta;
 use App\Models\Materia;
 use App\Models\Reclamo;
 use Illuminate\Http\RedirectResponse;
@@ -101,6 +102,10 @@ class ReclamoController extends Controller
                 ->whereHas('actividad.componente.division.dictado', fn ($q) => $q->where('materia_id', $materia->id))
                 ->with('actividad.componente.division.dictado', 'actividad.artefacto', 'estudiante', 'item.pregunta')
                 ->latest()->get(),
+            // 6.5.6: también las anulaciones de ítems, se hayan hecho por un reclamo o desde Estadísticas
+            'anulaciones' => ArtefactoPregunta::query()->whereNotNull('anulada_en')
+                ->whereHas('artefacto', fn ($q) => $q->where('materia_id', $materia->id))
+                ->with('artefacto', 'pregunta')->latest('anulada_en')->get(),
         ]);
     }
 

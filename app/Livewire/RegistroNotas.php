@@ -126,6 +126,20 @@ class RegistroNotas extends Component
         }
     }
 
+    /**
+     * 3.1.4: cambia la actividad de componente, con sus notas. Solo dentro del mismo periodo; la definitiva se
+     * recalcula sola porque se calcula a partir de la estructura.
+     */
+    public function cambiarComponente(int $actividadId, int $componenteId): void
+    {
+        $a = $this->actividad($actividadId);
+        $destino = Componente::query()->with('division')->findOrFail($componenteId);
+        abort_unless($destino->division->dictado_id === $this->grupo()->dictado_id, 403);
+        if ($destino->id !== $a->componente_id) {
+            $a->update(['componente_id' => $destino->id, 'orden' => (int) $destino->actividades()->max('orden') + 1]);
+        }
+    }
+
     public function vaciasACeros(int $actividadId): void
     {
         $actividad = $this->actividad($actividadId);
@@ -205,6 +219,8 @@ class RegistroNotas extends Component
             'filas' => $division ? $tablero->filasDivision($division) : $tablero->filasConsolidado(),
             'ultimaAccion' => last(session($this->clavePila(), [])) ?: null,
             'retirados' => $this->grupo()->estudiantes()->wherePivot('activo', false)->orderBy('apellidos')->get(),
+            'componentesDestino' => Componente::query()->whereHas('division', fn ($q) => $q->where('dictado_id', $this->grupo()->dictado_id))
+                ->with('division')->get()->sortBy(fn ($c) => [$c->division->orden, $c->orden])->values(),
         ]);
     }
 

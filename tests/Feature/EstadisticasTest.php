@@ -170,6 +170,10 @@ class EstadisticasTest extends TestCase
         $this->assertStringContainsString('Anulación del ítem 3: Enunciado ambiguo', NotaCambio::query()->latest('id')->value('motivo'));
         $this->get(route('calificador.detalle', $this->actividad->entregas()->first()))->assertSee('Ítem anulado para todo el grupo')->assertSee('se dio por bueno a todos')->assertSee('Enunciado ambiguo: admite dos respuestas');
 
+        // 6.5.6: queda en el registro de reclamos y anulaciones de la materia, aunque no hubo reclamo
+        $this->get(route('reclamos.materia', $this->materia))->assertOk()->assertSee('Ítems anulados para todo el grupo')
+            ->assertSee('Enunciado ambiguo: admite dos respuestas')->assertSee('Se dio por buena a todos');
+
         // El análisis ya no lo marca para revisión
         $this->assertSame([], (new EstadisticasActividad($this->actividad))->items()[2]['marcas']);
 

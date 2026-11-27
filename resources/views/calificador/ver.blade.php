@@ -64,7 +64,7 @@
         </section>
         <section class="tarjeta">
             <h2 style="margin-top:0">3. Calificar y registrar</h2>
-            <p>Procesadas {{ $indicadores['procesadas'] }} · calificadas {{ $indicadores['calificadas'] }} · aprobadas {{ $indicadores['aprobados'] }}
+            <p>Procesadas {{ $indicadores['procesadas'] }} · calificadas {{ $indicadores['calificadas'] }} · aprobadas {{ $indicadores['aprobados'] }} · reprobadas {{ $indicadores['reprobados'] }}
                 @if ($indicadores['promedio']) · promedio {{ $indicadores['promedio'] }}@endif · ítems por calificar {{ $indicadores['pendientes'] }}</p>
             <div class="fila">
                 <button class="boton boton-sec" id="ejecutar-retos" type="button">Ejecutar retos de código</button>
@@ -83,19 +83,38 @@
     </div>
 
     <h2>Planilla</h2>
-    @if ($filas->isEmpty())
+    @if ($total > 0)
+        <form method="GET" class="fila" style="margin-bottom:.6rem" aria-label="Filtrar la planilla">
+            <label for="f-estado" style="margin:0">Estado</label>
+            <select id="f-estado" name="estado" onchange="this.form.submit()">
+                @foreach (['' => 'Todas', 'pendientes' => 'Con ítems por calificar', 'calificadas' => 'Con nota', 'reprobadas' => 'Reprobadas'] as $k => $v)<option value="{{ $k }}" @selected(($filtros['estado'] ?? '') === $k)>{{ $v }}</option>@endforeach
+            </select>
+            <label for="f-alerta" style="margin:0">Alerta</label>
+            <select id="f-alerta" name="alerta" onchange="this.form.submit()">
+                <option value="">Todas</option><option value="con" @selected($filtros['alerta'] === 'con')>Con alguna alerta</option><option value="sin" @selected($filtros['alerta'] === 'sin')>Sin alertas</option>
+                @foreach ($tiposPresentes as $t)<option value="{{ $t }}" @selected($filtros['alerta'] === $t)>{{ $tiposAlerta[$t] ?? $t }}</option>@endforeach
+            </select>
+            <noscript><button class="boton boton-sec boton-chico">Filtrar</button></noscript>
+            @if ($filtros['estado'] || $filtros['alerta'])<span class="suave" role="status">{{ $filas->count() }} de {{ $total }} entregas · <a href="{{ route('calificador.show', $actividad) }}">quitar filtros</a></span>@endif
+        </form>
+    @endif
+    @if ($filas->isEmpty() && $total > 0)
+        <div class="tarjeta vacio"><strong>Ninguna entrega cumple el filtro.</strong><a href="{{ route('calificador.show', $actividad) }}">Ver todas</a></div>
+    @elseif ($filas->isEmpty())
         <div class="tarjeta vacio"><strong>Aún no hay entregas procesadas.</strong>Suba los archivos que generó el examen al finalizar.</div>
     @else
         @php($porRevisar = app(\App\Calificacion\PoliticaAlertas::class)->pendientes($actividad, auth()->user()))
         <p class="suave">Las alertas informan; ninguna sanciona por sí sola. Esta planilla no se proyecta en el aula.
             <a href="{{ route('alertas.actividad', $actividad) }}">{{ $porRevisar ? "Revisar las alertas ({$porRevisar} pendientes)" : 'Ver las alertas' }}</a></p>
         <div class="tabla-notas"><table>
-            <thead><tr><th>Estudiante(s)</th><th class="num">Duración</th><th class="num">Puntaje servidor</th><th>Pendiente</th><th class="num">Nota</th><th>Alertas</th><th></th></tr></thead>
+            <thead><tr><th>Documento</th><th>Estudiante(s)</th>@if (count($versiones) > 1)<th>Versión</th>@endif<th class="num">Duración</th><th class="num">Puntaje servidor</th><th>Pendiente</th><th class="num">Nota</th><th>Alertas</th><th></th></tr></thead>
             <tbody>
                 @foreach ($filas as $f)
                     @php($e = $f['entrega'])
                     <tr>
-                        <td>{{ $e->integrantes->map->nombreCompleto()->join(' · ') }}@if (count($versiones) > 1 && $e->version) <span class="suave">· versión {{ $e->version }}</span>@endif @if (! $e->cifrada) <span class="alerta-chip">sin cifrar</span>@endif</td>
+                        <td>{{ $e->integrantes->pluck('documento')->join(' · ') }}</td>
+                        <td>{{ $e->integrantes->map->nombreCompleto()->join(' · ') }} @if (! $e->cifrada) <span class="alerta-chip">sin cifrar</span>@endif</td>
+                        @if (count($versiones) > 1)<td>{{ $e->version ?? '—' }}</td>@endif
                         <td class="num">{{ $e->duracion_seg === null ? '—' : sprintf('%d:%02d', intdiv($e->duracion_seg, 60), $e->duracion_seg % 60) }}</td>
                         <td class="num">{{ rtrim(rtrim(number_format($f['servidor'], 2, '.', ''), '0'), '.') }}</td>
                         <td>@if ($f['retos'])<span class="alerta-chip">{{ $f['retos'] }} reto(s)</span>@endif @if ($f['abiertas'])<span class="alerta-chip">{{ $f['abiertas'] }} abierta(s)</span>@endif @if (! $f['retos'] && ! $f['abiertas'])—@endif</td>

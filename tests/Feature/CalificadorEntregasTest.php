@@ -382,6 +382,29 @@ class CalificadorEntregasTest extends TestCase
     }
 
     #[Test]
+    public function la_planilla_muestra_documento_reprobados_y_se_filtra_por_estado_y_alerta(): void
+    {
+        $a = $this->aplicar();
+        $this->post(route('calificador.subir', $a), ['entregas' => [
+            $this->entrega($a, $this->ana, $this->perfectas($a)),
+            $this->entrega($a, $this->beto, $this->respuestas($a, ['a', false, [], [], '']), cifrar: false),
+        ]]);
+        $sin = fn ($r) => preg_replace('/\s+/', ' ', strip_tags($r->getContent()));
+
+        $todo = $sin($this->get(route('calificador.show', $a))->assertOk());
+        $this->assertStringContainsString('10001', $todo);
+        $this->assertStringContainsString('reprobadas', $todo);
+        $soloAlerta = $sin($this->get(route('calificador.show', ['actividad' => $a, 'alerta' => 'sin_cifrar'])));
+        $this->assertStringContainsString('BELTRAN, BETO', $soloAlerta);
+        $this->assertStringNotContainsString('ARIAS, ANA ', $soloAlerta);
+        $this->assertStringContainsString('1 de 2 entregas', $soloAlerta);
+        $sinAlertas = $sin($this->get(route('calificador.show', ['actividad' => $a, 'alerta' => 'sin'])));
+        $this->assertStringContainsString('ARIAS, ANA', $sinAlertas);
+        $this->assertStringNotContainsString('BELTRAN, BETO', $sinAlertas);
+        $this->get(route('calificador.show', ['actividad' => $a, 'estado' => 'reprobadas']))->assertSee('Ninguna entrega cumple el filtro');
+    }
+
+    #[Test]
     public function todo_el_calificador_es_solo_del_docente_dueno(): void
     {
         $a = $this->aplicar();

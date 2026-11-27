@@ -87,6 +87,12 @@
                                                     <button class="boton boton-sec boton-chico" wire:click="mover({{ $a->id }}, -1)">← Mover</button>
                                                     <button class="boton boton-sec boton-chico" wire:click="mover({{ $a->id }}, 1)">Mover →</button>
                                                 </div>
+                                                <div>
+                                                    <label for="componente-{{ $a->id }}">Componente <span class="suave">(se lleva sus notas)</span></label>
+                                                    <select id="componente-{{ $a->id }}" x-on:change="if (confirm('¿Pasar «{{ addslashes($a->nombre) }}» con sus notas a ' + $event.target.selectedOptions[0].text + '? Cambia cómo pesa en la definitiva.')) $wire.cambiarComponente({{ $a->id }}, Number($event.target.value)); else $event.target.value = '{{ $a->componente_id }}'">
+                                                        @foreach ($componentesDestino as $cd)<option value="{{ $cd->id }}" @selected($cd->id === $a->componente_id)>{{ $cd->division->nombre }} — {{ $cd->nombre }}</option>@endforeach
+                                                    </select>
+                                                </div>
                                                 @if ($a->artefacto_id)<a class="boton boton-sec boton-chico" href="{{ route('calificador.show', $a) }}">Abrir calificador</a>@else<a class="boton boton-sec boton-chico" href="{{ route('calificador.archivos', $a) }}">Entregas de archivo</a>@endif
                                                 <button class="boton boton-sec boton-chico" wire:click="vaciasACeros({{ $a->id }})">Convertir vacías en cero</button>
                                                 @php($conNota = $a->notas()->count())

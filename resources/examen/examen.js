@@ -62,6 +62,10 @@
         el('strong', { texto: 'Sus respuestas se guardan solas en este equipo. ' }),
         'Si la ventana se cierra por accidente, vuelva a abrir este mismo archivo, en este mismo navegador, y escriba el mismo documento: todo se recupera. No funciona en modo incógnito.'),
       el('div', { class: 'aviso' }, 'Solo cuenta como salida dejar esta ventana (otra pestaña, otra aplicación o minimizar). Probar su código no cuenta.'),
+      // 5.4.9: lo que se registra se declara antes de empezar
+      el('div', { class: 'aviso' }, el('strong', { texto: 'Qué se registra: ' }),
+        'el tiempo en cada pregunta, las salidas de esta ventana, los textos pegados, las veces que ejecuta su código y sus errores de sintaxis, la versión del examen y el navegador. '
+        + 'Lo ve su docente; sirve para revisar, y nada de eso baja la nota por sí solo.'),
       D.reloj_minutos ? el('p', { texto: 'Tiempo disponible: ' + D.reloj_minutos + ' minutos. Al terminar el tiempo, el examen se cierra y se genera la entrega con lo respondido.' }) : null,
       el('label', { for: 'documento', texto: 'Número de documento' }), el('input', { type: 'text', id: 'documento', inputmode: 'numeric', autocomplete: 'off' }),
       el('label', { for: 'nombre', texto: 'Apellidos y nombres' }), el('input', { type: 'text', id: 'nombre', autocomplete: 'off' }),
@@ -102,7 +106,7 @@
     $('#portada').classList.add('oculto');
     $('#examen').classList.remove('oculto');
     $('#quien').textContent = E.nombre + ' · ' + E.documento + ((D.versiones || []).length > 1 ? ' · versión ' + E.version : '');
-    renderItems(); guardar(); iniciarReloj(); if (D.contar_salidas !== false) vigilarFoco(); vigilarConexion(); latirVivo();
+    renderItems(); guardar(); iniciarReloj(); if (D.contar_salidas !== false) vigilarFoco(); vigilarConexion(); latirVivo(); medirItems();
     if (D.ensayo) autoverificar();
     if (E.cierre) mostrarCierre();
   }
@@ -535,6 +539,27 @@
   }
   const fmt = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
 
+  // ---------- Tiempo en cada pregunta (5.4.9) ----------
+  // Cuenta mientras el foco está dentro de la pregunta y la ventana está a la vista
+  function medirItems() {
+    E.sesion.tiempos = E.sesion.tiempos || {};
+    let actual = null, desde = null;
+    const cerrar = () => {
+      if (actual && desde) { E.sesion.tiempos[actual] = Math.round((E.sesion.tiempos[actual] || 0) + (Date.now() - desde) / 1000); }
+      desde = actual ? Date.now() : null;
+    };
+    document.addEventListener('focusin', (ev) => {
+      const s = ev.target.closest && ev.target.closest('section.item');
+      const id = s ? s.id.replace('item-', '') : null;
+      if (id === actual) return;
+      cerrar(); actual = id; desde = id ? Date.now() : null; guardar();
+    });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { cerrar(); desde = null; guardar(); } else if (actual) desde = Date.now(); });
+    setInterval(() => { if (!document.hidden && !E.cierre) cerrar(); }, 15000);
+    window.addEventListener('beforeunload', cerrar);
+    medirItems.cerrar = cerrar;
+  }
+
   // ---------- Salidas de ventana (5.4.9) ----------
   function vigilarFoco() {
     const salir = () => { if (!E || E.cierre || salidaDesde) return; salidaDesde = Date.now(); };
@@ -641,6 +666,7 @@
 
   async function finalizar(tipo) {
     if (E.cierre && tipo !== 'descargar') { mostrarCierre(); return; }
+    if (medirItems.cerrar) medirItems.cerrar();
     if (tipo === 'manual') {
       const faltan = D.items.map((it, i) => respondida(it) ? null : i + 1).filter(Boolean);
       if (!confirm(faltan.length ? 'Faltan por responder: ' + faltan.join(', ') + '.\n¿Finalizar de todos modos?' : '¿Finalizar el examen? No podrá cambiar sus respuestas.')) return;

@@ -203,6 +203,23 @@ class CalificadorEntregasTest extends TestCase
     }
 
     #[Test]
+    public function el_detalle_muestra_el_registro_de_la_sesion_con_el_tiempo_por_pregunta(): void
+    {
+        // 5.4.9
+        $a = $this->aplicar();
+        $ids = $a->artefacto->items()->orderBy('orden')->pluck('id')->all();
+        $this->post(route('calificador.subir', $a), ['entregas' => [$this->entrega($a, $this->ana, $this->perfectas($a), ['carga' => ['sesion' => [
+            'pegados' => 2, 'ejecuciones' => 7, 'tiempos' => [$ids[0] => 75, $ids[4] => 610], 'navegador' => 'Mozilla/5.0 Firefox/130',
+        ]]])]]);
+        $texto = preg_replace('/\s+/', ' ', strip_tags($this->get(route('calificador.detalle', Entrega::query()->sole()))->assertOk()->getContent()));
+        $this->assertStringContainsString('Registro de la sesión', $texto);
+        $this->assertStringContainsString('Textos pegados: 2 · ejecuciones de código: 7', $texto);
+        $this->assertStringContainsString('1: 1:15', $texto);
+        $this->assertStringContainsString('5: 10:10', $texto);
+        $this->assertStringContainsString('Firefox/130', $texto);
+    }
+
+    #[Test]
     public function ciclo_completo_hasta_el_registro(): void
     {
         $a = $this->aplicar();

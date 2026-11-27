@@ -1,9 +1,9 @@
 <x-app :titulo="'Similitud — '.$actividad->nombre">
     @php($S = \App\Calificacion\Similitud::class)
     @php($nombres = fn ($e) => $e->integrantes->map->nombreCompleto()->join(' · '))
-    <div class="migas"><a href="{{ route('calificador.show', $actividad) }}">Calificador — {{ $actividad->nombre }}</a> › Similitud</div>
+    <div class="migas"><a href="{{ $actividad->artefacto_id ? route('calificador.show', $actividad) : route('calificador.archivos', $actividad) }}">{{ $actividad->artefacto_id ? 'Calificador' : 'Entregas de archivo' }} — {{ $actividad->nombre }}</a> › Similitud</div>
     <h1>Similitud entre entregas</h1>
-    <p class="suave">Pares de entregas con respuestas abiertas o código muy parecidos, pregunta por pregunta. Quitar comentarios, cambiar el espaciado
+    <p class="suave">Pares de entregas con respuestas abiertas, código o archivos entregados muy parecidos, pregunta por pregunta. Quitar comentarios, cambiar el espaciado
         o renombrar variables no esconde una copia; tampoco copiar solo una parte. No cuentan la plantilla, el enunciado ni lo que escribe casi todo el grupo.
         <strong>Es una señal, no un veredicto:</strong> la plataforma no acusa ni cambia notas; usted revisa el par y decide.</p>
 
@@ -26,7 +26,7 @@
                 <strong>{{ $nombres($p['a']) }}</strong> y <strong>{{ $nombres($p['b']) }}</strong>
                 @if ($otroPeriodo)<span class="etiqueta-tipo">de {{ $p['b']->actividad->componente->division->dictado->periodo }}</span>@endif
                 <div class="suave">Pregunta(s):
-                    @foreach ($p['items'] as $it){{ $it['numero'] }} ({{ $it['tipo'] === 'reto' ? 'código' : 'texto' }}, {{ (int) round($it['puntaje'] * 100) }} %)@if (! $loop->last), @endif @endforeach</div>
+                    @foreach ($p['items'] as $it){{ $it['numero'] }} ({{ $it['tipo'] === 'reto' ? 'código' : ($it['tipo'] === 'archivo' ? 'texto del archivo' : 'texto') }}, {{ (int) round($it['puntaje'] * 100) }} %)@if (! $loop->last), @endif @endforeach</div>
             </div>
             <span @class(['estado', 'estado-reprobado' => $p['puntaje'] >= $S::ALTA, 'estado-incompleto' => $p['puntaje'] < $S::ALTA])>
                 {{ $p['puntaje'] >= $S::ALTA ? 'Muy alta' : 'Alta' }} · {{ (int) round($p['puntaje'] * 100) }} %</span>

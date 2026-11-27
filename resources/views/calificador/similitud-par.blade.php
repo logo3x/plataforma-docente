@@ -1,6 +1,6 @@
 <x-app :titulo="'Comparar entregas — '.$actividad->nombre">
     @php($nombres = fn ($e) => $e->integrantes->map->nombreCompleto()->join(' · '))
-    <div class="migas"><a href="{{ route('calificador.show', $actividad) }}">Calificador — {{ $actividad->nombre }}</a> ›
+    <div class="migas"><a href="{{ $actividad->artefacto_id ? route('calificador.show', $actividad) : route('calificador.archivos', $actividad) }}">{{ $actividad->artefacto_id ? 'Calificador' : 'Entregas de archivo' }} — {{ $actividad->nombre }}</a> ›
         <a href="{{ route('calificador.similitud', $actividad) }}">Similitud</a> › Lado a lado</div>
     <h1>{{ $nombres($a) }} <span class="suave">y</span> {{ $nombres($b) }}
         @if ($puntaje !== null)<span class="suave">· {{ (int) round($puntaje * 100) }} %</span>@endif</h1>
@@ -9,7 +9,7 @@
 
     @foreach ($comparaciones as $c)
         <section class="tarjeta">
-            <h2 style="margin-top:0">Pregunta {{ $c['numero'] }} @if ($c['puntaje'] !== null)<span class="estado estado-incompleto">{{ (int) round($c['puntaje'] * 100) }} %</span>@else<span class="suave">· sin coincidencia relevante</span>@endif</h2>
+            <h2 style="margin-top:0">{{ is_numeric($c['numero']) ? 'Pregunta '.$c['numero'] : 'Archivo entregado' }} @if ($c['puntaje'] !== null)<span class="estado estado-incompleto">{{ (int) round($c['puntaje'] * 100) }} %</span>@else<span class="suave">· sin coincidencia relevante</span>@endif</h2>
             <p class="suave">{{ \Illuminate\Support\Str::limit($c['enunciado'], 200) }}</p>
             <div class="lado-a-lado">
                 @foreach ([$a, $b] as $i => $e)

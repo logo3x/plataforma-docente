@@ -70,6 +70,16 @@ final class Similitud
             }
         }
 
+        // 6.11.1: el texto de los archivos entregados se compara como una pregunta más
+        foreach ($entregas as $e) {
+            if ($e->tipo === 'archivo' && trim((string) $e->texto_extraido) !== '') {
+                $porItem['archivo']['tipo'] = 'archivo';
+                $porItem['archivo']['pregunta'] = null;
+                $porItem['archivo']['entregas'][$e->id] = (string) $e->texto_extraido;
+                $porItem['archivo']['numero'][$e->id] = 'archivo';
+            }
+        }
+
         $pares = [];
         foreach ($porItem as $preguntaId => $datos) {
             $codigo = $datos['tipo'] === 'reto';
@@ -185,7 +195,7 @@ final class Similitud
     /** Fragmentos que no son señal: los de la plantilla o el enunciado y los que escribe casi todo el grupo. */
     private function ignorables($pregunta, bool $codigo, array $huellas): array
     {
-        $base = $codigo ? (string) ($pregunta->enunciado['plantilla_codigo'] ?? '') : (string) ($pregunta->enunciado['texto'] ?? '');
+        $base = $codigo ? (string) ($pregunta?->enunciado['plantilla_codigo'] ?? '') : (string) ($pregunta?->enunciado['texto'] ?? '');
         $ignorar = array_keys($this->fragmentos($base, $codigo));
 
         $tope = max(3, (int) floor(count($huellas) * 0.4));

@@ -2,6 +2,7 @@
 
 namespace App\Calificacion;
 
+use App\Archivos\ExtractorTexto;
 use App\Evaluacion\Rubricas;
 use App\Models\Actividad;
 use App\Models\Entrega;
@@ -27,7 +28,7 @@ final class EntregasArchivo
 
     public const FORMATOS = ['pdf' => 'PDF consolidado', 'libre' => 'Archivo libre'];
 
-    public function __construct(private readonly Rubricas $rubricas) {}
+    public function __construct(private readonly Rubricas $rubricas, private readonly ExtractorTexto $extractor) {}
 
     /**
      * @return array{estado: string, mensaje: string, entrega: ?Entrega} estado: recibida | sin_identificar | duplicada | rechazada
@@ -61,13 +62,23 @@ final class EntregasArchivo
         $ext = strtolower(pathinfo($nombre, PATHINFO_EXTENSION)) ?: ($esPdf ? 'pdf' : 'bin');
         $ruta = "entregas/{$actividad->id}/{$sha}.".(preg_replace('/[^a-z0-9]/', '', $ext) ?: 'bin');
         Storage::disk('local')->put($ruta, $contenido);
+        // 6.11.1: el texto del archivo, para compararlo con las demás entregas; si no se puede leer, solo se compara por huella
+        $texto = null;
+        $tipo = $esPdf ? 'pdf' : $ext;
+        if (in_array($tipo, ExtractorTexto::EXTENSIONES, true)) {
+            try {
+                $texto = mb_substr($this->extractor->extraer(Storage::disk('local')->path($ruta), $tipo), 0, 200000) ?: null;
+            } catch (\Throwable) {
+                $texto = null;
+            }
+        }
 
-        $entrega = DB::transaction(function () use ($actividad, $nombre, $sha, $ruta, $contenido, $esPdf, $mime, $integrantes, $extra) {
+        $entrega = DB::transaction(function () use ($actividad, $nombre, $sha, $ruta, $contenido, $esPdf, $mime, $integrantes, $extra, $texto) {
             $e = $actividad->entregas()->create([
                 'tipo' => 'archivo', 'subida_por_id' => $integrantes->first()?->id, 'ruta' => $ruta, 'sha256' => $sha, 'cifrada' => false,
                 'archivo_nombre' => mb_substr($nombre, 0, 250), 'archivo_mime' => $esPdf ? 'application/pdf' : ($mime ?: 'application/octet-stream'),
                 'archivo_bytes' => strlen($contenido), 'paginas' => $esPdf ? $this->paginas($contenido) : null,
-                'estado_codigo' => 'pendiente', 'procesada_en' => now(),
+                'estado_codigo' => 'pendiente', 'procesada_en' => now(), 'texto_extraido' => $texto,
             ] + $extra);
             $e->integrantes()->attach($integrantes->pluck('id')->all());
 

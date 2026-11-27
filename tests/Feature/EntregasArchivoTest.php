@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Calificacion\Similitud;
 use App\Evaluacion\Rubricas;
 use App\Models\Actividad;
 use App\Models\Entrega;
@@ -62,6 +63,30 @@ class EntregasArchivoTest extends TestCase
             ['nombre' => 'Implementación', 'descripcion' => '', 'peso' => '60', 'niveles' => $niveles],
             ['nombre' => 'Documentación', 'descripcion' => '', 'peso' => '40', 'niveles' => $niveles],
         ]]));
+    }
+
+    #[Test]
+    public function la_similitud_compara_el_texto_de_los_archivos_entregados(): void
+    {
+        // 6.11.1: no solo archivos idénticos; también un trabajo copiado con cambios
+        $this->put(route('calificador.archivos.configurar', $this->actividad), ['formato_entrega' => 'libre'])->assertSessionHasNoErrors();
+        $informe = "Informe del taller de listas enlazadas.\nUna lista enlazada guarda cada nodo con un puntero al siguiente; insertar al inicio cuesta O(1) "
+            .'porque solo cambia la cabeza, y buscar cuesta O(n) porque hay que recorrer desde el primero hasta encontrar el valor. '
+            .'En el taller medimos la inserción de mil nodos y comparamos con un arreglo que debe correr sus elementos.';
+        $archivo = fn ($nombre, $texto) => UploadedFile::fake()->createWithContent($nombre, $texto);
+        $this->post(route('calificador.archivos.subir', $this->actividad), ['archivos' => [
+            $archivo('1098765432_informe.txt', $informe),
+            $archivo('1098765433_informe.txt', str_replace(['Informe del taller', 'mil nodos'], ['Trabajo del taller', 'mil elementos'], $informe)),
+            $archivo('1098765434_informe.txt', 'Las pilas y las colas se diferencian en el orden de salida; una pila atiende primero lo último que llegó y una cola lo primero, como en la fila del banco del centro comercial.'),
+        ]]);
+        $this->assertNotNull(Entrega::query()->whereHas('integrantes', fn ($q) => $q->whereKey($this->ana->id))->value('texto_extraido'));
+
+        $pares = app(Similitud::class)->pares($this->actividad);
+        $this->assertCount(1, $pares, 'Solo el par copiado, no el trabajo distinto');
+        $this->assertSame([$this->ana->id, $this->beto->id], [$pares[0]['a']->integrantes->first()->id, $pares[0]['b']->integrantes->first()->id]);
+        $this->assertSame('archivo', $pares[0]['items'][0]['tipo']);
+        $this->get(route('calificador.similitud', $this->actividad))->assertOk()->assertSee('texto del archivo')->assertSee('Entregas de archivo');
+        $this->get(route('calificador.similitud.ver', [$this->actividad, $pares[0]['a'], $pares[0]['b']]))->assertOk()->assertSee('Archivo entregado');
     }
 
     #[Test]

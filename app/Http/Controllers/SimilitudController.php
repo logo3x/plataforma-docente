@@ -55,6 +55,11 @@ class SimilitudController extends Controller
                 return ['numero' => $r->item->orden + 1, 'enunciado' => $r->item->pregunta->enunciado['texto'] ?? '', 'codigo' => $codigo,
                     'puntaje' => $puntajes[$r->item->pregunta_id]['puntaje'] ?? null, 'lados' => $similitud->comparar($ta, $tb, $codigo)];
             })->values();
+        // 6.11.1: dos trabajos entregados como archivo se comparan por su texto
+        if (filled($a->texto_extraido) && filled($b->texto_extraido)) {
+            $comparaciones->push(['numero' => 'archivo', 'enunciado' => 'Texto de los archivos entregados ('.$a->archivo_nombre.' y '.$b->archivo_nombre.')', 'codigo' => false,
+                'puntaje' => $puntajes['archivo']['puntaje'] ?? null, 'lados' => $similitud->comparar((string) $a->texto_extraido, (string) $b->texto_extraido, false)]);
+        }
 
         return view('calificador.similitud-par', [
             'actividad' => $actividad, 'a' => $a->load('integrantes'), 'b' => $b->load('integrantes', 'actividad.componente.division.dictado'),

@@ -54,14 +54,45 @@
         <a class="boton boton-sec" href="{{ route('dictados.show', $dictado) }}">Cancelar</a>
     </form>
 
+    @php($esc = $dictado->escala())
+    @php($f = fn ($v) => (string) \Brick\Math\BigDecimal::of($v)->strippedOfTrailingZeros())
+    <h2>Escala de notas</h2>
+    <form method="POST" action="{{ route('dictados.escala.guardar', $dictado) }}" class="tarjeta">
+        @csrf @method('PUT')
+        @error('escala')<div class="aviso aviso-error" role="alert">{{ $message }}</div>@enderror
+        <div class="rejilla">
+            <div class="campo"><label for="escala_min">Mínima</label><input id="escala_min" name="escala_min" type="number" step="0.1" value="{{ old('escala_min', $f($esc->minimo)) }}" required @disabled($notas) ></div>
+            <div class="campo"><label for="escala_max">Máxima</label><input id="escala_max" name="escala_max" type="number" step="0.1" value="{{ old('escala_max', $f($esc->maximo)) }}" required @disabled($notas)></div>
+            <div class="campo"><label for="nota_aprobatoria">Aprueba con</label><input id="nota_aprobatoria" name="nota_aprobatoria" type="number" step="0.01" value="{{ old('nota_aprobatoria', $f($esc->aprobatoria)) }}" required></div>
+            <div class="campo"><label for="decimales">Decimales al mostrar</label>
+                <select id="decimales" name="decimales">@foreach ([0, 1, 2] as $n)<option value="{{ $n }}" @selected((int) old('decimales', $esc->decimales) === $n)>{{ $n }}</option>@endforeach</select></div>
+            <div class="campo"><label for="redondeo">Redondeo de lo que se muestra</label>
+                <select id="redondeo" name="redondeo">@foreach (['cercano' => 'Al más cercano', 'arriba' => 'Hacia arriba', 'abajo' => 'Hacia abajo'] as $k => $v)<option value="{{ $k }}" @selected(old('redondeo', $esc->redondeo) === $k)>{{ $v }}</option>@endforeach</select></div>
+        </div>
+        @if ($notas)
+            {{-- Deshabilitados no se envían: van ocultos con el valor actual --}}
+            <input type="hidden" name="escala_min" value="{{ $f($esc->minimo) }}"><input type="hidden" name="escala_max" value="{{ $f($esc->maximo) }}">
+            <p class="suave">Con notas cargadas, el mínimo y el máximo ya no se cambian. La nota mínima, los decimales y el redondeo sí:
+                las notas guardadas no cambian, cambia cómo se muestran y quién aprueba. El cálculo interno conserva siempre la precisión completa.</p>
+        @else
+            <p class="suave">Sin notas todavía: puede cambiar también el mínimo y el máximo. Las actividades que valían el máximo pasan a valer el nuevo.</p>
+        @endif
+        <button class="boton" type="submit">Guardar escala</button>
+    </form>
+
     <h2>Cambios anteriores</h2>
     @forelse ($historial as $h)
         <details class="tarjeta" style="box-shadow:none">
             <summary>{{ $h->created_at->format('Y-m-d H:i') }} · {{ $h->usuario?->name ?? '—' }} · {{ count($h->cambios) }} {{ count($h->cambios) === 1 ? 'cambio' : 'cambios' }}
                 @if ($h->notas_cargadas) <span class="suave">(con {{ $h->notas_cargadas }} notas cargadas)</span>@endif</summary>
             <ul>@foreach ($h->cambios as $c)<li>{{ $c }}</li>@endforeach</ul>
+            @if (isset($h->antes['escala']))
+            <p class="suave" style="margin-bottom:0">Antes: escala {{ $f($h->antes['escala']['minimo']) }} a {{ $f($h->antes['escala']['maximo']) }}, aprueba con {{ $f($h->antes['escala']['aprobatoria']) }},
+                {{ $h->antes['escala']['decimales'] }} decimales, redondeo {{ ['cercano' => 'al más cercano', 'arriba' => 'hacia arriba', 'abajo' => 'hacia abajo'][$h->antes['escala']['redondeo']] ?? '' }}.</p>
+            @else
             <p class="suave" style="margin-bottom:0">Antes:
                 @foreach ($h->antes as $d){{ $d['nombre'] }} {{ \Brick\Math\BigDecimal::of($d['peso'])->multipliedBy(100)->strippedOfTrailingZeros() }} % (@foreach ($d['componentes'] as $c){{ $c['nombre'] }} {{ \Brick\Math\BigDecimal::of($c['peso'])->multipliedBy(100)->strippedOfTrailingZeros() }} %@if (! $loop->last), @endif @endforeach)@if (! $loop->last); @endif @endforeach</p>
+            @endif
         </details>
     @empty
         <p class="suave">La estructura no ha cambiado desde el alta.</p>

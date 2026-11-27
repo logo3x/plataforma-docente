@@ -3,7 +3,7 @@
  * devuelve al formato al guardar. El servidor valida igual que una importación: aquí solo se ayuda a no
  * equivocarse (sumas por versión, correctas marcadas, huecos de la plantilla).
  */
-window.editorBanco = function (inicial, otras, tipos) {
+window.editorBanco = function (inicial, otras, tipos, vistas) {
   const LETRAS = 'abcdefghijklmnopqrstuvwxyz';
   const RETO = ['lenguaje', 'esquema', 'archivos', 'alcance', 'plantilla_codigo', 'casos_visibles', 'verificaciones'];
   const texto = (v) => (v === null || v === undefined ? '' : String(v));
@@ -97,6 +97,8 @@ window.editorBanco = function (inicial, otras, tipos) {
     meta: { formato: 'plataforma-banco', version: 1, configuracion: inicial.configuracion || {} },
     items: (inicial.items || []).map(aFormulario),
     otras: otras || [],
+    vistas: vistas || {},
+    ocultarVistas: false,
     version: (inicial.items || [])[0]?.version || 'A',
     filtro: '',
     errorReto: {},
@@ -117,6 +119,7 @@ window.editorBanco = function (inicial, otras, tipos) {
     traer(o) {
       const f = aFormulario(Object.assign({}, o.item, { version: this.version }));
       f.abierto = true;
+      f._vista = o.vista || null;
       this.items.push(f);
     },
     duplicar(f) { const c = aFormulario(aBanco(Object.assign({}, f, { _ap: null }))); c._ap = null; c.abierto = true; this.items.splice(this.items.indexOf(f) + 1, 0, c); },
@@ -134,7 +137,22 @@ window.editorBanco = function (inicial, otras, tipos) {
     resumen(f) { return (f.enunciado || '(sin enunciado)').replace(/\s+/g, ' ').slice(0, 110); },
     get otrasFiltradas() {
       const q = this.filtro.trim().toLowerCase();
-      return this.otras.filter(o => !q || (o.item.enunciado + ' ' + (o.item.tema || '') + ' ' + o.origen + ' ' + (this.tipos[o.item.tipo] || o.item.tipo)).toLowerCase().includes(q)).slice(0, 40);
+      // 5.4.13: las que nadie del periodo ha visto van primero; las vistas se pueden ocultar
+      return this.otras.filter(o => (!q || (o.item.enunciado + ' ' + (o.item.tema || '') + ' ' + o.origen + ' ' + (this.tipos[o.item.tipo] || o.item.tipo)).toLowerCase().includes(q))
+        && !(this.ocultarVistas && o.vista)).sort((a, b) => (a.vista ? 1 : 0) - (b.vista ? 1 : 0)).slice(0, 40);
+    },
+    vista(f) { return f._vista || (f._ap ? this.vistas[f._ap] : null) || null; },
+    textoVista(v) { return v ? '👁 ya la respondieron ' + (v.estudiantes === 1 ? '1 estudiante' : v.estudiantes + ' estudiantes') + ' en ' + v.periodos.join(', ') : ''; },
+    /* 5.4.14: preguntas y puntos por tema y dificultad de una versión. */
+    equilibrio(v) {
+      const filas = {};
+      for (const f of this.deVersion(v)) {
+        const t = f.tema.trim() || 'Sin tema';
+        filas[t] = filas[t] || { tema: t, baja: 0, media: 0, alta: 0, c: 0 };
+        filas[t][f.dificultad] = (filas[t][f.dificultad] || 0) + 1;
+        filas[t].c += centesimas(f.peso) || 0;
+      }
+      return Object.values(filas).sort((a, b) => b.c - a.c).map(x => Object.assign(x, { puntos: x.c / 10000 }));
     },
     validarReto(f) {
       try { const r = JSON.parse(f.reto); if (typeof r !== 'object' || Array.isArray(r)) throw new Error('debe ser un objeto { … }'); delete this.errorReto[f.uid]; return true; }

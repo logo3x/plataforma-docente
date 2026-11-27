@@ -28,6 +28,9 @@
         @if (session('estado'))
             <div class="aviso aviso-ok" role="status">{{ session('estado') }}</div>
         @endif
+        @if (session('aviso_vistas'))
+            <div class="aviso aviso-info" role="note">{{ session('aviso_vistas') }}</div>
+        @endif
         {{ $slot }}
     </main>
 </x-layouts.base>

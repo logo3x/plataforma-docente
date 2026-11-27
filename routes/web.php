@@ -72,6 +72,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dictados/{dictado}', [DictadoController::class, 'show'])->name('dictados.show');
     Route::get('/dictados/{dictado}/estructura', [DictadoController::class, 'estructura'])->name('dictados.estructura');
     Route::put('/dictados/{dictado}/estructura', [DictadoController::class, 'guardarEstructura'])->name('dictados.estructura.guardar');
+    Route::put('/dictados/{dictado}/escala', [DictadoController::class, 'guardarEscala'])->name('dictados.escala.guardar');
     Route::post('/dictados/{dictado}/siguiente', [DictadoController::class, 'store'])->name('dictados.store');
 
     Route::get('/plantilla-lista-clase', [ImportacionController::class, 'plantilla'])->name('importacion.plantilla');

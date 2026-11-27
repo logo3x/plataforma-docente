@@ -2,7 +2,7 @@
     <div class="migas"><a href="{{ route('inicio') }}">Mis materias</a> › {{ $dictado->materia->nombre }} › {{ $dictado->periodo }}</div>
     <h1>{{ $dictado->materia->nombre }} <span class="suave">{{ $dictado->periodo }}</span></h1>
     <p class="suave">Escala {{ $dictado->escala()->mostrar($dictado->escala_min) }} a {{ $dictado->escala()->mostrar($dictado->escala_max) }},
-        aprueba con {{ $dictado->escala()->mostrar($dictado->nota_aprobatoria) }}.
+        aprueba con {{ $dictado->escala()->mostrar($dictado->nota_aprobatoria) }} (<a href="{{ route('dictados.estructura', $dictado) }}#escala_min">cambiar</a>).
         <a href="{{ route('historial.index', ['materia' => $dictado->materia, 'dictado' => $dictado->id]) }}">Historial de actividades del periodo</a></p>
     @if ($r = \App\Models\Restauracion::query()->where('dictado_id', $dictado->id)->latest()->first())
         <div class="aviso aviso-info">Periodo restaurado el {{ $r->created_at->format('Y-m-d') }} desde un respaldo de {{ $r->periodo_original }}@if ($r->generado_en) generado el {{ $r->generado_en->format('Y-m-d H:i') }}@endif.

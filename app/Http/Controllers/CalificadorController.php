@@ -7,6 +7,7 @@ use App\Calificacion\PasoAlRegistro;
 use App\Evaluacion\GeneradorExamen;
 use App\Evaluacion\ImportadorBanco;
 use App\Evaluacion\ProcesadorEntregas;
+use App\Evaluacion\UsoPreguntas;
 use App\Models\Actividad;
 use App\Models\Artefacto;
 use App\Models\Componente;
@@ -81,9 +82,13 @@ class CalificadorController extends Controller
             'orden' => (int) $componente->actividades()->max('orden') + 1,
         ]);
         $actividad->grupos()->attach($grupos);
+        // 5.4.13: avisa si hay estudiantes que ya respondieron preguntas de este examen en otro periodo
+        $vistas = app(UsoPreguntas::class)->resumen($artefacto, $dictado, $grupos->all());
 
         return redirect()->route('calificador.show', $actividad)
-            ->with('estado', 'Actividad aplicada: ya aparece como columna en el registro. Descargue el examen y, después de aplicarlo, suba aquí las entregas.');
+            ->with('estado', 'Actividad aplicada: ya aparece como columna en el registro. Descargue el examen y, después de aplicarlo, suba aquí las entregas.')
+            ->with('aviso_vistas', $vistas ? ($vistas['estudiantes'] === 1 ? 'Un estudiante de estos grupos ya respondió' : "Hasta {$vistas['estudiantes']} estudiantes de estos grupos ya respondieron")
+                .', en '.implode(', ', $vistas['periodos']).', '.($vistas['preguntas'] === 1 ? 'una pregunta' : "{$vistas['preguntas']} preguntas").' de este examen. Si no quiere repetírselas, cámbielas en el banco o use otra versión.' : null);
     }
 
     /** El examen de un banco (5.4.2): el banco 2 es para la otra jornada, con otros datos. */

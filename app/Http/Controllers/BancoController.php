@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Evaluacion\EditorBanco;
+use App\Evaluacion\UsoPreguntas;
 use App\Historial\Versiones;
 use App\Models\Artefacto;
 use App\Models\Materia;
@@ -100,12 +101,21 @@ class BancoController extends Controller
 
     private function editorView(Materia $materia, ?Artefacto $a, array $banco): View
     {
+        // 5.4.13: qué preguntas ya respondieron, en periodos anteriores, estudiantes del periodo actual
+        $uso = app(UsoPreguntas::class);
+        $destino = $uso->destino($materia);
+        $vistas = $destino ? $uso->vistas($destino) : [];
+        $marca = fn (array $it) => $vistas[UsoPreguntas::huella((string) ($it['tipo'] ?? ''), $it['enunciado'] ?? '')] ?? null;
+
         return view('bancos.editor', [
             'materia' => $materia, 'a' => $a, 'banco' => $banco,
             'bloqueo' => $a ? $this->editor->bloqueo($a) : null,
             'errores' => session('errores_banco', []),
             'temas' => $materia->temario()->where('tipo', 'tema')->orderBy('orden')->pluck('titulo'),
-            'otras' => $this->editor->deLaMateria($materia, $a),
+            'otras' => $this->editor->deLaMateria($materia, $a)->map(fn ($o) => $o + ['vista' => $marca($o['item'])]),
+            'vistasItems' => (object) collect($banco['items'] ?? [])->filter(fn ($it) => is_array($it) && isset($it[EditorBanco::ID]) && $marca($it))
+                ->mapWithKeys(fn ($it) => [$it[EditorBanco::ID] => $marca($it)])->all(),
+            'destino' => $destino,
         ]);
     }
 }

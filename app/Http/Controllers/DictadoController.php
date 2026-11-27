@@ -84,6 +84,29 @@ class DictadoController extends Controller
             : 'No había cambios que guardar.');
     }
 
+    /** 3.2.1, 3.2.3: escala, nota mínima y redondeo después del alta. */
+    public function guardarEscala(Request $request, Dictado $dictado, EditorEstructura $editor): RedirectResponse
+    {
+        Gate::authorize('gestionar', $dictado);
+        $d = $request->validate([
+            'escala_min' => ['required', 'numeric'],
+            'escala_max' => ['required', 'numeric', 'gt:escala_min'],
+            'nota_aprobatoria' => ['required', 'numeric', 'gte:escala_min', 'lte:escala_max'],
+            'decimales' => ['required', 'integer', 'between:0,2'],
+            'redondeo' => ['required', Rule::in(['cercano', 'arriba', 'abajo'])],
+        ]);
+
+        try {
+            $cambios = $editor->cambiarEscala($dictado, $d, $request->user());
+        } catch (InvalidArgumentException $e) {
+            return back()->withInput()->withErrors(['escala' => $e->getMessage()]);
+        }
+
+        return redirect()->route('dictados.estructura', $dictado)->with('estado', $cambios
+            ? implode('. ', $cambios).'. Las notas guardadas no cambian; cambia cómo se muestran y quién aprueba.'
+            : 'No había cambios en la escala.');
+    }
+
     /** En el formulario los pesos van en porcentaje; el editor los quiere en fracción. */
     private function desdeFormulario(array $divisiones): array
     {

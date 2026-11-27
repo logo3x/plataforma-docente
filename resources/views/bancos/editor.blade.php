@@ -20,7 +20,7 @@
     @endif
 
     <script src="{{ asset('js/editor-banco.js') }}?v={{ filemtime(public_path('js/editor-banco.js')) }}"></script>
-    <div x-data="editorBanco(@js($banco), @js($otras), @js($TIPOS))" class="editor-banco">
+    <div x-data="editorBanco(@js($banco), @js($otras), @js($TIPOS), @js($vistasItems))" class="editor-banco">
         <form method="POST" action="{{ $a ? route('bancos.update', $a) : route('bancos.store', $materia) }}" x-on:submit="enviar($event)">
             @csrf @if ($a) @method('PUT') @endif
             <input type="hidden" name="banco">
@@ -49,6 +49,20 @@
                 </div>
                 <p class="suave" style="margin:.5rem 0 0">A y B son el mismo examen con otros datos (a cada estudiante le toca una por su documento); 2A y 2B, un segundo banco para otra jornada.
                     Cada versión debe sumar el valor y tener los mismos tipos con los mismos pesos.@if ($a) La versión B también se puede <a href="{{ route('variantes.create', $a) }}">generar con IA</a>.@endif</p>
+                {{-- 5.4.14: el examen equilibrado por tema y dificultad, a la vista mientras se arma --}}
+                <details class="equilibrio" x-show="deVersion(version).length">
+                    <summary x-text="'Equilibrio por tema y dificultad — versión ' + version"></summary>
+                    <table>
+                        <thead><tr><th>Tema</th><th class="num">Baja</th><th class="num">Media</th><th class="num">Alta</th><th class="num">Puntos</th></tr></thead>
+                        <tbody>
+                            <template x-for="fila in equilibrio(version)" :key="fila.tema">
+                                <tr><td x-text="fila.tema"></td><td class="num" x-text="fila.baja || '—'"></td><td class="num" x-text="fila.media || '—'"></td>
+                                    <td class="num" x-text="fila.alta || '—'"></td><td class="num" x-text="fila.puntos"></td></tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    <p class="suave" style="margin:.3rem 0 0" x-show="deVersion(version).some(f => vista(f))" x-text="deVersion(version).filter(f => vista(f)).length + ' de ' + deVersion(version).length + ' preguntas de esta versión ya las respondieron estudiantes de {{ $destino?->periodo }} en otro periodo.'"></p>
+                </details>
             </div>
 
             <datalist id="temas-banco">@foreach ($temas as $t)<option value="{{ $t }}">@endforeach</datalist>
@@ -58,7 +72,8 @@
                     <div class="fila" style="justify-content:space-between;align-items:flex-start">
                         <button type="button" class="enlace resumen-item" x-on:click="f.abierto = !f.abierto" :aria-expanded="f.abierto">
                             <strong x-text="(n + 1) + '.'"></strong> <span x-text="resumen(f)"></span>
-                            <span class="suave" x-text="' · ' + tipos[f.tipo] + ' · ' + f.peso + (f.tema ? ' · ' + f.tema : '')"></span>
+                            <span class="suave" x-text="' · ' + tipos[f.tipo] + ' · ' + f.peso + (f.tema ? ' · ' + f.tema : '') + ' · ' + f.dificultad"></span>
+                            <span class="marca-vista" x-show="vista(f)" x-text="textoVista(vista(f))"></span>
                         </button>
                         @unless ($bloqueo)<span class="fila" style="gap:.3rem;flex-wrap:nowrap">
                             <button type="button" class="boton boton-sec boton-chico" x-on:click="mover(f, -1)" :aria-label="'Subir la pregunta ' + (n + 1)">↑</button>
@@ -193,11 +208,16 @@
                     <p class="suave">Todavía no hay otros exámenes en esta materia.</p>
                 @else
                     <div class="campo" style="margin-top:.5rem"><label for="filtro-otras">Buscar por enunciado, tema, tipo o sigla</label><input id="filtro-otras" type="search" x-model="filtro"></div>
+                    @if ($otras->contains(fn ($o) => $o['vista']))
+                        <label style="font-weight:400"><input type="checkbox" x-model="ocultarVistas"> Ocultar las que ya respondieron estudiantes de {{ $destino?->periodo }} en otro periodo
+                            <span class="suave">({{ $otras->filter(fn ($o) => $o['vista'])->count() }}; las no usadas aparecen primero)</span></label>
+                    @endif
                     <ul class="lista-otras">
                         <template x-for="(o, k) in otrasFiltradas" :key="k">
                             <li class="fila" style="justify-content:space-between;flex-wrap:nowrap">
                                 <span><span x-text="o.item.enunciado.replace(/\s+/g, ' ').slice(0, 140)"></span>
-                                    <span class="suave" x-text="' · ' + tipos[o.item.tipo] + ' · ' + (o.item.tema || 'sin tema') + ' · ' + o.origen + ' ' + o.version"></span></span>
+                                    <span class="suave" x-text="' · ' + tipos[o.item.tipo] + ' · ' + (o.item.tema || 'sin tema') + ' · ' + (o.item.dificultad || 'media') + ' · ' + o.origen + ' ' + o.version"></span>
+                                    <span class="marca-vista" x-show="o.vista" x-text="textoVista(o.vista)"></span></span>
                                 <button type="button" class="boton boton-sec boton-chico" x-on:click="traer(o)" x-text="'Traer a ' + version"></button>
                             </li>
                         </template>

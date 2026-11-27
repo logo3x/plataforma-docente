@@ -7,6 +7,7 @@ use App\Models\Componente;
 use App\Models\Nota;
 use App\Models\User;
 use App\Notas\TableroNotas;
+use Brick\Math\BigDecimal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\CreaEscenario;
@@ -120,11 +121,52 @@ class EstructuraPeriodoTest extends TestCase
         $this->assertSame('50', $this->trabajos->fresh()->porcentaje(), 'nada se guarda a medias');
     }
 
+    private function escala(array $cambios = []): array
+    {
+        return array_merge(['escala_min' => '0', 'escala_max' => '5', 'nota_aprobatoria' => '3', 'decimales' => 1, 'redondeo' => 'cercano'], $cambios);
+    }
+
+    #[Test]
+    public function la_nota_minima_y_el_redondeo_se_cambian_con_notas_y_las_notas_no_cambian(): void
+    {
+        $e = $this->grupo->estudiantes()->first();
+        $quiz = $this->crearActividad($this->trabajos);
+        Nota::query()->create(['actividad_id' => $quiz->id, 'estudiante_id' => $e->id, 'valor' => '2.96', 'origen' => 'digitada']);
+        $this->assertTrue($this->dictado->fresh()->escala()->apruebaSoloPorRedondeo('2.96'));
+
+        $this->put(route('dictados.escala.guardar', $this->dictado), $this->escala(['nota_aprobatoria' => '3.5', 'decimales' => 2, 'redondeo' => 'abajo']))
+            ->assertSessionHasNoErrors()->assertSessionHas('estado', fn ($m) => str_contains($m, 'Nota mínima para aprobar de 3 a 3.5'));
+
+        $escala = $this->dictado->fresh()->escala();
+        $this->assertSame(['3.5', 2, 'abajo'], [(string) BigDecimal::of($escala->aprobatoria)->strippedOfTrailingZeros(), $escala->decimales, $escala->redondeo]);
+        $this->assertSame('2.9600', Nota::query()->sole()->valor);
+        $this->assertSame('2.96', $escala->mostrar('2.96'));
+        $this->assertFalse($escala->aprueba('3.4'));
+        $cambio = CambioEstructura::query()->sole();
+        $this->assertSame(1, $cambio->antes['escala']['decimales']);
+        $this->get(route('dictados.estructura', $this->dictado))->assertOk()->assertSee('Antes: escala 0 a 5, aprueba con 3')->assertSee('ya no se cambian');
+    }
+
+    #[Test]
+    public function el_minimo_y_el_maximo_solo_se_cambian_sin_notas(): void
+    {
+        $quiz = $this->crearActividad($this->trabajos);
+        $this->put(route('dictados.escala.guardar', $this->dictado), $this->escala(['escala_max' => '10', 'nota_aprobatoria' => '6']))->assertSessionHasNoErrors();
+        $this->assertSame('10.0000', $this->dictado->fresh()->escala_max);
+        $this->assertSame('10.0000', $quiz->fresh()->valor_max, 'la actividad que valía el máximo vale el nuevo máximo');
+
+        Nota::query()->create(['actividad_id' => $quiz->id, 'estudiante_id' => $this->grupo->estudiantes()->first()->id, 'valor' => '7', 'origen' => 'digitada']);
+        $this->put(route('dictados.escala.guardar', $this->dictado), $this->escala())
+            ->assertSessionHasErrors(['escala' => 'El periodo ya tiene una nota en la escala de 0.0 a 10.0: el mínimo y el máximo ya no se cambian. La nota mínima, los decimales y el redondeo sí.']);
+        $this->assertSame('10.0000', $this->dictado->fresh()->escala_max);
+    }
+
     #[Test]
     public function no_se_editan_componentes_de_otro_docente(): void
     {
         $otro = User::factory()->create();
         $this->actingAs($otro)->get(route('dictados.estructura', $this->dictado))->assertForbidden();
         $this->actingAs($otro)->put(route('dictados.estructura.guardar', $this->dictado), ['divisiones' => $this->formulario()])->assertForbidden();
+        $this->actingAs($otro)->put(route('dictados.escala.guardar', $this->dictado), $this->escala())->assertForbidden();
     }
 }

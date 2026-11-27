@@ -10,6 +10,7 @@ use App\Models\Division;
 use App\Models\Nota;
 use App\Models\User;
 use App\Notas\CalculadoraNotas;
+use App\Notas\Escala;
 use Brick\Math\BigDecimal;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -133,6 +134,61 @@ final class EditorEstructura
 
             return $cambios;
         });
+    }
+
+    /**
+     * 3.2.1 y 3.2.3: la nota mínima, los decimales y la regla de redondeo se cambian siempre, porque no tocan
+     * ninguna nota guardada (solo cómo se muestra y quién aprueba). El mínimo y el máximo de la escala solo
+     * mientras el periodo no tenga notas: después habría que convertir notas que los estudiantes ya vieron.
+     * Sin notas, las actividades que valían el máximo pasan a valer el nuevo máximo.
+     *
+     * @param  array{escala_min:string, escala_max:string, nota_aprobatoria:string, decimales:int, redondeo:string}  $d
+     * @return array<int, string> los cambios hechos, en frases
+     */
+    public function cambiarEscala(Dictado $dictado, array $d, ?User $quien = null): array
+    {
+        $antes = $dictado->escala();
+        $nueva = new Escala((string) $d['escala_min'], (string) $d['escala_max'], (string) $d['nota_aprobatoria'], (int) $d['decimales'], $d['redondeo']);
+        $igual = fn ($a, $b) => BigDecimal::of($a)->compareTo(BigDecimal::of($b)) === 0;
+        $rango = ! $igual($antes->minimo, $nueva->minimo) || ! $igual($antes->maximo, $nueva->maximo);
+        $notas = $this->notasCargadas($dictado);
+        if ($rango && $notas > 0) {
+            throw new InvalidArgumentException('El periodo ya tiene '.($notas === 1 ? 'una nota' : "{$notas} notas")." en la escala de {$antes->mostrar($antes->minimo)} a {$antes->mostrar($antes->maximo)}: "
+                .'el mínimo y el máximo ya no se cambian. La nota mínima, los decimales y el redondeo sí.');
+        }
+
+        $f = fn (Escala $e, string $v) => (string) BigDecimal::of($v)->strippedOfTrailingZeros();
+        $reglas = ['cercano' => 'al más cercano', 'arriba' => 'hacia arriba', 'abajo' => 'hacia abajo'];
+        $cambios = [];
+        if ($rango) {
+            $cambios[] = "Escala de {$f($antes, $antes->minimo)}–{$f($antes, $antes->maximo)} a {$f($nueva, $nueva->minimo)}–{$f($nueva, $nueva->maximo)}";
+        }
+        if (! $igual($antes->aprobatoria, $nueva->aprobatoria)) {
+            $cambios[] = "Nota mínima para aprobar de {$f($antes, $antes->aprobatoria)} a {$f($nueva, $nueva->aprobatoria)}";
+        }
+        if ($antes->decimales !== $nueva->decimales) {
+            $cambios[] = "Decimales al mostrar de {$antes->decimales} a {$nueva->decimales}";
+        }
+        if ($antes->redondeo !== $nueva->redondeo) {
+            $cambios[] = "Redondeo de «{$reglas[$antes->redondeo]}» a «{$reglas[$nueva->redondeo]}»";
+        }
+        if (! $cambios) {
+            return [];
+        }
+
+        DB::transaction(function () use ($dictado, $antes, $nueva, $rango, $cambios, $quien, $notas) {
+            if ($rango) {
+                Actividad::query()->whereIn('componente_id', Componente::query()->whereIn('division_id', $dictado->divisiones()->select('id'))->select('id'))
+                    ->where('valor_max', $antes->maximo)->update(['valor_max' => $nueva->maximo]);
+            }
+            $dictado->update(['escala_min' => $nueva->minimo, 'escala_max' => $nueva->maximo, 'nota_aprobatoria' => $nueva->aprobatoria,
+                'decimales' => $nueva->decimales, 'redondeo' => $nueva->redondeo]);
+            CambioEstructura::query()->create(['dictado_id' => $dictado->id, 'user_id' => $quien?->id, 'cambios' => $cambios, 'notas_cargadas' => $notas,
+                'antes' => ['escala' => ['minimo' => $antes->minimo, 'maximo' => $antes->maximo, 'aprobatoria' => $antes->aprobatoria,
+                    'decimales' => $antes->decimales, 'redondeo' => $antes->redondeo]]]);
+        });
+
+        return $cambios;
     }
 
     private function esDelDictado(Componente $c, Dictado $dictado): bool

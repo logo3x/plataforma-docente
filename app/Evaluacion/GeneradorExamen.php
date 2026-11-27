@@ -79,6 +79,7 @@ final class GeneradorExamen
         $json = json_encode($datos, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         // El entorno de los retos de HTML es el mismo de la plataforma: un solo código (4.6)
         $js = file_get_contents(public_path('js/ejecutor-dom.js'))."\n".file_get_contents(public_path('js/ejecutor-sql.js'))
+            ."\n".$this->editorCodigo($datos['items'])
             ."\n".file_get_contents(resource_path('examen/examen.js'));
         // Dentro de <script>, «<!--» y «<script» cambian cómo el navegador busca el cierre (4.5.5)
         foreach (['</script' => 'una etiqueta de cierre de script', '<script' => 'una etiqueta de apertura de script', '<!--' => 'una apertura de comentario HTML'] as $sec => $que) {
@@ -96,6 +97,20 @@ final class GeneradorExamen
             'css' => file_get_contents(resource_path('examen/examen.css')),
             'js' => $js,
         ])->render();
+    }
+
+    /**
+     * 4.4.3 y 4.4.5: el editor de código (CodeMirror) viaja dentro del examen solo si hay retos, y con los
+     * lenguajes que usan: solo JavaScript (unos 440 KB) o todos (unos 630 KB). Sin retos, el examen no lo carga.
+     */
+    private function editorCodigo(array $items): string
+    {
+        $lenguajes = collect($items)->where('tipo', 'reto')->map(fn ($it) => $it['lenguaje'] ?? 'javascript')->unique();
+        if ($lenguajes->isEmpty()) {
+            return '';
+        }
+
+        return file_get_contents(resource_path('examen/editor-'.($lenguajes->diff(['javascript'])->isEmpty() ? 'javascript' : 'todos').'.js'));
     }
 
     /**

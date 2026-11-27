@@ -57,6 +57,7 @@ class RetosSqlTest extends TestCase
         $this->assertArrayNotHasKey('verificaciones', $reto->enunciado);
 
         $html = $this->get(route('calificador.examen', $this->actividad()))->assertOk()->getContent();
+        $this->assertStringContainsString('paquete «todos» del editor del examen', $html, 'SQL usa el paquete con todos los lenguajes');
         $this->assertStringContainsString('id="motor-sql"', $html);
         $this->assertStringContainsString(base64_encode(substr(file_get_contents(public_path('vendor/sql.js/sql-wasm.wasm')), 0, 300)), $html);
         $this->assertStringContainsString('window.ejecutarSQL', $html);
@@ -76,6 +77,7 @@ class RetosSqlTest extends TestCase
             'items' => [['tipo' => 'vf', 'peso' => '5', 'enunciado' => 'SQL es un lenguaje declarativo.', 'correcta' => true]]]);
         $html = $this->get(route('calificador.examen', $this->actividad()))->assertOk()->getContent();
         $this->assertStringNotContainsString('id="motor-sql"', $html);
+        $this->assertStringNotContainsString('del editor del examen', $html, 'sin retos, sin editor de código');
         $this->assertLessThan(300_000, strlen($html));
     }
 

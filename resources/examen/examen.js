@@ -185,6 +185,25 @@
     });
   }
 
+  // ---------- Editor de código (4.4.3 y 4.4.5) ----------
+  /* CodeMirror viaja dentro del examen cuando hay retos. Se monta sobre el textarea, que sigue guardando el
+     valor; si el navegador no lo soporta, queda el textarea de siempre. */
+  const editores = [];
+  function montarEditor(area, lenguaje, filas) {
+    if (!window.EditorCodigo) return;
+    try {
+      area._editor = window.EditorCodigo.montar(area, { lenguaje, filas, espacios: ['php', 'blade'].includes(lenguaje) ? 4 : 2 });
+      editores.push(area._editor);
+    } catch (e) { area.hidden = false; }
+  }
+  /* Subraya en el editor la línea del error («Línea 3: …» o la línea que dio la ejecución); sin error, limpia. */
+  function marcarError(area, texto, linea, columna) {
+    const ed = area._editor; if (!ed) return;
+    const m = texto && /^Línea (\d+)/.exec(texto);
+    const l = linea || (m && Number(m[1]));
+    try { if (texto && l) ed.marcar(l, columna, texto); else ed.limpiar(); } catch (e) { /* la marca es una ayuda: nunca rompe el examen */ }
+  }
+
   // ---------- Entorno de prueba de código (sección 4) ----------
   function renderReto(caja, it, id) {
     if (it.lenguaje === 'php') return renderRetoPHP(caja, it, id);
@@ -195,18 +214,21 @@
     const aviso = el('div', { class: 'aviso-sintaxis', role: 'status', 'aria-live': 'polite' });
     const html = it.lenguaje === 'html', sql = it.lenguaje === 'sql';
     const lenguajesReto = html ? ['html', 'javascript'] : sql ? ['sql'] : ['javascript'];
-    const revisar = () => { if (nivel === 'minimo') return; const p = conCatalogo(area, lenguajesReto, html ? window.revisarHTML(area.value, revisarSintaxis) : sql ? window.revisarSQL(area.value) : revisarSintaxis(area.value)); aviso.textContent = p ? '⚠ ' + p : ''; aviso.classList.toggle('oculto', !p); };
+    const revisar = () => { if (nivel === 'minimo') return; const p = conCatalogo(area, lenguajesReto, html ? window.revisarHTML(area.value, revisarSintaxis) : sql ? window.revisarSQL(area.value) : revisarSintaxis(area.value)); aviso.textContent = p ? '⚠ ' + p : ''; aviso.classList.toggle('oculto', !p); marcarError(area, p); };
+    // El error de la ejecución se marca en su línea (salvo en el nivel mínimo, que solo muestra la consola)
+    let marcado = false;
+    const marcarEjecucion = (r) => { if (!marcado && nivel !== 'minimo' && ['error', 'no_compila'].includes(r.estado) && r.mensaje) { marcado = true; marcarError(area, r.mensaje, r.linea, r.columna); } return r; };
     area.addEventListener('input', () => { E.respuestas[id] = area.value; clearTimeout(area._t); area._t = setTimeout(guardar, 400); clearTimeout(area._s); area._s = setTimeout(revisar, 500); });
     const salida = el('div', { class: 'resultado-reto' });
     const vista = html ? el('div', { class: 'contenedor-vista', 'aria-label': 'Vista previa de su página' }) : sql ? el('div', { class: 'contenedor-vista', 'aria-label': 'Tablas de la actividad' }) : null;
     const probar = el('button', { class: 'boton boton-sec', texto: '▶ Probar', onclick: async () => {
-      E.sesion.ejecuciones++; salida.innerHTML = '';
+      E.sesion.ejecuciones++; salida.innerHTML = ''; marcado = false;
       if (html) return probarHTML();
       if (sql) return probarSQL();
       // 4.4.6: en el nivel mínimo solo se ejecuta el código tal cual; los casos del enunciado quedan para los otros niveles
       const casos = nivel !== 'minimo' && it.casos_visibles.length ? it.casos_visibles : [{ entrada: '', descripcion: 'Ejecutar el código' }];
       for (const c of casos) {
-        const r = await ejecutar(area.value, c.entrada || '', D.tiempo_ms);
+        const r = marcarEjecucion(await ejecutar(area.value, c.entrada || '', D.tiempo_ms));
         if (r.estado === 'no_compila') E.sesion.errores_sintaxis++;
         salida.append(el('div', { class: 'tarjeta' },
           el('div', {}, el('span', { class: 'estado ' + ({ con_salida: 'e-ok', sin_salida: 'e-pend' }[r.estado] || 'e-mal'), texto: ETIQUETAS[r.estado] }),
@@ -220,7 +242,7 @@
     } });
     /* 4.6: la página del estudiante en una vista previa aislada e interactiva; los casos se evalúan cada uno
        en su propia página, para que lo que haga uno no contamine al siguiente (4.3.5). */
-    const tarjeta = (r, c) => el('div', { class: 'tarjeta' },
+    const tarjeta = (r, c) => marcarEjecucion(r) && el('div', { class: 'tarjeta' },
       el('div', {}, el('span', { class: 'estado ' + ({ con_salida: 'e-ok', sin_salida: 'e-pend' }[r.estado] || 'e-mal'), texto: r.estado === 'con_salida' && !c ? '✓ La página se muestra' : ETIQUETAS[r.estado] }),
         c && c.descripcion ? ' ' + c.descripcion : '', c && c.entrada ? el('code', { texto: '  ' + c.entrada }) : null),
       r.mensaje && (nivel !== 'minimo' || r.estado === 'tiempo') ? el('div', { class: 'aviso mal', texto: r.mensaje }) : null,
@@ -246,6 +268,7 @@
     };
     const mensajeSQL = (r) => {
       if (!r.mensaje) return null;
+      marcarEjecucion(r);
       if (r.estado === 'tiempo') return r.mensaje;
       const crudo = r.original || r.mensaje, ex = explicar(['sql'], crudo);
       anotar(['sql'], crudo, ex, nivel === 'completo');
@@ -278,6 +301,8 @@
     if (html || sql) area.rows = 16;
     revisar();
     poner(caja, area, aviso, guiaErrores(lenguajesReto), el('p', {}, probar, ' ', verTablas, verTablas ? ' ' : null, it.reservadas ? el('span', { class: 'peso', texto: 'Hay ' + it.reservadas + ' verificación(es) adicional(es) que se evaluarán al calificar.' }) : null), vista, salida);
+    montarEditor(area, html ? 'html' : sql ? 'sql' : 'javascript', html || sql ? 16 : 14);
+    revisar();
   }
 
   /* 4.6 PHP y Laravel: no hay ejecución en el navegador. El estudiante escribe cada archivo, ve en lenguaje
@@ -300,11 +325,12 @@
       const area = el('textarea', { rows: varios ? 10 : 14, spellcheck: 'false', 'aria-label': 'Archivo ' + f.nombre, onpaste: () => { E.sesion.pegados++; guardar(); } });
       area.value = valorDe(f, i);
       const aviso = el('div', { class: 'aviso-sintaxis', role: 'status', 'aria-live': 'polite' });
-      const revisar = () => { if (nivel === 'minimo') return; const p = conCatalogo(area, ['php'], blade ? revisarBlade(area.value) : revisarPHP(area.value)); aviso.textContent = p ? '⚠ ' + p : ''; };
+      const revisar = () => { if (nivel === 'minimo') return; const p = conCatalogo(area, ['php'], blade ? revisarBlade(area.value) : revisarPHP(area.value)); aviso.textContent = p ? '⚠ ' + p : ''; marcarError(area, p); };
       area.addEventListener('keydown', ev => { if (ev.key === 'Tab') { ev.preventDefault(); const s = area.selectionStart; area.setRangeText('    ', s, area.selectionEnd, 'end'); } });
       area.addEventListener('input', () => { fijarTodo(); clearTimeout(area._t); area._t = setTimeout(guardar, 400); clearTimeout(area._s); area._s = setTimeout(revisar, 500); });
       areas.push([f, area]);
       caja.append(el('label', { class: 'archivo-php', texto: f.nombre }), area, aviso);
+      montarEditor(area, blade ? 'blade' : 'php', varios ? 10 : 14);
       revisar();
     });
     caja.append(guiaErrores(['php']));
@@ -767,6 +793,7 @@
   function mostrarCierre(cifrada) {
     cerrado = true;
     $('#examen').querySelectorAll('input, textarea, select').forEach(x => x.disabled = true);
+    editores.forEach(ed => { try { ed.soloLectura(); } catch (e) { /* sigue el cierre */ } });
     const c = $('#cierre'); c.classList.remove('oculto'); c.innerHTML = '';
     const enLinea = D.vivo && E.vivo && E.vivo.entregada;
     poner(c, el('h2', { texto: 'Examen finalizado' + (E.cierre.tipo === 'automatico' ? ' por tiempo' : E.cierre.tipo === 'docente' ? ' por el docente' : '') }),

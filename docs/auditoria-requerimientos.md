@@ -44,18 +44,23 @@ Estado: ✅ corregido · 🔧 pendiente, sin decisiones abiertas · ❓ necesita
 | 7.8 | Rúbricas y unidades en HTML y Word; tablas reales en Word | ✅ |
 | 9.1 | Versión del material al cargarlo de nuevo | ✅ |
 
+## Decidido por el docente y hecho
+
+| Req. | Decisión | Estado |
+|---|---|---|
+| 2.7.1, 2.7.2, 3.1.2 | Cortes y componentes se editan después del alta, aunque haya notas | ✅ Nombres, pesos, fechas, divisiones y componentes nuevos; no se quita lo que tiene actividades; cada cambio queda registrado con cómo estaba |
+| 3.2 | Nota del parcial por partes, según el profesor | ✅ Opción por examen: por puntos (como antes) o por partes, con el peso de la escrita que fije el docente; la cuenta se explica en el detalle y en el informe |
+| 6.8.1 a 6.8.3 | Grupos de trabajo: las dos vías | ✅ El docente los arma (por defecto sin conexión, con reparto al azar) o el estudiante escoge de la lista por nombre; el archivo no lleva los documentos del curso |
+| 4.4.3, 4.4.5 | Incluir el editor de código en el examen | ✅ CodeMirror dentro del examen: 440 KB con JavaScript y 630 KB con los demás lenguajes (más de los 300 KB estimados); solo en exámenes con retos |
+
 ## Necesita una decisión del docente
 
 | Req. | Pregunta |
 |---|---|
-| 2.7.1, 2.7.2, 3.1.2 | Cortes y componentes no se pueden editar después del alta. ¿Se permite cambiar nombres y pesos con notas ya cargadas, o solo mientras el periodo está vacío? |
 | 2.7.4 | Divisiones anidadas (cortes dentro de cortes): el modelo las soporta, la interfaz no. ¿Hacen falta? |
 | 2.6.2 | Fechas y calendario del dictado: ¿solo inicio y fin de cada corte, o también las fechas de clase? |
-| 3.2 | Nota del parcial como 50 % escrita y 50 % práctica: hoy es la proporción de puntos. ¿Se calcula por partes, con el peso configurable? |
 | 3.2.1, 3.2.3 | Escala, nota mínima y regla de redondeo no se cambian después del alta. ¿Se deben poder cambiar? |
 | 6.2.3, 6.4 | Modalidad II: nota de la práctica digitada con su comentario y requerimientos con su fracción. ¿Cómo llega hoy esa nota (anexo calificado aparte)? |
-| 6.8.1 a 6.8.3 | Grupos de trabajo definidos por el docente y elegidos de la lista, en vez de documentos escritos por el estudiante. ¿Se arman antes del parcial en sala? |
-| 4.4.3, 4.4.5 | Editor de código con números de línea, resaltado y marca del error en la línea. Requiere incluir un editor (unos 300 KB dentro del examen sin internet). ¿Vale la pena? |
 | 4.4.1 | Avisar del punto y coma faltante: JavaScript no lo exige y avisarlo puede confundir. ¿Se pide como estilo? |
 | 5.2 | Enunciado de la práctica descargable en texto plano, con fracciones y números de autoverificación |
 | 5.4.13, 5.4.14 | Historial de uso por pregunta: avisar y excluir preguntas que un grupo ya vio; equilibrio por tema y dificultad |

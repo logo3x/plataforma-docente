@@ -136,6 +136,9 @@ class CalificadorEntregasTest extends TestCase
             $this->assertStringNotContainsString($secreto, $html, "El examen contiene «{$secreto}».");
         }
         $this->assertStringContainsString('"reservadas":1', $html);
+        // 4.4.3 y 4.4.5: el editor de código viaja dentro del examen, solo con JavaScript porque el reto es de JavaScript
+        $this->assertStringContainsString('paquete «javascript» del editor del examen', $html);
+        $this->assertStringNotContainsString('paquete «todos»', $html);
         // 4.5.5: exactamente dos bloques de script y ninguno cortado por el contenido
         $this->assertSame(2, substr_count($html, '</script>'));
         // Regresión verificada en navegador real: sin 'unsafe-eval' el Worker no puede ejecutar el código

@@ -6,6 +6,7 @@
                               else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); this.n = Math.max(this.n - 1, 0); }
                               else if (e.key === 'Escape') this.proyectando = false; } }">
         <div class="migas"><a href="{{ route('inicio') }}">Mis materias</a> › <a href="{{ route('debates.index', $m->materia) }}">Preguntas de debate — {{ $m->materia->nombre }}</a> › {{ $m->titulo }}</div>
+    @include('ia._generacion-funciono')
         <div class="fila" style="justify-content:space-between">
             <h1 style="margin-bottom:0">{{ $m->titulo }}@if ($estudiante) <span class="suave">· para estudiantes</span>@endif</h1>
             <div class="fila no-imprimir">

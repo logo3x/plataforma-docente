@@ -4,6 +4,7 @@ namespace App\Material;
 
 use App\Http\Controllers\ApunteController;
 use App\Http\Controllers\DebateController;
+use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\EjemploController;
 use App\Http\Controllers\PresentacionController;
 use App\Http\Controllers\ProyectoController;
@@ -35,7 +36,7 @@ final class Publicador
 
     /** tipo del material => controlador que dibuja su versión para estudiantes */
     private const CONTROLADORES = ['apuntes' => ApunteController::class, 'ejemplos' => EjemploController::class, 'debate' => DebateController::class,
-        'vocabulario' => VocabularioController::class, 'proyectos' => ProyectoController::class, 'presentacion' => PresentacionController::class];
+        'vocabulario' => VocabularioController::class, 'proyectos' => ProyectoController::class, 'presentacion' => PresentacionController::class, 'documento' => DocumentoController::class];
 
     /** La ficha propuesta: la de la última publicación del material, o lo que se sabe de él y del docente. */
     public function fichaInicial(Material $m): array
@@ -129,6 +130,11 @@ final class Publicador
             if (! preg_match('#^https?://#', $a->getAttribute('href')) || str_starts_with($a->getAttribute('href'), url('/'))) {
                 $a->parentNode->replaceChild($doc->createTextNode($a->textContent), $a);    // enlaces internos de la plataforma: solo texto
             }
+        }
+        // Lo que en la plataforma solo sale al imprimir (el código de un ejercicio, que allá se edita) queda a la vista
+        foreach ($xp->query('.//*[contains(concat(" ", normalize-space(@class), " "), " solo-imprimir ")]', $main) as $n) {
+            /** @var DOMElement $n */
+            $n->setAttribute('class', trim(str_replace('solo-imprimir', '', $n->getAttribute('class'))));
         }
         foreach ($xp->query('.//@*[starts-with(name(), "x-") or starts-with(name(), "wire:") or starts-with(name(), ":") or starts-with(name(), "@")]', $main) as $at) {
             $at->ownerElement->removeAttribute($at->nodeName);

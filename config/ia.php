@@ -334,6 +334,30 @@ Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después
  "resumen":["..."],"preguntas":[{"pregunta":"...","respuesta":"..."}],"fuentes":["..."]}
 TXT,
 
+        'documento' => <<<'TXT'
+Tarea: {{nombre_generador}}.
+
+Tema:   {{tema}}
+Grupo:  {{grupo}}
+
+Instrucciones del docente:
+{{instrucciones}}
+
+Reglas:
+- Párrafos cortos. Separe los párrafos con una línea en blanco; para listas, empiece cada línea con «- ».
+- Base lo que dice en el material de referencia y cite en «fuentes» los títulos que usó; no invente referencias ni fechas.
+- Cíñase al alcance del grupo.
+{{reglas_codigo}}
+{{glosario}}
+{{memoria}}
+
+Formato de salida: responda SOLO con un objeto JSON, sin texto antes ni después, con esta forma:
+{"formato":"plataforma-documento","version":1,"generador":"{{nombre_generador}}","titulo":"...","proposito":"para qué sirve este documento",
+ "secciones":[{"titulo":"...","texto":"párrafo\n\notro párrafo","codigo":"","lenguaje":"","ejercicio":null}],
+ "fuentes":["..."]}
+Si una sección lleva ejercicio, «ejercicio» es {"enunciado":"...","plantilla":"...","solucion":"...","prueba":"..."}.
+TXT,
+
         'comentarios' => <<<'TXT'
 Tarea: proponga un comentario breve para cada respuesta abierta de esta pregunta, como lo escribiría el docente después de leerla.
 

@@ -58,6 +58,9 @@ Estado: ✅ corregido · 🔧 pendiente, sin decisiones abiertas · ❓ necesita
 | 5.2 | Enunciado de la práctica en texto plano | ✅ Botón en el examen con los datos del estudiante, los puntos y los casos para autoverificar; sin lo reservado |
 | 2.6.2 | Calendario semanal: se registra una semana y las clases salen solas sin festivos nacionales | ✅ Horario por grupo, festivos de Colombia (Ley Emiliani y Pascua), días sin clase del periodo, clases por corte y descarga .ics; el horario pasa al periodo siguiente |
 | 6.2.3, 6.4 | Modalidad II: solo se registra la nota de la práctica | ✅ Con anexo, el calificador crea la columna «Práctica — examen» junto al examen, en el mismo componente y grupos; la nota y el comentario se digitan ahí |
+| 7.4.3 | Generador genérico desde una plantilla de prompt | ✅ Generadores del docente con campos e instrucciones en lenguaje natural; salida en documento por secciones |
+| 7.5, 7.10 | Manuales interactivos, guías y boletines | ✅ Tres generadores de fábrica; el manual trae ejemplos que se ejecutan y ejercicios que se comprueban solos |
+| 8.4.5 | Biblioteca de plantillas que funcionaron | ✅ Marca «funcionó» en plantillas y generadores, «Esto funcionó» desde el material, biblioteca y copia del estilo entre materias |
 | 2.7.4 | Divisiones anidadas | No se hacen: la institución usa cortes planos. El modelo las sigue admitiendo |
 | 4.4.1 | Aviso de punto y coma faltante | No se avisa: JavaScript no lo exige y el aviso daría falsos positivos |
 | 5.7 | Interruptores del panel (versiones, segundo banco, casos reservados) | No se hacen: no se usan |
@@ -67,7 +70,4 @@ Estado: ✅ corregido · 🔧 pendiente, sin decisiones abiertas · ❓ necesita
 
 | Req. | Pregunta |
 |---|---|
-| 7.4.3 | Catálogo extensible: hoy cada generador nuevo requiere código. ¿Un generador genérico a partir de una plantilla de prompt? |
-| 7.5, 7.10 | Manuales interactivos con el entorno de prueba, guías y boletines |
-| 8.4.5 | Biblioteca de plantillas que funcionaron, reutilizable entre materias |
 | 8.5.3 | Perfil de escritura del docente con muestras de sus comentarios para la IA |

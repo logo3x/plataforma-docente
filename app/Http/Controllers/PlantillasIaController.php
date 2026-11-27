@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\IA\ConstructorPrompt;
+use App\Models\GeneracionIa;
+use App\Models\Generador;
 use App\Models\Materia;
 use App\Models\PlantillaPrompt;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +33,7 @@ class PlantillasIaController extends Controller
         'vocabulario' => 'Capa 3 — Tarea: lista de vocabulario',
         'proyectos' => 'Capa 3 — Tarea: ideas de proyectos',
         'apuntes' => 'Capa 3 — Tarea: texto informativo o apunte',
+        'documento' => 'Capa 3 — Tarea: documento de un generador configurable (guía, manual, boletín y los suyos)',
         'comentarios' => 'Capa 3 — Tarea: comentarios de respuestas abiertas (voz del docente)',
         'puntajes' => 'Capa 3 — Tarea: puntaje sugerido para respuestas abiertas',
         'temario' => 'Capa 3 — Tarea: extraer el temario del plan', 'sugerencias' => 'Capa 3 — Tarea: sugerir organización de la clase'];
@@ -41,7 +44,7 @@ class PlantillasIaController extends Controller
             'perfil' => $prompts->perfil($request->user()),
             'plantillas' => collect(array_keys(self::CLAVES))->mapWithKeys(fn ($c) => [$c => $prompts->plantilla($request->user(), $c)]),
             'versiones' => PlantillaPrompt::query()->where('user_id', $request->user()->id)->whereNull('materia_id')
-                ->orderByDesc('version')->get(['id', 'clave', 'version', 'cuerpo', 'created_at'])->groupBy('clave'),
+                ->orderByDesc('version')->get(['id', 'clave', 'version', 'cuerpo', 'created_at', 'funciono', 'nota_funciono'])->groupBy('clave'),
         ]);
     }
 
@@ -96,11 +99,63 @@ class PlantillasIaController extends Controller
         return back()->with('estado', "Plantilla «{$d['clave']}» restaurada a la de fábrica (versión {$p->version}).");
     }
 
-    public function estilo(Materia $materia): View
+    /** 8.4.5: lo que funcionó, para volver a usarlo en cualquier materia. */
+    public function biblioteca(Request $request): View
+    {
+        return view('ia.biblioteca', [
+            'plantillas' => PlantillaPrompt::query()->where('user_id', $request->user()->id)->whereNull('materia_id')->where('funciono', true)->orderBy('clave')->orderByDesc('version')->get(),
+            'vigentes' => collect(array_keys(self::CLAVES))->mapWithKeys(fn ($c) => [$c => app(ConstructorPrompt::class)->plantilla($request->user(), $c)['id']]),
+            'generadores' => Generador::query()->where('user_id', $request->user()->id)->where('funciono', true)->orderBy('nombre')->get(),
+        ]);
+    }
+
+    /** Marca o desmarca una versión de plantilla como «funcionó» (8.4.5). */
+    public function funciono(Request $request, PlantillaPrompt $plantilla): RedirectResponse
+    {
+        abort_unless($plantilla->user_id === $request->user()->id, 403);
+        $d = $request->validate(['funciono' => ['required', 'boolean'], 'nota_funciono' => ['nullable', 'string', 'max:300']]);
+        $plantilla->update(['funciono' => (bool) $d['funciono'], 'nota_funciono' => $d['funciono'] ? ($d['nota_funciono'] ?? null) : null]);
+
+        return back()->with('estado', $d['funciono'] ? "La versión {$plantilla->version} de «{$plantilla->clave}» quedó en la biblioteca." : "La versión {$plantilla->version} de «{$plantilla->clave}» salió de la biblioteca.");
+    }
+
+    /**
+     * Desde un material aprobado: la plantilla de tarea con la que se generó funcionó. Si era la de fábrica,
+     * se guarda como versión propia para poder marcarla.
+     */
+    public function generacionFunciono(Request $request, GeneracionIa $generacion, ConstructorPrompt $prompts): RedirectResponse
+    {
+        abort_if($generacion->materia === null, 404);
+        Gate::authorize('gestionar', $generacion->materia);
+        $clave = $generacion->tarea;
+        $version = (int) ($generacion->plantillas[$clave] ?? 0);
+        abort_unless(array_key_exists($clave, self::CLAVES), 422, 'Esa tarea no tiene plantilla propia.');
+        $p = $version > 0
+            ? PlantillaPrompt::query()->where('user_id', $request->user()->id)->whereNull('materia_id')->where('clave', $clave)->where('version', $version)->first()
+            : null;
+        $p ??= $prompts->guardarPlantilla($request->user(), $clave, config("ia.plantillas.{$clave}"));
+        $p->update(['funciono' => true, 'nota_funciono' => $request->validate(['nota_funciono' => ['nullable', 'string', 'max:300']])['nota_funciono'] ?? "Funcionó con «{$generacion->resultado?->titulo}»"]);
+
+        return back()->with('estado', "La plantilla «{$clave}» (versión {$p->version}) quedó en la biblioteca como una que funcionó.");
+    }
+
+    public function estilo(Request $request, Materia $materia): View
     {
         Gate::authorize('gestionar', $materia);
 
-        return view('ia.estilo', ['materia' => $materia]);
+        return view('ia.estilo', ['materia' => $materia,
+            'otras' => Materia::query()->where('user_id', $materia->user_id)->whereKeyNot($materia->id)->whereNotNull('estilo')->orderBy('nombre')->get(['id', 'nombre'])]);
+    }
+
+    /** 8.4.5: el estilo (capa 2) que funcionó en otra materia, como punto de partida. */
+    public function copiarEstilo(Request $request, Materia $materia): RedirectResponse
+    {
+        Gate::authorize('gestionar', $materia);
+        $origen = Materia::query()->findOrFail($request->validate(['origen' => ['required', 'integer']])['origen']);
+        Gate::authorize('gestionar', $origen);
+        $materia->update(['estilo' => $origen->estilo]);
+
+        return back()->with('estado', "Se copió el estilo de {$origen->nombre}. Ajuste lo propio de esta materia (unidades, alcance, herramientas).");
     }
 
     public function guardarEstilo(Request $request, Materia $materia): RedirectResponse

@@ -1,5 +1,6 @@
 <x-app :titulo="$m->titulo.' — Ejemplos prácticos'">
     <div class="migas"><a href="{{ route('inicio') }}">Mis materias</a> › <a href="{{ route('ejemplos.index', $m->materia) }}">Ejemplos prácticos — {{ $m->materia->nombre }}</a> › {{ $m->titulo }}</div>
+    @include('ia._generacion-funciono')
     <div class="fila" style="justify-content:space-between">
         <h1 style="margin-bottom:0">{{ $m->titulo }}@if ($estudiante) <span class="suave">· para practicar</span>@endif</h1>
         <div class="fila no-imprimir">

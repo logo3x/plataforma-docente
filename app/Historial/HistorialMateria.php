@@ -27,10 +27,11 @@ final class HistorialMateria
     public const TIPOS = [
         'evaluacion' => 'Evaluación', 'rubrica' => 'Rúbrica', 'unidad' => 'Unidad didáctica', 'apuntes' => 'Texto o apunte',
         'ejemplos' => 'Ejemplos prácticos', 'debate' => 'Preguntas de debate', 'vocabulario' => 'Vocabulario', 'proyectos' => 'Ideas de proyectos', 'presentacion' => 'Presentaciones',
+        'documento' => 'Documento (guía, manual, boletín…)',
     ];
 
     /** Prefijo de rutas de cada tipo de material. */
-    public const RUTAS_MATERIAL = ['apuntes' => 'apuntes', 'ejemplos' => 'ejemplos', 'debate' => 'debates', 'vocabulario' => 'vocabularios', 'proyectos' => 'proyectos', 'presentacion' => 'presentaciones'];
+    public const RUTAS_MATERIAL = ['apuntes' => 'apuntes', 'ejemplos' => 'ejemplos', 'debate' => 'debates', 'vocabulario' => 'vocabularios', 'proyectos' => 'proyectos', 'presentacion' => 'presentaciones', 'documento' => 'documentos'];
 
     /**
      * @param  array{tipo?: ?string, dictado?: ?int, origen?: ?string, q?: ?string}  $filtros
@@ -75,7 +76,7 @@ final class HistorialMateria
                 continue;
             }
             $ruta = self::RUTAS_MATERIAL[$m->tipo];
-            $coleccion = ['apuntes' => 'secciones', 'ejemplos' => 'ejemplos', 'debate' => 'preguntas', 'vocabulario' => 'terminos', 'proyectos' => 'proyectos', 'presentacion' => 'diapositivas'][$m->tipo];
+            $coleccion = ['apuntes' => 'secciones', 'ejemplos' => 'ejemplos', 'debate' => 'preguntas', 'vocabulario' => 'terminos', 'proyectos' => 'proyectos', 'presentacion' => 'diapositivas', 'documento' => 'secciones'][$m->tipo];
             $entradas->push($this->entrada($m->tipo, $m, $m->titulo, $ia($m), $dictados, [
                 'detalle' => count($m->contenido[$coleccion] ?? []).' '.['secciones' => 'sección(es)', 'ejemplos' => 'ejemplo(s)', 'preguntas' => 'pregunta(s)', 'terminos' => 'término(s)', 'proyectos' => 'proyecto(s)', 'diapositivas' => 'diapositiva(s)'][$coleccion].$this->copiaDe($m),
                 'abrir' => route("{$ruta}.show", $m), 'editar' => route("{$ruta}.edit", $m),

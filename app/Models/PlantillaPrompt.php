@@ -14,7 +14,7 @@ class PlantillaPrompt extends Model
 
     protected function casts(): array
     {
-        return ['activa' => 'boolean'];
+        return ['activa' => 'boolean', 'funciono' => 'boolean'];
     }
 
     public function materia(): BelongsTo

@@ -1,6 +1,7 @@
 <x-app :titulo="$m->titulo.' — Ideas de proyectos'">
     @php($IP = \App\Material\IdeasProyecto::class)
     <div class="migas"><a href="{{ route('inicio') }}">Mis materias</a> › <a href="{{ route('proyectos.index', $m->materia) }}">Ideas de proyectos — {{ $m->materia->nombre }}</a> › {{ $m->titulo }}</div>
+    @include('ia._generacion-funciono')
     <div class="fila" style="justify-content:space-between">
         <h1 style="margin-bottom:0">{{ $m->titulo }}@if ($estudiante) <span class="suave">· enunciados para estudiantes</span>@endif</h1>
         <div class="fila no-imprimir">

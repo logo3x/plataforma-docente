@@ -25,6 +25,7 @@
                 <div class="fila" style="margin-top:.5rem"><button class="boton boton-sec" type="submit">Guardar versión nueva</button></div>
             </form>
             <form method="POST" action="{{ route('ia.plantillas.restaurar') }}" style="margin-top:.5rem">@csrf <input type="hidden" name="clave" value="{{ $clave }}"><button class="enlace">Restaurar la de fábrica</button></form>
+            @if ($vigente = ($versiones[$clave] ?? collect())->first())<div style="margin-top:.4rem">@include('ia._funciono', ['plantilla' => $vigente])</div>@endif
             @if (($versiones[$clave] ?? collect())->count() > 1)
                 <details style="margin-top:.5rem">
                     <summary>Versiones anteriores ({{ $versiones[$clave]->count() - 1 }})</summary>
@@ -32,7 +33,8 @@
                         <details class="tarjeta" style="box-shadow:none;margin:.4rem 0">
                             <summary>Versión {{ $v->version }} · {{ $v->created_at->format('Y-m-d H:i') }}</summary>
                             <pre style="white-space:pre-wrap;font-size:.8rem;max-height:18rem;overflow:auto">{{ $v->cuerpo }}</pre>
-                            <form method="POST" action="{{ route('ia.plantillas.volver') }}">@csrf <input type="hidden" name="version_id" value="{{ $v->id }}"><button class="boton boton-sec boton-chico">Volver a esta versión</button></form>
+                            <div class="fila"><form method="POST" action="{{ route('ia.plantillas.volver') }}">@csrf <input type="hidden" name="version_id" value="{{ $v->id }}"><button class="boton boton-sec boton-chico">Volver a esta versión</button></form>
+                                @include('ia._funciono', ['plantilla' => $v])</div>
                         </details>
                     @endforeach
                 </details>

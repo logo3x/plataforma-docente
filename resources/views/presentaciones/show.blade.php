@@ -1,6 +1,7 @@
 @php($todas = array_merge([['tipo' => 'portada', 'titulo' => $c['titulo'], 'puntos' => array_values(array_filter([$c['subtitulo'], $m->materia->nombre])), 'codigo' => '', 'notas' => $c['proposito'], 'tema' => '']], $c['diapositivas']))
 <x-app :titulo="$m->titulo.' — Presentación'">
     <div class="migas"><a href="{{ route('inicio') }}">Mis materias</a> › <a href="{{ route('presentaciones.index', $m->materia) }}">Presentaciones — {{ $m->materia->nombre }}</a> › {{ $m->titulo }}</div>
+    @include('ia._generacion-funciono')
     <div class="fila no-imprimir" style="justify-content:space-between">
         <h1 style="margin:0">{{ $m->titulo }}</h1>
         <div class="fila">

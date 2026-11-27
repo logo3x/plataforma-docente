@@ -16,6 +16,7 @@ use App\Http\Controllers\ContenidoController;
 use App\Http\Controllers\DebateController;
 use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\DictadoController;
+use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\EjemploController;
 use App\Http\Controllers\EnDosGruposController;
 use App\Http\Controllers\EnsayoController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\EstadisticasController;
 use App\Http\Controllers\EstudianteController;
 use App\Http\Controllers\ExportacionController;
 use App\Http\Controllers\GeneracionBancoController;
+use App\Http\Controllers\GeneradoresController;
 use App\Http\Controllers\GruposTrabajoController;
 use App\Http\Controllers\HistorialController;
 use App\Http\Controllers\ImportacionController;
@@ -132,9 +134,13 @@ Route::middleware('auth')->group(function () {
         Route::post('plantillas', [PlantillasIaController::class, 'plantilla'])->name('plantillas.guardar');
         Route::post('plantillas/restaurar', [PlantillasIaController::class, 'restaurar'])->name('plantillas.restaurar');
         Route::post('plantillas/volver', [PlantillasIaController::class, 'volver'])->name('plantillas.volver');
+        Route::get('biblioteca', [PlantillasIaController::class, 'biblioteca'])->name('biblioteca');
+        Route::post('plantillas/{plantilla}/funciono', [PlantillasIaController::class, 'funciono'])->name('plantillas.funciono');
+        Route::post('generaciones/{generacion}/funciono', [PlantillasIaController::class, 'generacionFunciono'])->name('generaciones.funciono');
     });
     Route::get('/materias/{materia}/estilo', [PlantillasIaController::class, 'estilo'])->name('materias.estilo');
     Route::put('/materias/{materia}/estilo', [PlantillasIaController::class, 'guardarEstilo'])->name('materias.estilo.guardar');
+    Route::post('/materias/{materia}/estilo/copiar', [PlantillasIaController::class, 'copiarEstilo'])->name('materias.estilo.copiar');
     Route::get('/materias/{materia}/contenido', [ContenidoController::class, 'index'])->name('contenido.index');
     Route::post('/materias/{materia}/contenido', [ContenidoController::class, 'store'])->name('contenido.store');
     Route::get('/contenido/{contenido}', [ContenidoController::class, 'show'])->name('contenido.show');
@@ -173,7 +179,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/generaciones/{generacion}/unidad/aprobar', [UnidadDidacticaController::class, 'aprobar'])->name('unidades.aprobar');
     Route::post('/generaciones/{generacion}/unidad/descartar', [UnidadDidacticaController::class, 'descartar'])->name('unidades.descartar');
     // Generadores de material del catálogo (7.4): mismas pantallas y flujo de borrador para cada tipo
-    foreach (['ejemplos' => EjemploController::class, 'debates' => DebateController::class, 'vocabularios' => VocabularioController::class, 'proyectos' => ProyectoController::class, 'apuntes' => ApunteController::class, 'presentaciones' => PresentacionController::class] as $r => $c) {
+    foreach (['ejemplos' => EjemploController::class, 'debates' => DebateController::class, 'vocabularios' => VocabularioController::class, 'proyectos' => ProyectoController::class, 'apuntes' => ApunteController::class, 'presentaciones' => PresentacionController::class, 'documentos' => DocumentoController::class] as $r => $c) {
         Route::get("/materias/{materia}/{$r}", [$c, 'index'])->name("{$r}.index");
         Route::get("/materias/{materia}/{$r}/nuevo", [$c, 'create'])->name("{$r}.create");
         Route::post("/materias/{materia}/{$r}", [$c, 'store'])->name("{$r}.store");
@@ -191,6 +197,13 @@ Route::middleware('auth')->group(function () {
     }
     Route::get('/materiales/{material}/publicar', [PublicacionController::class, 'edit'])->name('publicacion.edit');
     Route::post('/materiales/{material}/publicar', [PublicacionController::class, 'store'])->name('publicacion.store');
+    Route::get('/generadores', [GeneradoresController::class, 'index'])->name('generadores.index');
+    Route::get('/generadores/nuevo', [GeneradoresController::class, 'create'])->name('generadores.create');
+    Route::post('/generadores', [GeneradoresController::class, 'store'])->name('generadores.store');
+    Route::get('/generadores/{generador}/editar', [GeneradoresController::class, 'edit'])->name('generadores.edit');
+    Route::put('/generadores/{generador}', [GeneradoresController::class, 'update'])->name('generadores.update');
+    Route::delete('/generadores/{generador}', [GeneradoresController::class, 'destroy'])->name('generadores.destroy');
+    Route::post('/generadores/{generador}/funciono', [GeneradoresController::class, 'funciono'])->name('generadores.funciono');
     Route::get('/presentaciones/{material}/pptx', [PresentacionController::class, 'pptx'])->name('presentaciones.pptx');
     Route::post('/apuntes/{material}/repositorio', [ApunteController::class, 'repositorio'])->name('apuntes.repositorio');
     Route::post('/vocabularios/{material}/glosario', [VocabularioController::class, 'glosario'])->name('vocabularios.glosario');

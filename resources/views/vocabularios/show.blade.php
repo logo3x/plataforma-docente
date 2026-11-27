@@ -2,6 +2,7 @@
     @php($version = in_array(request('version'), ['tarjetas', 'repaso'], true) ? request('version') : 'lista')
     @php($terminos = $c['terminos'])
     <div class="migas"><a href="{{ route('inicio') }}">Mis materias</a> › <a href="{{ route('vocabularios.index', $m->materia) }}">Vocabulario — {{ $m->materia->nombre }}</a> › {{ $m->titulo }}</div>
+    @include('ia._generacion-funciono')
     <div class="fila" style="justify-content:space-between">
         <h1 style="margin-bottom:0">{{ $m->titulo }} <span class="suave">· {{ ['lista' => 'lista', 'tarjetas' => 'tarjetas para repasar', 'repaso' => 'hoja de repaso'][$version] }}</span></h1>
         <div class="fila no-imprimir">

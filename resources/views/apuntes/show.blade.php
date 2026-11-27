@@ -1,6 +1,7 @@
 <x-app :titulo="$m->titulo.' — Texto informativo'">
     @php($TI = \App\Material\TextoInformativo::class)
     <div class="migas"><a href="{{ route('inicio') }}">Mis materias</a> › <a href="{{ route('apuntes.index', $m->materia) }}">Textos y apuntes — {{ $m->materia->nombre }}</a> › {{ $m->titulo }}</div>
+    @include('ia._generacion-funciono')
     <div class="fila no-imprimir" style="justify-content:flex-end">
         <a class="boton boton-sec" href="{{ route('apuntes.edit', $m) }}">Editar</a>
         @if ($estudiante)

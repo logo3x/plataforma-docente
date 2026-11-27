@@ -124,7 +124,7 @@ final class ExportadorPptx
             default => $this->titulo($s['titulo'])
                 .$this->texto($m, 1600200, $W - 2 * $m, $H - 1600200 - 685800, array_map(fn ($p) => [$p, count($s['puntos']) > 6 ? 2000 : 2400, self::TEXTO, false, '•'], $s['puntos'])),
         };
-        $pie = $s['tipo'] === 'portada' ? '' : $this->texto($m, $H - 457200, $W - 2 * $m, 320040, [[$materia.' · '.$k.' / '.$n, 1100, '9CA3AF', false]], 'ctr', null, 'r');
+        $pie = $s['tipo'] === 'portada' ? '' : $this->texto($m, $H - 457200, $W - 2 * $m, 320040, [[$materia.' · '.$k.' / '.$n, 1100, '6B7280', false]], 'ctr', null, 'r');
 
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld '.self::NS.'><p:cSld><p:spTree>'.$this->grupo().$formas.$pie
             .'</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>';

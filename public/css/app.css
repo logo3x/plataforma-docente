@@ -98,7 +98,8 @@ details.menu .contenido > * + * { margin-top: .5rem; }
 .nombre-estudiante:hover { text-decoration: underline; color: var(--cian); }
 details.menu summary.boton { list-style: none; }
 details.menu .contenido a { display: block; }
-.texto-estudiante { white-space: pre-wrap; font-size: 15px; max-width: 90ch; background: #fffbeb; border-left: 4px solid var(--naranja); padding: .75rem 1rem; margin: .5rem 0 .75rem; border-radius: 0 var(--radio) var(--radio) 0; }
+/* 9.3: máximo 90 caracteres por línea. «ch» es el ancho del «0», más ancho que la letra promedio: 68ch da como mucho 90 caracteres de texto real */
+.texto-estudiante { white-space: pre-wrap; font-size: 15px; max-width: 68ch; background: #fffbeb; border-left: 4px solid var(--naranja); padding: .75rem 1rem; margin: .5rem 0 .75rem; border-radius: 0 var(--radio) var(--radio) 0; }
 .puntaje-abierta { position: sticky; bottom: 0; background: var(--blanco); padding: .4rem 0; }
 .rubrica-calificar { display: grid; grid-template-columns: minmax(12rem, max-content) 1fr; gap: .3rem 1rem; align-items: center; margin: .25rem 0 .5rem; }
 .rubrica-calificar > .fila { display: contents; }
@@ -247,7 +248,7 @@ th .suave { color: inherit; opacity: .85; }
 .diapositiva .d-cierre { list-style: '✓  '; }
 .diapositiva .d-sub { font-size: 2.2cqw; color: var(--suave); margin: .6cqw 0 0; }
 .diapositiva .d-codigo { font-size: 1.7cqw; background: #f3f4f6; border-radius: .6cqw; padding: 1.5cqw 2cqw; margin: 0; white-space: pre; overflow: hidden; }
-.diapositiva .d-pie { position: absolute; right: 3cqw; bottom: 1.5cqw; font-size: 1.1cqw; color: #9ca3af; margin: 0; }
+.diapositiva .d-pie { position: absolute; right: 3cqw; bottom: 1.5cqw; font-size: 1.1cqw; color: #6b7280; margin: 0; }
 .diapositiva-portada { background: var(--marino); color: #fff; display: flex; flex-direction: column; justify-content: center; }
 .diapositiva-portada .d-titulo { color: #fff; font-size: 5cqw; }
 .diapositiva-portada .d-linea { background: #7dd3fc; }

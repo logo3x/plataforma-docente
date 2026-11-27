@@ -26,8 +26,9 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
- * Calificación de respuestas abiertas por pregunta (6.7): el enunciado, la referencia y la
- * rúbrica una sola vez arriba, y debajo las respuestas de todas las entregas, legibles.
+ * Calificación de respuestas abiertas (6.7). Por pregunta: el enunciado, la referencia y la rúbrica una sola
+ * vez arriba, y debajo las respuestas de todas las entregas. Por estudiante: todas las abiertas de una entrega,
+ * cada una con su pregunta. Se pasa de un modo al otro sin perder nada: cada puntaje se guarda al escribirlo.
  */
 class CalificarAbiertas extends Component
 {
@@ -36,6 +37,17 @@ class CalificarAbiertas extends Component
 
     #[Url(as: 'pregunta')]
     public ?int $itemId = null;
+
+    /** «pregunta» o «estudiante» (6.7.2). */
+    #[Url(as: 'modo')]
+    public string $modo = 'pregunta';
+
+    #[Url(as: 'entrega')]
+    public ?int $entregaId = null;
+
+    /** Por debajo de estas palabras una respuesta se marca como corta (6.7.8). */
+    #[Url(as: 'umbral')]
+    public int $umbral = 15;
 
     /** Resaltado temporal de términos (6.7.9). */
     public string $buscar = '';
@@ -58,6 +70,16 @@ class CalificarAbiertas extends Component
         Gate::authorize('gestionar', $actividad->componente->division->dictado);
         $this->actividadId = $actividad->id;
         $this->itemId ??= $this->items()->first()?->id;
+    }
+
+    public function updatedModo(string $modo): void
+    {
+        $this->modo = in_array($modo, ['pregunta', 'estudiante'], true) ? $modo : 'pregunta';
+    }
+
+    public function updatedUmbral(mixed $v): void
+    {
+        $this->umbral = max(0, min(500, (int) $v));
     }
 
     public function puntuar(int $respuestaId, string $valor): void
@@ -203,7 +225,7 @@ class CalificarAbiertas extends Component
     public function insertarFrecuente(int $respuestaId, int $frecuenteId): void
     {
         $r = $this->respuesta($respuestaId);
-        $f = $this->frecuentes()->firstWhere('id', $frecuenteId);
+        $f = $this->frecuentes($r->item)->firstWhere('id', $frecuenteId);
         abort_if($f === null, 404);
         $r->update(['comentario' => trim(trim((string) $r->comentario).' '.$f->texto)]);
         $f->increment('usos');
@@ -230,21 +252,41 @@ class CalificarAbiertas extends Component
 
     public function render(): View
     {
-        $item = $this->itemId ? $this->items()->firstWhere('id', $this->itemId) : null;
-        // Solo las entregas de ESTA actividad: el mismo examen puede estar aplicado en otro periodo
-        $respuestas = $item
-            ? Respuesta::query()->where('artefacto_pregunta_id', $item->id)->whereHas('entrega', fn ($q) => $q->where('actividad_id', $this->actividadId))
-                ->with('entrega.integrantes')->get()
-                ->sortBy(fn ($r) => $r->entrega->integrantes->first()?->apellidos)->values()
-            : collect();
+        $items = $this->items();
+        $item = $this->itemId ? $items->firstWhere('id', $this->itemId) : null;
+        $base = fn () => Respuesta::query()->whereIn('artefacto_pregunta_id', $items->pluck('id'))
+            // Solo las entregas de ESTA actividad: el mismo examen puede estar aplicado en otro periodo
+            ->whereHas('entrega', fn ($q) => $q->where('actividad_id', $this->actividadId));
+        $nombre = fn (Respuesta $r) => $r->entrega->integrantes->first()?->apellidos;
+
+        // Entregas con abiertas, para el modo por estudiante, con lo que les falta
+        $todas = $base()->with('entrega.integrantes')->get(['id', 'entrega_id', 'puntaje', 'artefacto_pregunta_id']);
+        $entregas = $todas->groupBy('entrega_id')->map(fn ($rs) => ['entrega' => $rs->first()->entrega, 'pendientes' => $rs->whereNull('puntaje')->count()])
+            ->sortBy(fn ($x) => $x['entrega']->integrantes->first()?->apellidos)->values();
+
+        if ($this->modo === 'estudiante') {
+            $this->entregaId = $entregas->firstWhere('entrega.id', $this->entregaId) ? $this->entregaId : ($entregas->first()['entrega'] ?? null)?->id;
+            $orden = $items->pluck('orden', 'id');
+            $respuestas = $base()->where('entrega_id', $this->entregaId)->with('entrega.integrantes', 'item.pregunta.rubrica')->get()
+                ->sortBy(fn ($r) => $orden[$r->artefacto_pregunta_id] ?? 0)->values();
+        } else {
+            $respuestas = $item ? $base()->where('artefacto_pregunta_id', $item->id)->with('entrega.integrantes', 'item.pregunta.rubrica')->get()->sortBy($nombre)->values() : collect();
+        }
+        $frecuentes = $items->mapWithKeys(fn ($i) => [$i->id => $this->frecuentes($i)]);
+        $posicion = $entregas->search(fn ($x) => $x['entrega']->id === $this->entregaId);
 
         return view('livewire.calificar-abiertas', [
-            'items' => $this->items(),
+            'items' => $items,
             'rubricas' => $item ? Rubrica::query()->where('materia_id', $item->pregunta->materia_id)->orderBy('titulo')->get(['id', 'titulo']) : collect(),
             'item' => $item,
             'respuestas' => $respuestas,
             'pendientes' => $respuestas->whereNull('puntaje')->count(),
-            'frecuentes' => $item ? $this->frecuentes() : collect(),
+            'pendientesTotal' => $todas->whereNull('puntaje')->count(),
+            'entregas' => $entregas,
+            'anterior' => $posicion === false || $posicion === 0 ? null : $entregas[$posicion - 1]['entrega']->id,
+            'siguiente' => $posicion === false ? null : ($entregas[$posicion + 1]['entrega']->id ?? null),
+            'frecuentes' => $item ? $frecuentes[$item->id] : collect(),
+            'frecuentesPor' => $frecuentes,
             'sinComentario' => $item ? app(ComentariosIA::class)->candidatas($item, Actividad::query()->findOrFail($this->actividadId))->count() : 0,
             'sinSugerencia' => $item ? app(SugerenciasIA::class)->candidatas($item, Actividad::query()->findOrFail($this->actividadId))->count() : 0,
             'calibracion' => SugerenciasIA::calibracion($respuestas),
@@ -259,10 +301,10 @@ class CalificarAbiertas extends Component
         return $item;
     }
 
-    /** Frecuentes de esta pregunta y de toda la materia, los más usados primero. */
-    private function frecuentes(): Collection
+    /** Frecuentes de la pregunta y de toda la materia, los más usados primero. */
+    private function frecuentes(?ArtefactoPregunta $item = null): Collection
     {
-        $item = $this->itemActual();
+        $item ??= $this->itemActual();
 
         return ComentarioFrecuente::query()->where('user_id', auth()->id())->where('materia_id', $item->pregunta->materia_id)
             ->where(fn ($q) => $q->whereNull('pregunta_id')->orWhere('pregunta_id', $item->pregunta_id))

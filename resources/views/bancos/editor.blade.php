@@ -32,6 +32,7 @@
                     <div class="campo"><label for="b-valor">Valor</label><input type="text" id="b-valor" x-model="b.valor" inputmode="decimal" required></div>
                 </div></fieldset>
 
+                <div class="fila" style="gap:.4rem">
                 <div class="fila" role="tablist" aria-label="Versiones" style="gap:.4rem">
                     <template x-for="v in versiones" :key="v">
                         <button type="button" role="tab" class="boton boton-chico" :class="version === v ? '' : 'boton-sec'" :aria-selected="version === v" x-on:click="version = v">
@@ -39,6 +40,8 @@
                             <span x-text="cuadra(v) ? ' ✓' : ' ≠ ' + b.valor" :class="cuadra(v) ? '' : 'texto-alerta'"></span>
                         </button>
                     </template>
+                    
+                </div>
                     <select aria-label="Agregar una versión" x-on:change="if ($event.target.value) { version = $event.target.value; $event.target.value = '' }" class="boton-chico" style="width:auto">
                         <option value="">+ versión…</option>
                         <template x-for="v in ['B', '2A', '2B'].filter(x => !versiones.includes(x))" :key="v"><option :value="v" x-text="v"></option></template>

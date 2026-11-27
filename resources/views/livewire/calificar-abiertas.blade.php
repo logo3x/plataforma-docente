@@ -1,18 +1,50 @@
-<div>
+<div x-data="{
+        siguiente(desde) {
+            const todas = [...document.querySelectorAll('.respuesta-abierta')];
+            const i = desde ? todas.findIndex(s => s.id === 'r-' + desde) : todas.findIndex(s => s.contains(document.activeElement));
+            const resto = [...todas.slice(i + 1), ...todas.slice(0, i + 1)];
+            const s = resto.find(x => x.dataset.pendiente === '1' && x.id !== 'r-' + desde);
+            if (s) { s.scrollIntoView({ block: 'center' }); s.querySelector('input[inputmode=decimal]')?.focus(); }
+        } }"
+     x-on:keydown.window="if ($event.key.toLowerCase() === 'j' && !$event.ctrlKey && !$event.metaKey && !$event.altKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes($event.target.tagName)) { $event.preventDefault(); siguiente(null) }">
     @if ($items->isEmpty())
         <div class="tarjeta vacio"><strong>Esta actividad no tiene preguntas abiertas.</strong></div>
     @else
+        <div class="fila" style="margin-bottom:.6rem;gap:.4rem" role="group" aria-label="Modo de calificación">
+            <button type="button" @class(['boton', 'boton-chico', 'boton-sec' => $modo !== 'pregunta']) aria-pressed="{{ $modo === 'pregunta' ? 'true' : 'false' }}" wire:click="$set('modo', 'pregunta')">Por pregunta</button>
+            <button type="button" @class(['boton', 'boton-chico', 'boton-sec' => $modo !== 'estudiante']) aria-pressed="{{ $modo === 'estudiante' ? 'true' : 'false' }}" wire:click="$set('modo', 'estudiante')">Por estudiante</button>
+            <span class="suave">Faltan {{ $pendientesTotal }} respuesta(s) abiertas por calificar en toda la actividad.</span>
+        </div>
         <div class="fila" style="margin-bottom:1rem">
-            <label for="pregunta" style="margin:0">Pregunta</label>
-            <select id="pregunta" wire:model.live="itemId" style="max-width:40rem">
-                @foreach ($items as $i)
-                    <option value="{{ $i->id }}">{{ $loop->iteration }}. {{ \Illuminate\Support\Str::limit($i->pregunta->enunciado['texto'], 90) }}</option>
-                @endforeach
-            </select>
+            @if ($modo === 'estudiante')
+                <label for="entrega" style="margin:0">Estudiante</label>
+                <button type="button" class="boton boton-sec boton-chico" wire:click="$set('entregaId', {{ $anterior ?? 'null' }})" @disabled(! $anterior) aria-label="Estudiante anterior">←</button>
+                <select id="entrega" wire:model.live="entregaId" style="max-width:32rem">
+                    @foreach ($entregas as $x)
+                        <option value="{{ $x['entrega']->id }}">{{ $x['entrega']->integrantes->map->nombreCompleto()->join(' · ') }}{{ $x['pendientes'] ? " — faltan {$x['pendientes']}" : ' — ✓' }}</option>
+                    @endforeach
+                </select>
+                <button type="button" class="boton boton-sec boton-chico" wire:click="$set('entregaId', {{ $siguiente ?? 'null' }})" @disabled(! $siguiente) aria-label="Estudiante siguiente">→</button>
+            @else
+                <label for="pregunta" style="margin:0">Pregunta</label>
+                <select id="pregunta" wire:model.live="itemId" style="max-width:40rem">
+                    @foreach ($items as $i)
+                        <option value="{{ $i->id }}">{{ $loop->iteration }}. {{ \Illuminate\Support\Str::limit($i->pregunta->enunciado['texto'], 90) }}</option>
+                    @endforeach
+                </select>
+            @endif
             <span class="estado {{ $pendientes ? 'estado-incompleto' : 'estado-aprobado' }}" role="status">{{ $pendientes ? "Faltan {$pendientes} por calificar" : '✓ Todas calificadas' }}</span>
         </div>
+        <div class="fila" style="margin-bottom:1rem">
+            <label for="buscar" style="margin:0">Resaltar términos</label>
+            <input id="buscar" type="text" wire:model.live.debounce.300ms="buscar" placeholder="requisito, restricción" style="max-width:20rem">
+            <label for="umbral" style="margin:0">Marcar como corta con menos de</label>
+            <input id="umbral" type="number" min="0" max="500" wire:model.live.debounce.400ms="umbral" style="width:5rem"> <span>palabras</span>
+        </div>
+        <p class="suave" id="ayuda-teclado" style="margin:-.5rem 0 1rem">Teclado: <kbd>J</kbd> va a la siguiente respuesta sin calificar; en la casilla de puntaje, <kbd>Enter</kbd> guarda y pasa a la siguiente.</p>
 
-        @if ($item)
+        @if ($modo === 'estudiante' || $item)
+            @if ($modo === 'pregunta')
             @php($max = (string) \Brick\Math\BigDecimal::of($item->peso)->strippedOfTrailingZeros())
             <div class="tarjeta">
                 <h2 style="margin-top:0">{{ $item->pregunta->enunciado['texto'] }} <span class="suave">(máximo {{ $max }})</span></h2>
@@ -38,10 +70,6 @@
                         <a href="{{ route('rubricas.index', ['materia' => $item->pregunta->materia_id, 'pregunta' => $item->pregunta_id]) }}#generar">Generar una con IA</a>
                     </div>
                 </details>
-                <div class="fila" style="margin-top:.75rem">
-                    <label for="buscar" style="margin:0">Resaltar términos</label>
-                    <input id="buscar" type="text" wire:model.live.debounce.300ms="buscar" placeholder="requisito, restricción" style="max-width:24rem">
-                </div>
                 <details style="margin-top:.6rem">
                     <summary>Comentarios frecuentes <span class="suave">({{ $frecuentes->count() }})</span></summary>
                     <p class="suave" style="margin:.3rem 0">Frases de un clic para lo que se repite («falta justificar», «confunde requisito con restricción»). Se insertan en el comentario y se pueden editar.</p>
@@ -80,87 +108,10 @@
                 @if ($avisoIa)<div @class(['aviso', 'aviso-error' => $avisoIaError, 'aviso-info' => ! $avisoIaError]) role="status" style="margin-top:.5rem">{{ $avisoIa }}</div>@endif
             </div>
 
+            @endif
+
             @foreach ($respuestas as $r)
-                @php($texto = is_string($r->respuesta['valor'] ?? null) ? $r->respuesta['valor'] : '')
-                @php($palabras = str_word_count(preg_replace('/[^\pL\s]/u', ' ', \Illuminate\Support\Str::ascii($texto))))
-                <section class="tarjeta respuesta-abierta" wire:key="r-{{ $r->id }}" id="r-{{ $r->id }}">
-                    <div class="fila" style="justify-content:space-between">
-                        <strong>{{ $r->entrega->integrantes->map->nombreCompleto()->join(' · ') }}</strong>
-                        <span class="suave">{{ $palabras }} palabras
-                            @if (trim($texto) === '') · <span class="estado estado-reprobado">Vacía</span>
-                            @elseif ($palabras < 15) · <span class="estado estado-incompleto">Corta</span>@endif</span>
-                    </div>
-                    <div class="texto-estudiante">@if ($buscar !== '' && $texto !== ''){!! preg_replace('/('.collect(preg_split('/[\s,]+/', $buscar))->filter(fn ($t) => mb_strlen($t) > 1)->map(fn ($t) => preg_quote(e($t), '/'))->join('|').')/iu', '<mark>$1</mark>', e($texto)) !!}@else{{ $texto }}@endif</div>
-                    @if ($rubrica)
-                        @php($sel = ($r->desglose['rubrica_id'] ?? null) === $rubrica->id ? ($r->desglose['rubrica']['seleccion'] ?? []) : [])
-                        <div class="rubrica-calificar" role="group" aria-label="Rúbrica «{{ $rubrica->titulo }}»">
-                            @foreach ($rubrica->criterios as $ci => $c)
-                                <div class="fila">
-                                    <span><strong>{{ $c['nombre'] }}</strong> <span class="suave">{{ $c['peso'] }} %</span></span>
-                                    <span class="fila" style="gap:.4rem">
-                                    @foreach ($c['niveles'] as $ni => $n)
-                                        @php($elegido = ($sel[$ci] ?? null) === $ni)
-                                        <button type="button" @class(['boton', 'boton-chico', 'boton-sec' => ! $elegido]) aria-pressed="{{ $elegido ? 'true' : 'false' }}"
-                                                title="{{ $n['descripcion'] }}" wire:click="nivel({{ $r->id }}, {{ $ci }}, {{ $elegido ? 'null' : $ni }})">@if ($elegido)✓ @endif{{ $n['nombre'] }}</button>
-                                    @endforeach
-                                    </span>
-                                </div>
-                            @endforeach
-                            @if ($sel !== [] && in_array(null, $sel, true))<p class="suave" style="margin:.2rem 0">Faltan criterios por evaluar: el puntaje se calcula al completarlos.</p>@endif
-                        </div>
-                    @endif
-                    @php($sug = $r->sugerencia)
-                    @if (is_array($sug) && $r->puntaje === null && ($sug['decision'] ?? null) === null)
-                        <div class="sugerencia-ia" role="note" aria-label="Sugerencia de la IA">
-                            <div class="fila" style="justify-content:space-between">
-                                <span><strong>Sugerencia de la IA:</strong> {{ \Brick\Math\BigDecimal::of($sug['puntaje'])->toScale(2, \Brick\Math\RoundingMode::HalfUp)->strippedOfTrailingZeros() }}
-                                    de {{ \Brick\Math\BigDecimal::of($r->puntaje_max)->strippedOfTrailingZeros() }}
-                                    @if ($rubrica && is_array($sug['seleccion'] ?? null))
-                                        <span class="suave">· {{ collect($sug['seleccion'])->map(fn ($ni, $ci) => ($rubrica->criterios[$ci]['nombre'] ?? '?').': '.($rubrica->criterios[$ci]['niveles'][$ni]['nombre'] ?? '?'))->join(' · ') }}</span>
-                                    @endif</span>
-                                <span class="fila" style="gap:.4rem">
-                                    <button type="button" class="boton boton-chico" wire:click="aceptarSugerencia({{ $r->id }})">Aceptar</button>
-                                    <button type="button" class="boton boton-sec boton-chico" wire:click="descartarSugerencia({{ $r->id }})">Descartar</button>
-                                </span>
-                            </div>
-                            @if (! empty($sug['justificacion']))<p style="margin:.3rem 0 0">{{ $sug['justificacion'] }}</p>@endif
-                            <p class="suave" style="margin:.2rem 0 0">Lea la respuesta antes de aceptar. Si no está de acuerdo, ponga su puntaje: la sugerencia no cuenta.</p>
-                        </div>
-                    @endif
-                    <div class="fila puntaje-abierta">
-                        <label for="p-{{ $r->id }}" style="margin:0">Puntaje</label>
-                        <input id="p-{{ $r->id }}" type="text" inputmode="decimal" style="width:6rem" value="{{ $r->puntaje === null ? '' : (string) \Brick\Math\BigDecimal::of($r->puntaje)->strippedOfTrailingZeros() }}"
-                               x-on:change="$wire.puntuar({{ $r->id }}, $event.target.value)">
-                        @foreach ($rubrica ? [] : [0, 0.25, 0.5, 0.75, 1] as $f)
-                            @php($v = (string) \Brick\Math\BigDecimal::of($max)->multipliedBy((string) $f)->toScale(2, \Brick\Math\RoundingMode::HalfUp)->strippedOfTrailingZeros())
-                            <button class="boton boton-sec boton-chico" wire:click="puntuar({{ $r->id }}, '{{ $v }}')">{{ $v }}</button>
-                        @endforeach
-                        @isset($errores[$r->id])<span class="error" role="alert">{{ $errores[$r->id] }}</span>@endisset
-                    </div>
-                    <label for="c-{{ $r->id }}" style="margin-top:.5rem">Comentario para el estudiante</label>
-                    {{-- La clave cambia con el texto: al insertar un frecuente o usar un borrador, la casilla muestra el valor nuevo --}}
-                    <input id="c-{{ $r->id }}" wire:key="c-{{ $r->id }}-{{ md5((string) $r->comentario) }}" type="text" value="{{ $r->comentario }}" x-on:change="$wire.comentar({{ $r->id }}, $event.target.value)" placeholder="Breve, como lo diría en clase">
-                    @if ($frecuentes->isNotEmpty())
-                        <div class="fila frecuentes" style="margin-top:.3rem;gap:.3rem">
-                            @foreach ($frecuentes->take(8) as $f)
-                                <button type="button" class="boton boton-sec boton-chico" wire:click="insertarFrecuente({{ $r->id }}, {{ $f->id }})" title="Agregar al comentario">+ {{ \Illuminate\Support\Str::limit($f->texto, 40) }}</button>
-                            @endforeach
-                        </div>
-                    @endif
-                    @if ($r->comentario_borrador)
-                        <div class="borrador-ia" x-data="{ texto: @js($r->comentario_borrador) }">
-                            <label for="b-{{ $r->id }}"><strong>Borrador de la IA</strong> <span class="suave">(el estudiante aún no lo ve; edítelo si hace falta)</span></label>
-                            <textarea id="b-{{ $r->id }}" rows="2" x-model="texto" style="font-family:inherit"></textarea>
-                            @if (\App\Calificacion\ComentariosIA::delataCalculo($r->comentario_borrador))
-                                <p class="estado estado-incompleto" style="margin:.3rem 0">Menciona cifras o puntajes: un comentario de docente no los dice (8.5).</p>
-                            @endif
-                            <div class="fila" style="margin-top:.3rem">
-                                <button type="button" class="boton boton-chico" x-on:click="$wire.usarBorrador({{ $r->id }}, texto)">Usar este comentario</button>
-                                <button type="button" class="enlace" wire:click="descartarBorrador({{ $r->id }})">Descartar</button>
-                            </div>
-                        </div>
-                    @endif
-                </section>
+                @include('livewire._respuesta-abierta', ['r' => $r, 'frecuentes' => $frecuentesPor[$r->artefacto_pregunta_id] ?? collect(), 'numero' => $loop->iteration])
             @endforeach
         @endif
     @endif

@@ -12,13 +12,16 @@ use App\Models\Artefacto;
 use App\Models\Componente;
 use App\Models\Entrega;
 use App\Models\Materia;
+use Brick\Math\BigDecimal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /** Actividades evaluables y calificador (módulos 2 y 3). */
 class CalificadorController extends Controller
@@ -191,6 +194,43 @@ class CalificadorController extends Controller
         $this->autorizar($actividad);
 
         return view('calificador.abiertas', ['actividad' => $actividad->load('componente.division.dictado.materia')]);
+    }
+
+    /**
+     * Las respuestas abiertas de todos los estudiantes con su puntaje y el comentario del docente (6.7.14):
+     * una fila por entrega y, por cada pregunta abierta, su puntaje, el comentario y la respuesta. CSV para Excel en español.
+     */
+    public function abiertasCsv(Actividad $actividad): StreamedResponse
+    {
+        $this->autorizar($actividad);
+        $items = $actividad->artefacto?->items()->with('pregunta')->get()->filter(fn ($i) => $i->pregunta->tipo === 'abierta')->values() ?? collect();
+        $entregas = $actividad->entregas()->with('integrantes', 'respuestas')->get()
+            ->sortBy(fn ($e) => $e->integrantes->first()?->apellidos)->values();
+        $num = fn ($v) => $v === null ? '' : str_replace('.', ',', (string) BigDecimal::of($v)->strippedOfTrailingZeros());
+
+        return response()->streamDownload(function () use ($items, $entregas, $num) {
+            $f = fopen('php://output', 'w');
+            fwrite($f, "\u{FEFF}");
+            $cab = ['Documento', 'Estudiante'];
+            foreach ($items as $k => $i) {
+                $n = 'P'.($k + 1);
+                array_push($cab, "{$n} puntaje (de {$num($i->peso)})", "{$n} comentario", "{$n} respuesta");
+            }
+            fputcsv($f, [...$cab, 'Total abiertas', 'Sin calificar'], ';');
+            foreach ($entregas as $e) {
+                $fila = [$e->integrantes->pluck('documento')->join(' / '), $e->integrantes->map->nombreCompleto()->join(' / ')];
+                $total = BigDecimal::zero();
+                $faltan = 0;
+                foreach ($items as $i) {
+                    $r = $e->respuestas->firstWhere('artefacto_pregunta_id', $i->id);
+                    $faltan += $r && $r->puntaje === null ? 1 : 0;
+                    $total = $r?->puntaje !== null ? $total->plus($r->puntaje) : $total;
+                    array_push($fila, $num($r?->puntaje), (string) $r?->comentario, is_string($r?->respuesta['valor'] ?? null) ? $r->respuesta['valor'] : '');
+                }
+                fputcsv($f, [...$fila, $num((string) $total), $faltan], ';');
+            }
+            fclose($f);
+        }, 'abiertas-'.Str::slug($actividad->nombre).'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     /** Detalle autoexplicativo de una entrega (6.4). */

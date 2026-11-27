@@ -18,6 +18,10 @@
                 ({{ $r->item->regla_anulacion === 'dar_por_buena' ? 'se dio por bueno a todos' : 'se retiró y los demás ítems se reescalaron' }}): {{ $r->item->motivo_anulacion }}</div>
         @endif
 
+        {{-- Sin desglose (p. ej. una entrega traída de otra herramienta) se muestra el puntaje sin el detalle, en vez de fallar --}}
+        @if ($d === [] && ! in_array($p->tipo, ['abierta', 'reto'], true))
+            <p class="suave">No hay detalle guardado de esta respuesta; solo el puntaje.</p>
+        @else
         @switch($p->tipo)
             @case('unica')
                 <p>Respondió: <strong>{{ isset($d['respuesta']) ? $d['respuesta'].') '.($p->enunciado['opciones'][$d['respuesta']] ?? '') : 'sin responder' }}</strong><br>
@@ -82,6 +86,7 @@
                 @endforeach
                 @break
         @endswitch
+        @endif
         @if ($p->justificacion)<p class="suave">{{ $p->justificacion }}</p>@endif
     </section>
 @endforeach

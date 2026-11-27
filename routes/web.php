@@ -243,6 +243,7 @@ Route::middleware('auth')->group(function () {
         Route::get('en-vivo/{sesion}', [SesionVivoController::class, 'panel'])->name('vivo.panel');
         Route::get('en-vivo/{sesion}/proyectar', [SesionVivoController::class, 'proyectar'])->name('vivo.proyectar');
         Route::get('actividades/{actividad}/abiertas', [CalificadorController::class, 'abiertas'])->name('abiertas');
+        Route::get('actividades/{actividad}/abiertas.csv', [CalificadorController::class, 'abiertasCsv'])->name('abiertas.csv');
         Route::get('entregas/{entrega}', [CalificadorController::class, 'detalle'])->name('detalle');
         Route::get('actividades/{actividad}/estadisticas', [EstadisticasController::class, 'show'])->name('estadisticas');
         Route::get('actividades/{actividad}/ensayo', [EnsayoController::class, 'show'])->name('ensayo');

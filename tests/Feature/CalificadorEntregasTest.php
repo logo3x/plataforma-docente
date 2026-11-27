@@ -176,6 +176,30 @@ class CalificadorEntregasTest extends TestCase
     }
 
     #[Test]
+    public function cuarenta_entregas_se_procesan_en_menos_de_dos_minutos(): void
+    {
+        // 9.3: rendimiento del calificador con un grupo lleno (40 estudiantes) subido de una vez
+        $a = $this->aplicar();
+        $archivos = [];
+        for ($i = 3; $i <= 40; $i++) {
+            $e = $this->crearEstudiante((string) (10000 + $i), 'APELLIDO'.$i, 'NOMBRE');
+            $archivos[] = $this->entrega($a, $e, $this->perfectas($a));
+        }
+        $archivos[] = $this->entrega($a, $this->ana, $this->perfectas($a));
+        $archivos[] = $this->entrega($a, $this->beto, $this->perfectas($a));
+
+        $t = microtime(true);
+        $this->post(route('calificador.subir', $a), ['entregas' => $archivos])
+            ->assertSessionHas('resultados', fn ($r) => count($r) === 40 && collect($r)->every(fn ($x) => $x['estado'] === 'procesada'));
+        $segundos = microtime(true) - $t;
+        $this->get(route('calificador.show', $a))->assertOk();
+        $total = microtime(true) - $t;
+
+        $this->assertSame(40, Entrega::query()->count());
+        $this->assertLessThan(120, $total, "40 entregas tardaron {$total} s ({$segundos} s procesando)");
+    }
+
+    #[Test]
     public function ciclo_completo_hasta_el_registro(): void
     {
         $a = $this->aplicar();
@@ -194,6 +218,10 @@ class CalificadorEntregasTest extends TestCase
 
         $this->get(route('calificador.detalle', $e))->assertOk()
             ->assertSee('Un carrito vacío suma cero')->assertSee('✗ No superada')->assertSee('length cuenta los elementos');
+
+        // Una respuesta sin desglose (traída de otra herramienta) no tumba el detalle: muestra el puntaje sin explicación
+        $e->respuestas()->whereHas('item.pregunta', fn ($q) => $q->where('tipo', 'unica'))->update(['desglose' => null]);
+        $this->get(route('calificador.detalle', $e))->assertOk()->assertSee('No hay detalle guardado de esta respuesta');
 
         $this->post(route('calificador.registro', $a))->assertSessionHas('estado');
         $nota = Nota::query()->sole();
@@ -297,6 +325,49 @@ class CalificadorEntregasTest extends TestCase
 
         $r->refresh();
         $this->assertSame(['0.4000', 'docente', 'Bien, falta el valor inicial.'], [$r->puntaje, $r->calificado_por, $r->comentario]);
+    }
+
+    #[Test]
+    public function las_abiertas_se_califican_tambien_por_estudiante_y_se_exportan(): void
+    {
+        // 6.7.2: se pasa de un modo al otro sin perder puntajes; 6.7.8: umbral de respuesta corta; 6.7.14: exportación
+        $banco = $this->banco;
+        $banco['items'][0]['peso'] = '0.5';
+        $banco['items'][2]['peso'] = '0.5';
+        $banco['items'][] = ['tipo' => 'abierta', 'peso' => '0.5', 'enunciado' => 'Explique qué hace reduce.', 'referencia' => 'Acumula.'];
+        $banco['items'][] = ['tipo' => 'abierta', 'peso' => '0.5', 'enunciado' => 'Explique qué hace map.', 'referencia' => 'Transforma.'];
+        $this->banco = $banco;
+        $a = $this->aplicar();
+        $this->post(route('calificador.subir', $a), ['entregas' => [
+            $this->entrega($a, $this->ana, $this->respuestas($a, [5 => 'Recorre el arreglo y acumula un valor', 6 => 'Devuelve otro arreglo; transforma; cada; elemento'])),
+            $this->entrega($a, $this->beto, $this->respuestas($a, [5 => '', 6 => 'No sé'])),
+        ]]);
+        $abiertas = fn (Estudiante $e) => Entrega::query()->whereHas('integrantes', fn ($q) => $q->whereKey($e->id))->sole()
+            ->respuestas()->whereHas('item.pregunta', fn ($q) => $q->where('tipo', 'abierta'))->with('item')->get()->sortBy('item.orden')->values();
+        [$anaReduce, $anaMap] = $abiertas($this->ana);
+
+        $lw = Livewire::test(CalificarAbiertas::class, ['actividad' => $a])
+            ->call('puntuar', $anaReduce->id, '0.5')                                   // por pregunta…
+            ->set('modo', 'estudiante')->assertSet('entregaId', $anaReduce->entrega_id)  // …y luego por estudiante
+            ->assertSee('1. Explique qué hace reduce.')->assertSee('2. Explique qué hace map.')
+            ->assertSee('ARIAS, ANA — faltan 1')->assertSee('BELTRAN, BETO — faltan 2')
+            ->assertSeeHtml('value="0.5"')                                              // el puntaje dado en el otro modo sigue ahí
+            ->call('puntuar', $anaMap->id, '0.25')->call('comentar', $anaMap->id, 'Le faltó un ejemplo.')
+            ->assertSee('ARIAS, ANA — ✓');
+        $lw->set('umbral', 0);
+        $this->assertStringNotContainsString('Corta', strip_tags($lw->html()));
+        $lw->set('umbral', 7);                                                          // reduce tiene 7 palabras; map, 6
+        $this->assertSame(1, substr_count(strip_tags($lw->html()), 'Corta'));
+        $lw->set('entregaId', $abiertas($this->beto)[0]->entrega_id)->assertSee('Vacía');
+
+        $csv = $this->get(route('calificador.abiertas.csv', $a))->assertOk()->streamedContent();
+        $filas = array_map(fn ($l) => str_getcsv($l, ';'), explode("\n", trim(ltrim($csv, "\u{FEFF}"))));
+        $this->assertSame(['Documento', 'Estudiante', 'P1 puntaje (de 0,5)', 'P1 comentario', 'P1 respuesta', 'P2 puntaje (de 0,5)', 'P2 comentario', 'P2 respuesta', 'Total abiertas', 'Sin calificar'], $filas[0]);
+        $this->assertSame(['10001', 'ARIAS, ANA', '0,5', '', 'Recorre el arreglo y acumula un valor', '0,25', 'Le faltó un ejemplo.', 'Devuelve otro arreglo; transforma; cada; elemento', '0,75', '0'], $filas[1]);
+        $this->assertSame(['10002', 'BELTRAN, BETO', '', '', '', '', '', 'No sé', '0', '2'], $filas[2]);
+
+        $this->actingAs(User::factory()->create());
+        $this->get(route('calificador.abiertas.csv', $a))->assertForbidden();
     }
 
     #[Test]

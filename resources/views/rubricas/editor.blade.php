@@ -67,7 +67,7 @@
                             <input x-bind:id="'c-nombre-' + i" type="text" x-model="c.nombre" placeholder="Claridad de la explicación"></div>
                         <div class="campo"><label x-bind:for="'c-peso-' + i">Peso (%)</label>
                             <input x-bind:id="'c-peso-' + i" type="text" inputmode="decimal" x-model="c.peso"></div>
-                        <div class="campo"><button type="button" class="enlace" x-on:click="quitarCriterio(i)" x-bind:aria-label="'Quitar el criterio ' + (i + 1)">Quitar criterio</button></div>
+                        <div class="campo"><button type="button" class="enlace" x-on:click="quitarCriterio(i)" x-bind:aria-label="'Quitar criterio ' + (i + 1)">Quitar criterio</button></div>
                     </div>
                     <div class="campo"><label x-bind:for="'c-desc-' + i">Qué evalúa <span class="suave">(opcional)</span></label>
                         <input x-bind:id="'c-desc-' + i" type="text" x-model="c.descripcion"></div>

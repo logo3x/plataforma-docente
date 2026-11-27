@@ -56,7 +56,7 @@
                         <a class="boton boton-sec boton-chico" href="{{ $e['editar'] }}">Editar</a>
                         <form method="POST" action="{{ route('historial.copiar', $materia) }}">
                             @csrf<input type="hidden" name="tipo" value="{{ $e['tipo'] }}"><input type="hidden" name="id" value="{{ $e['id'] }}">
-                            <button class="boton boton-sec boton-chico" aria-label="Copiar «{{ $e['titulo'] }}» para ajustarla">Copiar para ajustar</button>
+                            <button class="boton boton-sec boton-chico" aria-label="Copiar para ajustar «{{ $e['titulo'] }}»">Copiar para ajustar</button>
                         </form>
                     @endif
                 </div>

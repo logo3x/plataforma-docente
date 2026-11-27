@@ -15,34 +15,34 @@ Estado: ✅ corregido · 🔧 pendiente, sin decisiones abiertas · ❓ necesita
 | 6.7 | Faltaban el modo por estudiante, el teclado, el umbral de respuesta corta y la exportación de abiertas | ✅ |
 | 9.3 | Líneas de 115 caracteres en las abiertas; cuatro problemas de accesibilidad; el informe fallaba con una respuesta sin desglose | ✅ |
 
-## Pendiente, sin decisiones abiertas
+## Pendientes sin decisión: todos corregidos
 
-| Req. | Qué falta | Tamaño |
+| Req. | Qué faltaba | Estado |
 |---|---|---|
-| 6.2.1, 6.2.2, 6.2.4 | Planilla: columna de documento, indicador de reprobados, filtros por estado y por alerta | pequeño |
-| 3.1.4 | Mover una actividad a otro componente | pequeño |
-| 3.1.13, 6.6.2 | Las alertas no se ven junto al estudiante en el registro | mediano |
-| 3.5.4 | Exportar la bitácora de una nota o de un estudiante como soporte de un reclamo | pequeño |
-| 3.7.1 | El simulador de cierre no calcula la nota mínima que necesita en la actividad pendiente (solo en el periodo) | mediano |
-| 3.7.9 | En la revisión de ceros, cruzar con la entrega grupal (la pareja tiene nota y él no) | pequeño |
-| 4.1, 4.2.3 | Errores de JavaScript sin línea ni columna en la consola del estudiante; los errores asíncronos se pierden | mediano |
-| 4.2.4 | Referencias circulares anidadas se muestran como `[object Object]` | pequeño |
-| 5.4.3 | Las opciones de única, múltiple y emparejar salen en el mismo orden para todos | pequeño |
-| 5.4.9 | Tiempo por ítem; la portada no declara todo lo que se registra (pegados, ejecuciones, navegador) | mediano |
-| 5.7 | Modo desconectado: no deja iniciar con internet y pausa el reloj al volver la conexión | pequeño |
-| 6.5.4 | Al prosperar un reclamo, poder corregir la verificación de un reto o la clave de emparejar u ordenar | mediano |
-| 6.5.6 | Las anulaciones hechas desde Estadísticas no aparecen en el registro de reclamos | pequeño |
-| 6.8.6 | El informe no dice quién subió la entrega grupal ni explica el tope aplicado | pequeño |
-| 6.10.6 | Estadísticas dentro de la exportación del corte | pequeño |
-| 6.11.1 | La similitud no compara el texto de los archivos entregados, solo el hash | mediano |
-| 6.1.4 | Aviso de un archivo subido a la actividad equivocada (hoy solo para exámenes) | mediano |
-| 2.8.3 | Lo copiado no guarda el vínculo con su origen | pequeño |
-| 7.2 | Asignar el material del repositorio a una unidad o tema y elegirlo así al generar | mediano |
-| 8.4.4 | Ver y restaurar versiones anteriores de una plantilla de prompt; el estilo de la materia se sobrescribe sin versiones | pequeño |
-| 8.4.1 | Validar al guardar que la plantilla no use campos que no existen | pequeño |
-| 7.6 | Historial de versiones del material y de los bancos editados | mediano |
-| 7.8 | Exportar rúbricas y unidades didácticas a HTML y Word | pequeño |
-| 9.1 | La versión del contenido no sube al cargar de nuevo el mismo material | pequeño |
+| 6.2.1, 6.2.2, 6.2.4 | Planilla: documento, versión, reprobadas, filtros por estado y por alerta | ✅ |
+| 3.1.4 | Mover una actividad a otro componente, con sus notas | ✅ |
+| 3.1.13, 6.6.2 | Alertas junto al estudiante en el registro, con filtro | ✅ |
+| 3.5.4 | Bitácora de un estudiante o de una nota en CSV | ✅ |
+| 3.7.1 | Nota mínima en la actividad pendiente para aprobar el corte y el periodo | ✅ |
+| 3.7.9 | Cero de quien entregó en pareja con alguien que sí tiene nota | ✅ |
+| 4.1, 4.2.3 | Línea y fragmento del error de JavaScript; errores asíncronos | ✅ |
+| 4.2.4 | Referencias circulares anidadas en la consola | ✅ |
+| 5.4.3 | Opciones barajadas por estudiante (salvo «todas las anteriores») | ✅ |
+| 5.4.9 | Tiempo por pregunta y registro de la sesión declarado en la portada | ✅ |
+| 5.7 | Modo desconectado: no inicia con internet y pausa el reloj | ✅ |
+| 6.5.4 | Corregir la clave de emparejar y ordenar, y las verificaciones de un reto | ✅ |
+| 6.5.6 | Anulaciones en el registro de reclamos y en los errores que evita la IA | ✅ |
+| 6.8.6 | Quién subió la entrega grupal y el tope explicados en el informe | ✅ |
+| 6.10.6 | Estadísticas en el Excel del grupo | ✅ |
+| 6.11.1 | Similitud del texto de los archivos entregados | ✅ |
+| 6.1.4 | Aviso de un archivo ya entregado en otra actividad | ✅ |
+| 2.8.3 | Las copias guardan el vínculo con su original | ✅ |
+| 7.2 | Material asignado a unidad o tema y elegido por tema al generar | ✅ |
+| 8.4.4 | Ver y volver a versiones anteriores de una plantilla | ✅ |
+| 8.4.1 | Validar al guardar los campos de una plantilla | ✅ |
+| 7.6 | Historial de versiones de material, rúbricas, unidades y bancos | ✅ |
+| 7.8 | Rúbricas y unidades en HTML y Word; tablas reales en Word | ✅ |
+| 9.1 | Versión del material al cargarlo de nuevo | ✅ |
 
 ## Necesita una decisión del docente
 

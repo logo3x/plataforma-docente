@@ -5,7 +5,7 @@
     <p class="suave">Opciones de aplicación, aparte de las preguntas: cambiarlas no obliga a rehacer el contenido.
         @if ($repartido) Si ya repartió el examen, vuelva a descargarlo para que los cambios lleguen al archivo.@endif</p>
 
-    <form method="POST" action="{{ route('configuracion.update', $a) }}" x-data="{ reloj: {{ $c['reloj_minutos'] ? 'true' : 'false' }}, desconectado: {{ $c['modo_desconectado'] ? 'true' : 'false' }} }">
+    <form method="POST" action="{{ route('configuracion.update', $a) }}" x-data="{ reloj: {{ $c['reloj_minutos'] ? 'true' : 'false' }}, desconectado: {{ $c['modo_desconectado'] ? 'true' : 'false' }}, calculo: @js(old('calculo_nota', $c['calculo_nota'])), escrita: {{ (int) old('peso_escrita', $c['peso_escrita']) }} }">
         @csrf @method('PUT')
         @if ($errors->any())<div class="aviso aviso-error" role="alert"><ul style="margin:0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
 
@@ -38,6 +38,24 @@
                 <div class="campo"><label for="duracion_minima_minutos">Marcar como anómala una duración menor a (minutos)</label><input id="duracion_minima_minutos" name="duracion_minima_minutos" type="number" min="1" max="600" value="{{ old('duracion_minima_minutos', $c['duracion_minima_minutos']) }}" placeholder="sin mínimo"></div>
             </div>
             <p class="suave" style="margin:0">Las alertas informan; no bajan la nota por sí solas. Cuáles revisa y qué sabe el estudiante: <a href="{{ route('alertas.politica') }}">política de alertas</a>.</p>
+        </section>
+
+        <section class="tarjeta">
+            <h2 style="margin-top:0">Cálculo de la nota</h2>
+            <fieldset class="campo" style="border:0;padding:0"><legend class="sr-only">Cómo sale la nota</legend>
+                @foreach ($CA::CALCULO_NOTA as $k => $v)
+                    <label style="font-weight:400;display:block"><input type="radio" name="calculo_nota" value="{{ $k }}" x-model="calculo"> {{ $v }}</label>
+                @endforeach
+            </fieldset>
+            <div class="fila" x-show="calculo === 'partes'">
+                <div class="campo"><label for="peso_escrita">Peso de la parte escrita (%)</label>
+                    <input id="peso_escrita" name="peso_escrita" type="number" min="1" max="99" x-model.number="escrita" style="max-width:8rem"></div>
+                <p class="suave" style="align-self:flex-end" x-text="'Práctica (retos de código): ' + (100 - (escrita || 0)) + ' %'"></p>
+            </div>
+            <p class="suave" style="margin:0" x-show="calculo === 'partes'">Ejemplo con 50 %: 8 de 10 en la escrita y 1 de 4 en la práctica dan (0,8 × 0,5 + 0,25 × 0,5) × valor = 52,5 % del valor.
+                Por puntos serían 9 de 14 = 64 %. Si el examen solo tiene una de las dos partes, se califica por puntos.</p>
+            @unless ($conRetos)<p class="suave" style="margin:.4rem 0 0">Este examen no tiene retos de código: todo es parte escrita y la nota sale por puntos.</p>@endunless
+            @if ($repartido)<p class="suave" style="margin:.4rem 0 0">Si ya hay notas en el registro, vuelva a pasarlas desde la planilla para que tomen el cálculo nuevo.</p>@endif
         </section>
 
         <section class="tarjeta">

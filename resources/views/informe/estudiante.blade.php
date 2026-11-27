@@ -35,6 +35,7 @@ main { max-width: 900px; }
             <div class="suave">Nota</div>
             <div class="nota-grande">{{ $vigente === null ? '—' : $escala->mostrar($vigente) }}</div>
             <div class="suave">sobre {{ $escala->mostrar($escala->maximo) }} · aprueba con {{ $escala->mostrar($escala->aprobatoria) }}</div>
+            @if ($partes ?? null)<div class="suave" style="max-width:40ch">{{ $partes }}</div>@endif
         </div>
         <div style="text-align:right">
             @if ($vigente !== null)

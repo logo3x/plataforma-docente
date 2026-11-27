@@ -259,6 +259,7 @@ class CalificadorController extends Controller
         return view('calificador.detalle', [
             'entrega' => $entrega,
             'nota' => $this->calificador->nota($entrega),
+            'partes' => $this->calificador->explicacionPartes($entrega),
             'escala' => $entrega->actividad->componente->division->dictado->escala(),
         ]);
     }

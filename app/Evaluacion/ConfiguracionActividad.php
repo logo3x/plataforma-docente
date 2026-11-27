@@ -23,6 +23,12 @@ final class ConfiguracionActividad
         'cantidad' => 'Solo la cantidad: cuántas hubo, cuántas superó y lo que sumaron, sin nombrarlas',
     ];
 
+    /** 3.2: cómo sale la nota del examen cuando tiene parte escrita y parte práctica (retos de código). */
+    public const CALCULO_NOTA = [
+        'puntos' => 'Por puntos: la nota es la proporción de todos los puntos del examen',
+        'partes' => 'Por partes: la parte escrita y la práctica se califican por separado y cada una pesa lo que usted fije',
+    ];
+
     /** Valores efectivos: lo guardado y, si falta, el valor por defecto según el tipo. */
     public static function efectiva(Artefacto $a): array
     {
@@ -44,6 +50,8 @@ final class ConfiguracionActividad
             'anexo' => (bool) ($c['anexo'] ?? false),
             // En un parcial el banco se reutiliza (otra jornada, otro semestre): nombrar lo reservado lo gasta
             'reservadas_informe' => array_key_exists($c['reservadas_informe'] ?? '', self::RESERVADAS_INFORME) ? $c['reservadas_informe'] : ($tipo === 'parcial' ? 'cantidad' : 'completas'),
+            'calculo_nota' => array_key_exists($c['calculo_nota'] ?? '', self::CALCULO_NOTA) ? $c['calculo_nota'] : 'puntos',
+            'peso_escrita' => (int) ($c['peso_escrita'] ?? 50),
         ];
     }
 
@@ -65,6 +73,8 @@ final class ConfiguracionActividad
             'tiempo_ejecucion_ms' => ['required', 'integer', 'between:500,20000'],
             'anexo' => ['nullable', 'boolean'],
             'reservadas_informe' => ['nullable', 'in:'.implode(',', array_keys(self::RESERVADAS_INFORME))],
+            'calculo_nota' => ['nullable', 'in:'.implode(',', array_keys(self::CALCULO_NOTA))],
+            'peso_escrita' => ['nullable', 'required_if:calculo_nota,partes', 'integer', 'between:1,99'],
         ];
     }
 
@@ -85,6 +95,8 @@ final class ConfiguracionActividad
             'tiempo_ejecucion_ms' => (int) $d['tiempo_ejecucion_ms'],
             'anexo' => (bool) ($d['anexo'] ?? false),
             'reservadas_informe' => $d['reservadas_informe'] ?? self::efectiva($a)['reservadas_informe'],     // si no llega, se conserva
+            'calculo_nota' => $d['calculo_nota'] ?? self::efectiva($a)['calculo_nota'],
+            'peso_escrita' => (int) ($d['peso_escrita'] ?? self::efectiva($a)['peso_escrita']),
         ] + ($a->configuracion ?? [])]);
     }
 }

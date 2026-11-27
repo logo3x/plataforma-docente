@@ -85,6 +85,32 @@ class CalificacionHibridaTest extends TestCase
     }
 
     #[Test]
+    public function por_partes_la_escrita_y_la_practica_pesan_lo_que_fija_el_docente(): void
+    {
+        [$entrega, $items] = $this->prepararParcial();
+        $this->actingAs($this->docente)->postJson(route('calificador.entregas.resultados-navegador', $entrega), ['resultados' => [[
+            'item' => $items[2]->id, 'verificaciones' => ['suma' => true, 'tabla' => false], 'casos' => [],
+        ]]])->assertOk();
+
+        $artefacto = $entrega->actividad->artefacto;
+        $this->put(route('configuracion.update', $artefacto), ['intervalo_sonda' => 20, 'umbral_salidas' => 3, 'umbral_salidas_segundos' => 60,
+            'nivel_ayuda' => 'intermedio', 'tiempo_ejecucion_ms' => 2000, 'calculo_nota' => 'partes', 'peso_escrita' => 70])->assertSessionHasNoErrors();
+
+        // Escrita 1.5 de 2.5 = 0.6 y práctica 1.25 de 2.5 = 0.5: 5 × (0.6 × 0.7 + 0.5 × 0.3) = 2.85 (por puntos serían 2.75)
+        $entrega = $entrega->fresh();
+        $this->assertSame('2.85', app(CalificadorEntrega::class)->nota($entrega));
+        $this->assertSame('Nota por partes: escrita 1,5 de 2,5 puntos (pesa 70 %) y práctica 1,25 de 2,5 puntos (pesa 30 %).',
+            app(CalificadorEntrega::class)->explicacionPartes($entrega));
+        $this->get(route('calificador.detalle', $entrega))->assertOk()->assertSee('escrita 1,5 de 2,5 puntos (pesa 70 %)');
+
+        // Sin retos en el examen (todo escrito) vuelve a ser por puntos
+        $this->put(route('configuracion.update', $artefacto), ['intervalo_sonda' => 20, 'umbral_salidas' => 3, 'umbral_salidas_segundos' => 60,
+            'nivel_ayuda' => 'intermedio', 'tiempo_ejecucion_ms' => 2000, 'calculo_nota' => 'puntos'])->assertSessionHasNoErrors();
+        $this->assertSame('2.75', app(CalificadorEntrega::class)->nota($entrega->fresh()));
+        $this->assertNull(app(CalificadorEntrega::class)->explicacionPartes($entrega->fresh()));
+    }
+
+    #[Test]
     public function el_navegador_no_puede_inventar_verificaciones_ni_calificar_items_del_servidor(): void
     {
         [$entrega, $items] = $this->prepararParcial();

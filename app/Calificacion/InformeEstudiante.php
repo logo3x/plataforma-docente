@@ -49,6 +49,7 @@ final class InformeEstudiante
             'subidaPor' => $entrega && $entrega->integrantes->count() > 1 ? $entrega->integrantes->firstWhere('id', $entrega->subida_por_id) : null,
             'tope' => $entrega && $actividad->tamano_grupo !== null && $actividad->tope_exceso !== null && $entrega->integrantes->count() > $actividad->tamano_grupo
                 ? ['tope' => $escala->mostrar($actividad->tope_exceso), 'integrantes' => $entrega->integrantes->count(), 'para' => $actividad->tamano_grupo] : null,
+            'partes' => $entrega ? app(CalificadorEntrega::class)->explicacionPartes($entrega) : null,
             'vigente' => $vigente,
             'original' => $original,
             'segunda' => $segunda,

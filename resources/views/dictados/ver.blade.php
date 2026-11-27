@@ -31,13 +31,15 @@
     </div>
 
     <h2>Estructura de evaluación</h2>
+    <p><a href="{{ route('dictados.estructura', $dictado) }}">Editar la estructura</a> <span class="suave">— nombres, pesos y fechas, aunque ya haya notas</span></p>
     <table>
-        <thead><tr><th>División</th><th class="num">Peso</th><th>Componentes</th></tr></thead>
+        <thead><tr><th>División</th><th class="num">Peso</th><th>Fechas</th><th>Componentes</th></tr></thead>
         <tbody>
             @foreach ($dictado->divisiones as $d)
                 <tr>
                     <td>{{ $d->nombre }}</td>
                     <td class="num">{{ $d->porcentaje() }} %</td>
+                    <td>@if ($d->fecha_inicio || $d->fecha_fin){{ $d->fecha_inicio?->format('Y-m-d') ?? '…' }} a {{ $d->fecha_fin?->format('Y-m-d') ?? '…' }}@else<span class="suave">—</span>@endif</td>
                     <td>@foreach ($d->componentes as $c){{ $c->nombre }} ({{ $c->porcentaje() }} %)@if (! $loop->last), @endif @endforeach</td>
                 </tr>
             @endforeach

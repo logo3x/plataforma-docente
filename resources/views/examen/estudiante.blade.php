@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' blob:; worker-src blob:; style-src 'unsafe-inline'; connect-src {{ $conectarA ?? 'https:' }}; img-src data:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' blob:; worker-src blob:; style-src 'unsafe-inline'; connect-src {{ ($conectarA ?? '') ?: "'none'" }}; img-src data:">
 <title>@if (! empty($datos['ensayo']))ENSAYO · @endif{{ $datos['sigla'] }} — {{ $datos['titulo'] }}</title>
 <style>{!! $css !!}</style>
 </head>

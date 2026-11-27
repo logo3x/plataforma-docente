@@ -140,7 +140,9 @@ class CalificadorEntregasTest extends TestCase
         // del estudiante y «Probar» responde «No compila» para todo (sección 4)
         $this->assertMatchesRegularExpression("/script-src[^;]*'unsafe-eval'/", $html);
         $this->assertMatchesRegularExpression("/default-src 'none'/", $html);
-        $this->assertStringNotContainsString('https://', str_replace('https://www.google.com/generate_204', '', $html), 'Sin recursos externos.');
+        // 4.5.3: solo se conecta a la sonda, no a todo https: (el código del estudiante no puede consultar servicios externos)
+        $this->assertStringContainsString('connect-src https://www.google.com;', $html);
+        $this->assertStringNotContainsString('https://', str_replace(['https://www.google.com/generate_204', 'connect-src https://www.google.com;'], '', $html), 'Sin recursos externos.');
     }
 
     #[Test]

@@ -345,7 +345,12 @@
 
   /* Código del worker: sin acceso al examen ni a la red. */
   const CODIGO_WORKER = `
-    self.fetch = undefined; self.XMLHttpRequest = undefined; self.WebSocket = undefined; self.importScripts = undefined; self.EventSource = undefined;
+    /* 4.5.3: sin red. Se borran de toda la cadena de prototipos (no basta con tapar «self.fetch»: el prototipo
+       la conserva) y se fijan como indefinidas y no configurables. Sin Worker, tampoco hay un worker anidado con red. */
+    for (const n of ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'importScripts', 'Worker', 'SharedWorker', 'WebTransport', 'Request', 'BroadcastChannel']) {
+      for (let o = self; o; o = Object.getPrototypeOf(o)) { try { delete o[n]; } catch (e) {} }
+      try { Object.defineProperty(self, n, { value: undefined, writable: false, configurable: false }); } catch (e) {}
+    }
     const lineas = []; const MAX = 500;
     const ser = (v, vistos = new WeakSet()) => {
       if (v === undefined) return 'undefined'; if (v === null) return 'null';

@@ -86,7 +86,8 @@ final class GeneradorExamen
             'datos' => $datos,
             'json' => $json,
             'motorSql' => $this->motorSql($datos['items']),
-            'conectarA' => $vivo ? "'self' https:" : 'https:',
+            // 4.5.3: el examen solo se conecta a la sonda (y en vivo, a la plataforma), no a todo https:
+            'conectarA' => trim(($vivo ? "'self' " : '').self::origen($config['sonda'])),
             'css' => file_get_contents(resource_path('examen/examen.css')),
             'js' => $js,
         ])->render();
@@ -111,5 +112,16 @@ final class GeneradorExamen
     private function peso(string $p): string
     {
         return (string) BigDecimal::of($p)->strippedOfTrailingZeros();
+    }
+
+    /** Origen (esquema, host y puerto) de la sonda, apto para la política de seguridad; vacío si no es una URL https válida. */
+    public static function origen(?string $url): string
+    {
+        $p = parse_url((string) $url);
+        if (($p['scheme'] ?? null) !== 'https' || ! preg_match('/^[a-z0-9.-]+$/i', $p['host'] ?? '')) {
+            return '';
+        }
+
+        return 'https://'.strtolower($p['host']).(isset($p['port']) ? ':'.(int) $p['port'] : '');
     }
 }

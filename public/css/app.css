@@ -115,6 +115,7 @@ table.barras th, table.barras td { border: 0; padding: .2rem .4rem; }
 .barra-dato { height: 1rem; background: var(--cian); border-radius: 3px; min-width: 2px; }
 .barra-correcta { background: var(--ok); }
 .marca-segunda { display: inline-block; font-size: .75rem; font-weight: 700; color: #5b21b6; background: #ede9fe; border-radius: 4px; padding: 0 .3rem; margin: 0 .3rem .2rem; text-decoration: none; white-space: nowrap; }
+.marca-alerta { display: inline-block; font-size: .75rem; font-weight: 700; color: #9a3412; background: #ffedd5; border-radius: 4px; padding: 0 .3rem; margin: 0 .2rem .2rem; text-decoration: none; white-space: nowrap; }
 .enlace-segunda { display: block; font-size: .78rem; color: var(--suave); }
 
 /* Unidad didáctica imprimible */

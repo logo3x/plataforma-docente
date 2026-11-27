@@ -88,6 +88,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/dictados/{dictado}/en-dos-grupos/{estudiante}', [EnDosGruposController::class, 'resolver'])->name('dos-grupos.resolver');
     Route::get('/grupos/{grupo}/estudiantes/{estudiante}', [EstudianteController::class, 'edit'])->name('estudiantes.edit');
     Route::get('/grupos/{grupo}/estudiantes/{estudiante}/historial', [EstudianteController::class, 'historial'])->name('estudiantes.historial');
+    Route::get('/grupos/{grupo}/estudiantes/{estudiante}/bitacora.csv', [EstudianteController::class, 'bitacora'])->name('estudiantes.bitacora');
     Route::put('/grupos/{grupo}/estudiantes/{estudiante}', [EstudianteController::class, 'update'])->name('estudiantes.update');
     Route::get('/grupos/{grupo}/estudiantes/{estudiante}/segunda-oportunidad', [SegundaOportunidadController::class, 'create'])->name('segundas.create');
     Route::post('/grupos/{grupo}/estudiantes/{estudiante}/segunda-oportunidad/simular', [SegundaOportunidadController::class, 'simular'])->name('segundas.simular');

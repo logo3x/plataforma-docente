@@ -12,6 +12,9 @@
                     <a href="{{ route('exportar.csv', $grupo) }}" style="display:block">Planilla consolidada (.csv)</a>
                 </div>
             </details>
+            @if ($alertasPendientes->isNotEmpty() || $soloAlertas)
+                <label style="display:inline;font-weight:400;margin:0"><input type="checkbox" wire:model.live="soloAlertas"> Solo con alertas sin revisar ({{ $alertasPendientes->count() }})</label>
+            @endif
             <span class="suave">Escala {{ $escala->mostrar($escala->minimo) }}–{{ $escala->mostrar($escala->maximo) }} · aprueba con {{ $escala->mostrar($escala->aprobatoria) }} · celda vacía no promedia</span>
         </div>
         <div class="fila">
@@ -120,6 +123,7 @@
                             <td class="estudiante" title="Documento {{ $e->documento }}">
                                 <a href="{{ route('estudiantes.historial', [$grupo, $e]) }}" class="nombre-estudiante" title="Historial del semestre">{{ $e->nombreCompleto() }}</a>
                                 @if ($e->revisar_nombre)<a href="{{ route('estudiantes.edit', [$grupo, $e]) }}" class="suave" title="El nombre no traía coma en la plantilla: sepárelo">⚠ revisar nombre</a>@endif
+                                @if ($n = $alertasPendientes[$e->id] ?? 0)<span class="marca-alerta" title="{{ $n }} alerta(s) del calificador sin revisar">⚑ {{ $n }}</span>@endif
                                 <a href="{{ route('segundas.create', [$grupo, $e]) }}" class="enlace-segunda" title="Supletorio, recuperación o habilitación">2ª oportunidad</a>
                             </td>
                             @foreach ($componentes as $c)
@@ -133,6 +137,11 @@
                                                x-on:dblclick="$wire.verHistorial({{ $a->id }}, {{ $e->id }})"
                                                title="Doble clic: historial de la nota">
                                         @isset($errores[$clave])<span class="celda-error" role="alert">{{ $errores[$clave] }}</span>@endisset
+                                        @if ($al = $alertasCelda[$clave] ?? null)
+                                            <a class="marca-alerta" href="{{ route('alertas.actividad', $a) }}"
+                                               aria-label="Alertas de {{ $e->nombreCompleto() }} en {{ $a->nombre }}: {{ $al->map(fn ($x) => $nombresAlerta[$x->tipo] ?? $x->tipo)->join(', ') }}"
+                                               title="{{ $al->map(fn ($x) => ($nombresAlerta[$x->tipo] ?? $x->tipo).($x->revisada_en ? ' (revisada)' : ''))->join(' · ') }}">⚑{{ $al->whereNull('revisada_en')->isEmpty() ? '✓' : '' }}</a>
+                                        @endif
                                         @if ($so = $tablero->segunda($a->getMorphClass(), $a->id, $e->id))
                                             <a class="marca-segunda" href="{{ route('segundas.create', [$grupo, $e]) }}"
                                                title="{{ \App\Models\SegundaOportunidad::TIPOS[$so->tipo] }} del {{ $so->fecha->format('Y-m-d') }}. La nota original ({{ $tablero->nota($a->id, $e->id) === null ? 'vacía' : $escala->mostrar($tablero->nota($a->id, $e->id)) }}) se conserva.">{{ $so->letra() }} {{ $escala->mostrar($tablero->notaEfectiva($a->id, $e->id)) }}</a>
@@ -226,7 +235,8 @@
                 @else
                     <p>Esta nota no tiene cambios registrados.</p>
                 @endif
-                <p><button class="boton" wire:click="cerrarHistorial" autofocus>Cerrar</button></p>
+                <p class="fila"><button class="boton" wire:click="cerrarHistorial" autofocus>Cerrar</button>
+                    @if ($historial['cambios'])<a class="boton boton-sec" href="{{ $historial['exportar'] }}">Descargar esta bitácora (CSV)</a>@endif</p>
             </div>
         </div>
     @endif

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\RegistroNotas;
 use App\Models\Actividad;
+use App\Models\Alerta;
 use App\Models\Nota;
 use App\Models\User;
 use App\Notas\RegistroNotas as Registro;
@@ -33,6 +34,46 @@ class RegistroNotasPantallaTest extends TestCase
             ->assertSee('Corte 1')->assertSee('Corte 3')->assertSee('Consolidado')
             ->assertSee('APELLIDO1, Nombre1')
             ->assertSee('aún no tiene actividades');
+    }
+
+    #[Test]
+    public function las_alertas_del_calificador_se_ven_en_el_registro_y_se_filtran(): void
+    {
+        // 3.1.13 y 6.6.2
+        $quiz = $this->crearActividad($this->trabajos, ['nombre' => 'Quiz 1']);
+        [$ana, $beto] = $this->grupo->estudiantes()->orderBy('apellidos')->get()->all();
+        Alerta::query()->create(['actividad_id' => $quiz->id, 'estudiante_id' => $ana->id, 'tipo' => 'salidas', 'datos' => ['cantidad' => 4, 'segundos' => 90]]);
+
+        $lw = Livewire::test(RegistroNotas::class, ['grupo' => $this->grupo])
+            ->assertSee('Solo con alertas sin revisar (1)')
+            ->assertSeeHtml('aria-label="Alertas de '.$ana->nombreCompleto().' en Quiz 1: Salidas de la ventana"')
+            ->assertSee($beto->nombreCompleto());
+        $lw->set('soloAlertas', true)->assertSee($ana->nombreCompleto())->assertDontSee($beto->nombreCompleto());
+    }
+
+    #[Test]
+    public function la_bitacora_de_un_estudiante_o_de_una_nota_se_descarga(): void
+    {
+        // 3.5.4: soporte ante un reclamo
+        $quiz = $this->crearActividad($this->trabajos, ['nombre' => 'Quiz 1']);
+        $taller = $this->crearActividad($this->trabajos, ['nombre' => 'Taller 1']);
+        $e = $this->grupo->estudiantes()->orderBy('apellidos')->first();
+        app(Registro::class)->asignar($quiz, $e, '3.0', 'digitada');
+        app(Registro::class)->asignar($quiz, $e, '3.5', 'reclamo', 'Reclamo aceptado: faltaba sumar el ítem 4');
+        app(Registro::class)->asignar($taller, $e, '4.0', 'digitada');
+
+        $csv = $this->get(route('estudiantes.bitacora', [$this->grupo, $e]))->assertOk()->assertDownload('bitacora-'.$e->documento.'.csv')->streamedContent();
+        $filas = array_map(fn ($l) => str_getcsv($l, ';'), explode("\n", trim(ltrim($csv, "\u{FEFF}"))));
+        $this->assertCount(5, $filas);                                  // encabezado, columnas y tres cambios
+        $this->assertSame(['Quiz 1', '3.0', '3.5', 'reclamo', 'Reclamo aceptado: faltaba sumar el ítem 4', $this->docente->name], array_slice($filas[3], 3, 6));
+
+        $solo = $this->get(route('estudiantes.bitacora', [$this->grupo, $e, 'actividad' => $taller->id]))->streamedContent();
+        $this->assertStringContainsString('Taller 1', $solo);
+        $this->assertStringNotContainsString('Quiz 1', $solo);
+        Livewire::test(RegistroNotas::class, ['grupo' => $this->grupo])->call('verHistorial', $quiz->id, $e->id)->assertSee('Descargar esta bitácora (CSV)');
+
+        $this->actingAs(User::factory()->create());
+        $this->get(route('estudiantes.bitacora', [$this->grupo, $e]))->assertForbidden();
     }
 
     #[Test]

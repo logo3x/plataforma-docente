@@ -21,6 +21,7 @@
             <a class="boton boton-sec boton-chico" href="{{ route('estudiantes.edit', [$grupo, $estudiante]) }}">Editar datos</a>
             <a class="boton boton-sec boton-chico" href="{{ route('segundas.create', [$grupo, $estudiante]) }}">Segunda oportunidad</a>
             <button class="boton boton-sec boton-chico" onclick="window.print()">Imprimir</button>
+            <a class="boton boton-sec boton-chico" href="{{ route('estudiantes.bitacora', [$grupo, $estudiante]) }}">Bitácora de sus notas (CSV)</a>
         </div>
     </div>
     <p class="suave">Vista del docente: no se proyecta ni se entrega al estudiante (para eso está el informe de cada actividad).</p>

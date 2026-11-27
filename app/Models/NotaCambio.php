@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
 
 /** Entrada de la bitácora de cambios de nota. Solo inserción (3.5). */
@@ -23,5 +24,16 @@ class NotaCambio extends Model
     {
         static::updating(fn () => throw new LogicException('La bitácora de notas es de solo lectura.'));
         static::deleting(fn () => throw new LogicException('La bitácora de notas es de solo lectura.'));
+    }
+
+    public function actividad(): BelongsTo
+    {
+        return $this->belongsTo(Actividad::class);
+    }
+
+    /** Quién hizo el cambio (el docente; vacío si fue un proceso automático). */
+    public function usuario(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

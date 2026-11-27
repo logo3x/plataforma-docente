@@ -2,7 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Calificacion\PoliticaAlertas;
 use App\Models\Actividad;
+use App\Models\Alerta;
 use App\Models\Componente;
 use App\Models\Estudiante;
 use App\Models\Grupo;
@@ -32,6 +34,10 @@ class RegistroNotas extends Component
     /** Id de la división activa o 'consolidado'. */
     #[Url(as: 'vista')]
     public string $pestana = '';
+
+    /** 3.1.13: solo los estudiantes con alertas sin revisar. */
+    #[Url(as: 'alertas')]
+    public bool $soloAlertas = false;
 
     /** @var array<int, string> nombre de la nueva columna por componente */
     public array $nuevaActividad = [];
@@ -191,6 +197,7 @@ class RegistroNotas extends Component
 
         $this->historial = [
             'titulo' => "{$estudiante->nombreCompleto()} — {$actividad->nombre}",
+            'exportar' => route('estudiantes.bitacora', [$this->grupo(), $estudiante, 'actividad' => $actividad->id]),
             'cambios' => $nota?->cambios()->get()->map(fn ($c) => [
                 'fecha' => $c->created_at->format('Y-m-d H:i'),
                 'anterior' => $c->valor_anterior === null ? 'vacía' : $this->tablero()->escala()->mostrar($c->valor_anterior),
@@ -212,11 +219,25 @@ class RegistroNotas extends Component
         $tablero = $this->tablero();
         $division = is_numeric($this->pestana) ? $tablero->division((int) $this->pestana) : null;
 
+        // 3.1.13 y 6.6.2: las alertas del calificador viajan al registro, junto al estudiante y a la nota
+        $alertas = Alerta::query()->whereIn('estudiante_id', $tablero->estudiantes()->pluck('id'))
+            ->whereHas('actividad.componente.division', fn ($q) => $q->where('dictado_id', $this->grupo()->dictado_id))
+            ->get(['id', 'actividad_id', 'estudiante_id', 'tipo', 'revisada_en']);
+        $porCelda = $alertas->groupBy(fn ($a) => $a->actividad_id.'-'.$a->estudiante_id);
+        $pendientesPor = $alertas->whereNull('revisada_en')->countBy('estudiante_id');
+        $filas = $division ? $tablero->filasDivision($division) : $tablero->filasConsolidado();
+        if ($this->soloAlertas) {
+            $filas = collect($filas)->filter(fn ($f) => ($pendientesPor[$f['estudiante']->id] ?? 0) > 0)->values()->all();
+        }
+
         return view('livewire.registro-notas', [
             'grupo' => $this->grupo(),
             'tablero' => $tablero,
             'division' => $division,
-            'filas' => $division ? $tablero->filasDivision($division) : $tablero->filasConsolidado(),
+            'filas' => $filas,
+            'alertasCelda' => $porCelda,
+            'alertasPendientes' => $pendientesPor,
+            'nombresAlerta' => collect(PoliticaAlertas::TIPOS)->map(fn ($t) => $t[0]),
             'ultimaAccion' => last(session($this->clavePila(), [])) ?: null,
             'retirados' => $this->grupo()->estudiantes()->wherePivot('activo', false)->orderBy('apellidos')->get(),
             'componentesDestino' => Componente::query()->whereHas('division', fn ($q) => $q->where('dictado_id', $this->grupo()->dictado_id))

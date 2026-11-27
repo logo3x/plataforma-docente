@@ -50,6 +50,11 @@ class Dictado extends Model
         return $this->hasMany(Estudiante::class);
     }
 
+    public function diasSinClase(): HasMany
+    {
+        return $this->hasMany(DiaSinClase::class)->orderBy('desde');
+    }
+
     public function claveCifrado(): HasOne
     {
         return $this->hasOne(ClaveCifrado::class);

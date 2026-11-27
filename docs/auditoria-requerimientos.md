@@ -56,17 +56,17 @@ Estado: ✅ corregido · 🔧 pendiente, sin decisiones abiertas · ❓ necesita
 | 7.9 | Copiar a otra materia (valor seguro: copia independiente) | ✅ Rúbricas, unidades y material desde el historial; contenido del repositorio desde su página; el tema se busca por título; las plantillas ya valen para todas las materias |
 | 9.2 | Pruebas 8 y 9 automáticas y exigir el ensayo (valor seguro: exigirlo es opcional) | ✅ Prueba 8 con la solución modelo opcional del reto; la 9 ya corría sola en el examen de ensayo; opción por examen para exigir el ensayo, y editar las preguntas lo deja pendiente |
 | 5.2 | Enunciado de la práctica en texto plano | ✅ Botón en el examen con los datos del estudiante, los puntos y los casos para autoverificar; sin lo reservado |
+| 2.6.2 | Calendario semanal: se registra una semana y las clases salen solas sin festivos nacionales | ✅ Horario por grupo, festivos de Colombia (Ley Emiliani y Pascua), días sin clase del periodo, clases por corte y descarga .ics; el horario pasa al periodo siguiente |
+| 2.7.4 | Divisiones anidadas | No se hacen: la institución usa cortes planos. El modelo las sigue admitiendo |
+| 4.4.1 | Aviso de punto y coma faltante | No se avisa: JavaScript no lo exige y el aviso daría falsos positivos |
+| 5.7 | Interruptores del panel (versiones, segundo banco, casos reservados) | No se hacen: no se usan |
 | 4.4.3, 4.4.5 | Incluir el editor de código en el examen | ✅ CodeMirror dentro del examen: 440 KB con JavaScript y 630 KB con los demás lenguajes (más de los 300 KB estimados); solo en exámenes con retos |
 
 ## Necesita una decisión del docente
 
 | Req. | Pregunta |
 |---|---|
-| 2.7.4 | Divisiones anidadas (cortes dentro de cortes): el modelo las soporta, la interfaz no. ¿Hacen falta? |
-| 2.6.2 | Fechas y calendario del dictado: ¿solo inicio y fin de cada corte, o también las fechas de clase? |
 | 6.2.3, 6.4 | Modalidad II: nota de la práctica digitada con su comentario y requerimientos con su fracción. ¿Cómo llega hoy esa nota (anexo calificado aparte)? |
-| 4.4.1 | Avisar del punto y coma faltante: JavaScript no lo exige y avisarlo puede confundir. ¿Se pide como estilo? |
-| 5.7 | Panel: interruptores de versiones, segundo banco, cantidad de casos reservados; formato de entrega «artefacto autocontenido» |
 | 7.4.3 | Catálogo extensible: hoy cada generador nuevo requiere código. ¿Un generador genérico a partir de una plantilla de prompt? |
 | 7.5, 7.10 | Manuales interactivos con el entorno de prueba, guías y boletines |
 | 8.4.5 | Biblioteca de plantillas que funcionaron, reutilizable entre materias |

@@ -4,6 +4,7 @@ use App\Http\Controllers\AlertasController;
 use App\Http\Controllers\ApunteController;
 use App\Http\Controllers\BancoController;
 use App\Http\Controllers\BitacoraController;
+use App\Http\Controllers\CalendarioController;
 use App\Http\Controllers\Calificador\ResultadosNavegadorController;
 use App\Http\Controllers\CalificadorController;
 use App\Http\Controllers\CargaNotasController;
@@ -82,6 +83,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/grupos/{grupo}/notas', RegistroController::class)->name('registro');
     Route::get('/grupos/{grupo}/cierre', CierreController::class)->name('cierre');
+    Route::get('/grupos/{grupo}/calendario', [CalendarioController::class, 'show'])->name('calendario.grupo');
+    Route::put('/grupos/{grupo}/horario', [CalendarioController::class, 'horario'])->name('calendario.horario');
+    Route::post('/grupos/{grupo}/sin-clase', [CalendarioController::class, 'sinClase'])->name('calendario.sin-clase');
+    Route::delete('/grupos/{grupo}/sin-clase/{dia}', [CalendarioController::class, 'quitarSinClase'])->name('calendario.sin-clase.quitar');
+    Route::get('/grupos/{grupo}/clases.ics', [CalendarioController::class, 'ics'])->name('calendario.ics');
     Route::get('/grupos/{grupo}/exportar.xlsx', [ExportacionController::class, 'xlsx'])->name('exportar.xlsx');
     Route::get('/grupos/{grupo}/planilla.csv', [ExportacionController::class, 'csv'])->name('exportar.csv');
     Route::get('/respaldos/restaurar', [RestauracionController::class, 'create'])->name('restauracion.create');

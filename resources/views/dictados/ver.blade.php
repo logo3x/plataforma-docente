@@ -22,6 +22,7 @@
                 <p>{{ $grupo->estudiantes_count }} estudiantes @if ($grupo->classroom_curso_nombre) · <a href="{{ route('classroom.grupo', $grupo) }}">Classroom: {{ $grupo->classroom_curso_nombre }}</a>@endif</p>
                 <div class="fila">
                     <a class="boton" href="{{ route('registro', $grupo) }}">Registro de notas</a>
+                    <a class="boton boton-sec" href="{{ route('calendario.grupo', $grupo) }}">Calendario</a>
                     <a class="boton boton-sec" href="{{ route('importacion.create', $grupo) }}">
                         {{ $grupo->estudiantes_count ? 'Actualizar lista' : 'Cargar lista' }}
                     </a>

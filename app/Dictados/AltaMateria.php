@@ -84,6 +84,13 @@ final class AltaMateria
 
             $this->crearDivisiones($dictado, $estructura);
             $this->crearGrupos($dictado, $grupos ?? $origen->grupos()->pluck('nombre')->all());
+            // 2.6.2: el horario semanal suele repetirse; las fechas de clase salen de los cortes nuevos
+            foreach ($origen->grupos()->with('horarios')->get() as $g) {
+                $nuevo = $dictado->grupos()->where('nombre', $g->nombre)->first();
+                foreach ($nuevo ? $g->horarios : [] as $h) {
+                    $nuevo->horarios()->create($h->only('dia', 'hora_inicio', 'hora_fin', 'aula'));
+                }
+            }
 
             return $dictado;
         });

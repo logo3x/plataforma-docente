@@ -4,6 +4,7 @@ namespace App\Calificacion;
 
 use App\Models\Alerta;
 use App\Models\Entrega;
+use App\Models\Nota;
 use App\Notas\RegistroNotas;
 use Brick\Math\BigDecimal;
 
@@ -19,6 +20,9 @@ final class AsignacionGrupal
     /**
      * @return string operación de la bitácora (deshacible)
      */
+    /** Notas con ajuste individual que se dejaron como estaban, desde que se creó el servicio. */
+    public int $conservadas = 0;
+
     public function asignar(Entrega $entrega, string $nota, ?string $comentario = null, ?string $motivoExtra = null): string
     {
         $actividad = $entrega->actividad;
@@ -48,6 +52,13 @@ final class AsignacionGrupal
                     ->whereKeyNot($entrega->id)
                     ->whereHas('integrantes', fn ($q) => $q->whereKey($estudiante->id))
                     ->first();
+
+                // 6.8.7: la nota ajustada a un solo integrante (reclamo aceptado o corrección a mano) se conserva
+                if (Nota::query()->where('actividad_id', $actividad->id)->where('estudiante_id', $estudiante->id)->where('ajuste_individual', true)->exists()) {
+                    $this->conservadas++;
+
+                    continue;
+                }
 
                 if ($otra !== null) {
                     Alerta::query()->firstOrCreate([

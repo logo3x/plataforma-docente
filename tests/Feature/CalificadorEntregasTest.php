@@ -12,6 +12,7 @@ use App\Models\Entrega;
 use App\Models\Estudiante;
 use App\Models\Nota;
 use App\Models\User;
+use App\Notas\RegistroNotas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -230,6 +231,14 @@ class CalificadorEntregasTest extends TestCase
         $this->assertSame('4.0000', $nota->valor);           // 3.0 + 1.0 del reto
         $this->assertSame('calificador', $nota->origen);
         $this->assertSame($e->id, $nota->entrega_id);
+        $this->assertFalse($nota->ajuste_individual);
+
+        // 6.8.7: la corrección a mano de un solo estudiante no se pierde al volver a pasar las notas
+        app(RegistroNotas::class)->asignar($a, $this->ana, '4.5', 'digitada');
+        $this->assertTrue($nota->fresh()->ajuste_individual);
+        $this->post(route('calificador.registro', $a))
+            ->assertSessionHas('estado', fn ($m) => str_contains($m, 'Se conservaron 1 nota(s) ajustadas a un solo estudiante'));
+        $this->assertSame('4.5000', $nota->fresh()->valor);
     }
 
     #[Test]

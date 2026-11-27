@@ -26,6 +26,7 @@ final class PasoAlRegistro
     {
         $pasadas = 0;
         $pendientes = 0;
+        $antes = $this->asignacion->conservadas;
 
         $op = $this->registro->operacion(function () use ($actividad, $motivo, $soloYaRegistradas, &$pasadas, &$pendientes) {
             foreach ($actividad->entregas()->get() as $e) {
@@ -46,6 +47,7 @@ final class PasoAlRegistro
 
         return [
             'operacion' => $op, 'pasadas' => $pasadas, 'pendientes' => $pendientes,
+            'conservadas' => $this->asignacion->conservadas - $antes,
             // Notas que de verdad cambiaron: las que dejaron entrada en la bitácora
             'cambiadas' => NotaCambio::query()->where('operacion_id', $op)->count(),
         ];

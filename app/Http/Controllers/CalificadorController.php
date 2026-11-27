@@ -178,14 +178,15 @@ class CalificadorController extends Controller
     public function pasarAlRegistro(Request $request, Actividad $actividad, PasoAlRegistro $paso): RedirectResponse
     {
         $this->autorizar($actividad);
-        ['operacion' => $op, 'pasadas' => $pasadas, 'pendientes' => $pendientes] = $paso->ejecutar($actividad);
+        ['operacion' => $op, 'pasadas' => $pasadas, 'pendientes' => $pendientes, 'conservadas' => $conservadas] = $paso->ejecutar($actividad);
 
         $grupo = $actividad->grupos()->first() ?? $actividad->componente->division->dictado->grupos()->first();
         $pila = $request->session()->get("deshacer.grupo.{$grupo->id}", []);
         $pila[] = ['op' => $op, 'descripcion' => "Notas de «{$actividad->nombre}» desde el calificador"];
         $request->session()->put("deshacer.grupo.{$grupo->id}", array_slice($pila, -50));
 
-        return back()->with('estado', "{$pasadas} entregas pasadas al registro".($pendientes ? "; {$pendientes} siguen con ítems por calificar." : '.'));
+        return back()->with('estado', "{$pasadas} entregas pasadas al registro".($pendientes ? "; {$pendientes} siguen con ítems por calificar." : '.')
+            .($conservadas ? " Se conservaron {$conservadas} nota(s) ajustadas a un solo estudiante (reclamo aceptado o corrección a mano)." : ''));
     }
 
     /** Calificación de respuestas abiertas por pregunta (6.7). */

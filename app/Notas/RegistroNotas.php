@@ -90,11 +90,16 @@ final class RegistroNotas
                 ? $origen
                 : ($nota->origen ?? 'digitada');
 
+            // 6.8.7: corregir a mano una nota que vino de una entrega es un ajuste individual; el próximo
+            // «Pasar al registro» lo conserva en vez de pisarlo con la nota de la entrega
+            $ajuste = $ajusteIndividual || ($origen === 'digitada' && $nota->exists && $nota->entrega_id !== null && ! $mismoValor)
+                || ($origen === 'digitada' && $mismoValor && $nota->ajuste_individual);
+
             $nota->fill([
                 'valor' => $valor,
                 'origen' => $origenNota,
                 'entrega_id' => $entregaId ?? $nota->entrega_id,
-                'ajuste_individual' => $ajusteIndividual,
+                'ajuste_individual' => $ajuste,
                 'comentario' => $comentario ?? $nota->comentario,
             ])->save();
 

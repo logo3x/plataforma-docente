@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Archivos\ExtractorTexto;
+use App\Historial\HistorialMateria;
 use App\Models\Contenido;
 use App\Models\Materia;
 use Illuminate\Http\RedirectResponse;
@@ -82,7 +83,32 @@ class ContenidoController extends Controller
     {
         Gate::authorize('gestionar', $contenido->materia);
 
-        return view('contenido.ver', ['contenido' => $contenido]);
+        return view('contenido.ver', ['contenido' => $contenido,
+            'otrasMaterias' => Materia::query()->where('user_id', $contenido->materia->user_id)->whereKeyNot($contenido->materia_id)->orderBy('nombre')->get(['id', 'nombre'])]);
+    }
+
+    /**
+     * 7.9: el mismo material en otra materia del docente. Comparte el archivo en disco (el borrado ya respeta
+     * las rutas compartidas); el tema se busca por título en la otra materia o queda sin asignar.
+     */
+    public function copiar(Request $request, Contenido $contenido): RedirectResponse
+    {
+        Gate::authorize('gestionar', $contenido->materia);
+        $destino = Materia::query()->findOrFail($request->validate(['destino' => ['required', 'integer']])['destino']);
+        Gate::authorize('gestionar', $destino);
+        abort_if($destino->is($contenido->materia), 422, 'Ya está en esta materia.');
+
+        $igual = $destino->contenidos()->where('sha256', $contenido->sha256)->first();
+        if ($igual) {
+            return back()->with('estado', "«{$contenido->titulo}» ya estaba en {$destino->nombre} como «{$igual->titulo}».");
+        }
+        $copia = $contenido->replicate(['created_at', 'updated_at']);
+        $copia->materia_id = $destino->id;
+        $copia->version = (int) $destino->contenidos()->where('titulo', $contenido->titulo)->max('version') + 1;
+        $copia->temario_item_id = HistorialMateria::mismoTema($contenido->temario_item_id, $destino);
+        $copia->save();
+
+        return back()->with('estado', "«{$contenido->titulo}» copiado a {$destino->nombre}".($copia->temario_item_id ? ', en el mismo tema.' : '. Asígnele un tema allá si lo necesita.'));
     }
 
     /** 7.2: asigna el material a una unidad o a un tema del temario de la materia (o lo deja sin asignar). */

@@ -7,6 +7,7 @@ use App\Models\GeneracionIa;
 use App\Models\Materia;
 use App\Models\Material;
 use App\Models\Rubrica;
+use App\Models\TemarioItem;
 use App\Models\UnidadDidactica;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -102,9 +103,11 @@ final class HistorialMateria
 
     /**
      * Copia una actividad para ajustarla sin tocar la original (por ejemplo, para el periodo
-     * siguiente). La copia queda como hecha a mano, con «(copia)» en el título.
+     * siguiente). La copia queda como hecha a mano, con «(copia)» en el título. Con $destino, la copia va a
+     * otra materia del mismo docente (7.9): lo que apunta al temario se busca por título en la otra materia
+     * y, si no está, queda sin asignar.
      */
-    public function copiar(Materia $materia, string $tipo, int $id): Rubrica|UnidadDidactica|Material
+    public function copiar(Materia $materia, string $tipo, int $id, ?Materia $destino = null): Rubrica|UnidadDidactica|Material
     {
         $original = match (true) {
             $tipo === 'rubrica' => $materia->rubricas()->findOrFail($id),
@@ -115,12 +118,27 @@ final class HistorialMateria
         $copia = $original->replicate(['generacion_ia_id', 'created_at', 'updated_at']);
         $copia->titulo = Str::limit($original->titulo, 240, '').' (copia)';
         $copia->origen_id = $original->getKey();                     // 2.8.3: la copia sabe de dónde salió
+        if ($destino && $destino->isNot($materia)) {
+            $copia->materia_id = $destino->id;
+            $copia->titulo = Str::limit($original->titulo, 240, '');
+            if (array_key_exists('temario_item_id', $copia->getAttributes()) && $copia->temario_item_id) {
+                $copia->temario_item_id = self::mismoTema($copia->temario_item_id, $destino);
+            }
+        }
         if (! $original instanceof Rubrica) {
             $copia->contenido = ['titulo' => $copia->titulo] + $original->contenido;
         }
         $copia->save();
 
         return $copia;
+    }
+
+    /** El tema o la unidad del mismo título en otra materia, o null (7.9). */
+    public static function mismoTema(?int $temarioItemId, Materia $destino): ?int
+    {
+        $titulo = $temarioItemId ? TemarioItem::query()->whereKey($temarioItemId)->value('titulo') : null;
+
+        return $titulo ? $destino->temario()->where('titulo', $titulo)->value('id') : null;
     }
 
     /** 2.8.3: « · copia de «Original»» si salió de otra; el original puede haberse borrado. */

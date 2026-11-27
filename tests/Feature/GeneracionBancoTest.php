@@ -229,6 +229,15 @@ class GeneracionBancoTest extends TestCase
         $this->delete(route('contenido.destroy', $notas))->assertRedirect();
         $copia = Contenido::query()->where('titulo', 'notas de otro curso')->sole();
         $this->assertSame($original, $this->get(route('contenido.descargar', $copia))->assertOk()->streamedContent());
+
+        // 7.9: el mismo material en otra materia del docente; borrar el de una no borra el archivo de la otra
+        $otra = Materia::query()->create(['user_id' => $this->docente->id, 'nombre' => 'Programación II']);
+        $this->get(route('contenido.show', $copia))->assertSee('Usar también en otra materia');
+        $this->post(route('contenido.copiar', $copia), ['destino' => $otra->id])->assertSessionHas('estado', '«notas de otro curso» copiado a Programación II. Asígnele un tema allá si lo necesita.');
+        $this->post(route('contenido.copiar', $copia), ['destino' => $otra->id])->assertSessionHas('estado', fn ($m) => str_contains($m, 'ya estaba en Programación II'));
+        $enOtra = $otra->contenidos()->sole();
+        $this->delete(route('contenido.destroy', $enOtra))->assertRedirect();
+        $this->assertSame($original, $this->get(route('contenido.descargar', $copia))->assertOk()->streamedContent());
         $this->actingAs(User::factory()->create());
         $this->get(route('contenido.descargar', $copia))->assertForbidden();
         $this->actingAs($this->docente);

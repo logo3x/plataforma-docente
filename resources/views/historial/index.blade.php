@@ -58,6 +58,16 @@
                             @csrf<input type="hidden" name="tipo" value="{{ $e['tipo'] }}"><input type="hidden" name="id" value="{{ $e['id'] }}">
                             <button class="boton boton-sec boton-chico" aria-label="Copiar para ajustar «{{ $e['titulo'] }}»">Copiar para ajustar</button>
                         </form>
+                        @if ($otrasMaterias->isNotEmpty())
+                            <form method="POST" action="{{ route('historial.copiar', $materia) }}" class="fila" style="gap:.3rem">
+                                @csrf<input type="hidden" name="tipo" value="{{ $e['tipo'] }}"><input type="hidden" name="id" value="{{ $e['id'] }}">
+                                <select name="destino" class="boton-chico" style="width:auto" aria-label="Materia a la que se copia «{{ $e['titulo'] }}»" required>
+                                    <option value="">Copiar a otra materia…</option>
+                                    @foreach ($otrasMaterias as $om)<option value="{{ $om->id }}">{{ $om->nombre }}</option>@endforeach
+                                </select>
+                                <button class="boton boton-sec boton-chico" aria-label="Copiar «{{ $e['titulo'] }}» a la materia elegida">Copiar</button>
+                            </form>
+                        @endif
                     @endif
                 </div>
             </div>

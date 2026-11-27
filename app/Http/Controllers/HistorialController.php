@@ -25,6 +25,7 @@ class HistorialController extends Controller
 
         return view('historial.index', [
             'materia' => $materia,
+            'otrasMaterias' => Materia::query()->where('user_id', $materia->user_id)->whereKeyNot($materia->id)->orderBy('nombre')->get(['id', 'nombre']),
             'entradas' => $historial->entradas($materia, $f),
             'conteos' => $historial->conteos($materia),
             'dictados' => $materia->dictados()->latest()->get(),
@@ -36,10 +37,18 @@ class HistorialController extends Controller
     public function copiar(Request $request, Materia $materia, HistorialMateria $historial): RedirectResponse
     {
         Gate::authorize('gestionar', $materia);
-        $d = $request->validate(['tipo' => ['required', Rule::in(array_keys(HistorialMateria::TIPOS))], 'id' => ['required', 'integer']]);
+        $d = $request->validate(['tipo' => ['required', Rule::in(array_keys(HistorialMateria::TIPOS))], 'id' => ['required', 'integer'],
+            'destino' => ['nullable', 'integer']]);
         abort_if($d['tipo'] === 'evaluacion', 422, 'Las evaluaciones se vuelven a aplicar; no se copian.');
-        $copia = $historial->copiar($materia, $d['tipo'], $d['id']);
+        // 7.9: a otra materia, solo del mismo docente
+        $destino = filled($d['destino'] ?? null) ? Materia::query()->findOrFail($d['destino']) : null;
+        if ($destino) {
+            Gate::authorize('gestionar', $destino);
+        }
+        $copia = $historial->copiar($materia, $d['tipo'], $d['id'], $destino);
 
-        return redirect($historial->urlEdicion($copia))->with('estado', "Copia creada: «{$copia->titulo}». Ajústela; la original no cambia.");
+        return redirect($historial->urlEdicion($copia))->with('estado', $destino && $destino->isNot($materia)
+            ? "Copiado a {$destino->nombre}: «{$copia->titulo}». Revise lo que dependa de la materia (temas, nivel); la original no cambia."
+            : "Copia creada: «{$copia->titulo}». Ajústela; la original no cambia.");
     }
 }

@@ -9,6 +9,7 @@ use App\Models\Artefacto;
 use App\Models\ConfigMotorIa;
 use App\Models\Dictado;
 use App\Models\GeneracionIa;
+use App\Models\Materia;
 use App\Models\Material;
 use App\Models\Rubrica;
 use App\Models\UnidadDidactica;
@@ -92,6 +93,27 @@ class HistorialTest extends TestCase
         $this->post(route('artefactos.aplicar', Artefacto::query()->sole()), ['componente_id' => $this->siguiente->divisiones()->create(['nombre' => 'Corte 1', 'peso' => '1', 'orden' => 0])
             ->componentes()->create(['nombre' => 'Quices', 'peso' => '1', 'orden' => 0])->id, 'grupos' => [$this->siguiente->grupos()->create(['nombre' => 'Nocturno'])->id]])->assertRedirect();
         $this->get(route('historial.index', ['materia' => $this->materia, 'dictado' => $this->siguiente->id]))->assertSee('Quiz de pilas')->assertSee('2026B › Corte 1 (Nocturno)');
+    }
+
+    #[Test]
+    public function se_copia_a_otra_materia_del_mismo_docente_y_no_a_la_de_otro(): void
+    {
+        $otra = Materia::query()->create(['user_id' => $this->docente->id, 'nombre' => 'Programación II']);
+        $unidad = UnidadDidactica::query()->sole();
+        $tema = $this->materia->temario()->create(['tipo' => 'unidad', 'titulo' => 'Pilas y colas', 'orden' => 0]);
+        $unidad->update(['temario_item_id' => $tema->id]);
+        $mismo = $otra->temario()->create(['tipo' => 'unidad', 'titulo' => 'Pilas y colas', 'orden' => 0]);
+
+        $this->get(route('historial.index', $this->materia))->assertSee('Copiar a otra materia…')->assertSee('Programación II');
+        $this->post(route('historial.copiar', $this->materia), ['tipo' => 'unidad', 'id' => $unidad->id, 'destino' => $otra->id])
+            ->assertRedirect()->assertSessionHas('estado', fn ($m) => str_contains($m, 'Copiado a Programación II'));
+        $copia = UnidadDidactica::query()->where('materia_id', $otra->id)->sole();
+        $this->assertSame($unidad->titulo, $copia->titulo);
+        $this->assertSame($mismo->id, $copia->temario_item_id, 'el tema se busca por título en la otra materia');
+        $this->assertSame($unidad->id, $copia->origen_id);
+
+        $ajena = Materia::query()->create(['user_id' => User::factory()->create()->id, 'nombre' => 'Ajena']);
+        $this->post(route('historial.copiar', $this->materia), ['tipo' => 'unidad', 'id' => $unidad->id, 'destino' => $ajena->id])->assertForbidden();
     }
 
     #[Test]

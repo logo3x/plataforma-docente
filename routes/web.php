@@ -135,6 +135,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/versiones/{version}/restaurar', [VersionController::class, 'restaurar'])->name('versiones.restaurar');
     Route::get('/contenido/{contenido}/archivo', [ContenidoController::class, 'descargar'])->name('contenido.descargar');
     Route::put('/contenido/{contenido}/tema', [ContenidoController::class, 'asignarTema'])->name('contenido.tema');
+    Route::post('/contenido/{contenido}/copiar', [ContenidoController::class, 'copiar'])->name('contenido.copiar');
     Route::delete('/contenido/{contenido}', [ContenidoController::class, 'destroy'])->name('contenido.destroy');
     Route::get('/materias/{materia}/rubricas', [RubricaController::class, 'index'])->name('rubricas.index');
     Route::get('/materias/{materia}/rubricas/nueva', [RubricaController::class, 'create'])->name('rubricas.create');
